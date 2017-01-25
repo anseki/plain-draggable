@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="/plain-draggable.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    div {
+      position: absolute;
+      border: 1px solid red;
+      background-color: rgba(150, 255, 127, 0.5);
+    }
+
+    #elm1 {
+      left: 100px;
+      top: 101px;
+      width: 102px;
+      height: 104px;
+    }
+
+    #elm2 {
+      left: 200px;
+      top: 201px;
+      width: 202px;
+      height: 204px;
+    }
+  </style>
+</head>
+<body>
+  <div id="elm1">elm1</div>
+  <div id="elm2" style="border-width: 2px 4px 8px 16px;">elm2</div>
+
+  <svg viewBox="240 250 220 230" id="svg1">
+    <rect id="rect1" x="245px" y="256px" width="20px" height="20px"/>
+  </svg>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "plain-draggable",
+  "version": "0.0.1",
+  "description": "%description%",
+  "keywords": [
+    "%keywords%"
+  ],
+  "main": "plain-draggable.min.js",
+  "homepage": "https://anseki.github.io/plain-draggable/",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/anseki/plain-draggable.git"
+  },
+  "moduleType": [],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "license": "MIT",
+  "authors": [
+    "anseki <AnSeki.aff@gmail.com>"
+  ]
+}
