@@ -356,9 +356,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var ZINDEX = 99999,
-    SNAP_TOLERANCE = 20,
+    SNAP_GRAVITY = 20,
     SNAP_EDGE = 'both',
-    SNAP_ORIGIN = 'containment',
+    SNAP_BASE = 'containment',
     SNAP_SIDE = 'both',
     IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
     isObject = function () {
@@ -399,6 +399,10 @@ cssWantedValueCursorDraggable = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'a
 // [DEBUG]
 window.insProps = insProps;
 window.IS_WEBKIT = IS_WEBKIT;
+window.SNAP_GRAVITY = SNAP_GRAVITY;
+window.SNAP_EDGE = SNAP_EDGE;
+window.SNAP_BASE = SNAP_BASE;
+window.SNAP_SIDE = SNAP_SIDE;
 // [/DEBUG]
 
 function copyTree(obj) {
@@ -680,18 +684,18 @@ function _setOptions(props, newOptions) {
 
   // containment
   if (newOptions.containment) {
-    if (isObject(newOptions.containment)) {
-      // bBox
-      var bBox = void 0;
-      if ((bBox = validBBox(copyTree(newOptions.containment))) && hasChanged(bBox, options.containment)) {
-        options.containment = bBox;
-        props.containmentIsBBox = true;
+    var bBox = void 0;
+    if (isElement(newOptions.containment)) {
+      // Specific element
+      if (newOptions.containment !== options.containment) {
+        options.containment = newOptions.containment;
+        props.containmentIsBBox = false;
         needsInitBBox = true;
       }
-    } else if (isElement(newOptions.containment) && newOptions.containment !== options.containment) {
-      // Specific element
-      options.containment = newOptions.containment;
-      props.containmentIsBBox = false;
+    } else if (isObject(newOptions.containment) && ( // bBox
+    bBox = validBBox(copyTree(newOptions.containment))) && hasChanged(bBox, options.containment)) {
+      options.containment = bBox;
+      props.containmentIsBBox = true;
       needsInitBBox = true;
     }
   }
@@ -700,60 +704,66 @@ function _setOptions(props, newOptions) {
    * @typedef {Object} SnapOptions
    * @property {SnapAxisOptions} [x]
    * @property {SnapAxisOptions} [y]
-   * @property {number} [tolerance]
+   * @property {number} [gravity]
    * @property {string} [edge]
-   * @property {string} [origin]
+   * @property {string} [base]
    * @property {string} [side]
    */
 
   /**
    * @typedef {Object} SnapAxisOptions
    * @property {SnapPointOptions[]} points
-   * @property {number} [tolerance]
+   * @property {number} [gravity]
    * @property {string} [edge]
-   * @property {string} [origin]
+   * @property {string} [base]
    * @property {string} [side]
    */
 
   /**
    * @typedef {Object} SnapPointOptions
-   * @property {(number|string|Element)} value - pixels | 'n%' | 's<step><closed-interval>' | Element
-   * @property {number} [tolerance]
+   * @property {(number|string|Element)} value - pixels | '<n>%' | 'step:<n><closed-interval>' | Element
+   * @property {number} [gravity]
    * @property {string} [edge]
-   * @property {string} [origin]
+   * @property {string} [base]
    * @property {string} [side]
    */
 
   /**
-   * @typedef {Object} ParsedSnapPointOptions
-   * @property {(number|Element)} [value] - pixels | ratio (isRatio: true) | Element (isElement: true)
-   * @property {number} tolerance
-   * @property {string} edge
-   * @property {boolean} [isRatio]
-   * @property {string} [origin] - isRatio: true or repeat: true
-   * @property {boolean} [isElement]
-   * @property {string} [side] - isElement: true
-   * @property {boolean} [repeat]
-   * @property {{value, isRatio}} [step] - repeat: true
-   * @property {{value, isRatio}} [start] - repeat: true
-   * @property {{value, isRatio}} [end] - repeat: true
+   * @typedef {Object} ParsedSnapOptions
+   * @property {ParsedSnapPointOptions[]} [x]
+   * @property {ParsedSnapPointOptions[]} [y]
    */
 
-  // Initialize `tolerance`, `edge`, `side`, `origin`
+  /**
+   * @typedef {Object} ParsedSnapPointOptions
+   * @property {(number|Element)} [value] - pixels | ratio (isRatio === true) | Element (isElement === true)
+   * @property {number} gravity
+   * @property {string} edge
+   * @property {boolean} [isRatio]
+   * @property {string} [base] - (isRatio === true || repeat === true)
+   * @property {boolean} [isElement]
+   * @property {string} [side] - (isElement === true)
+   * @property {boolean} [repeat]
+   * @property {{value, isRatio}} [step] - (repeat === true)
+   * @property {{value, isRatio}} [start] - (repeat === true)
+   * @property {{value, isRatio}} [end] - (repeat === true)
+   */
+
+  // Initialize `gravity`, `edge`, `side`, `base`
   function commonSnapOptions(options, newOptions) {
-    // tolerance
-    if (isFinite(newOptions.tolerance) && newOptions.tolerance > 0) {
-      options.tolerance = newOptions.tolerance;
+    // gravity
+    if (isFinite(newOptions.gravity) && newOptions.gravity > 0) {
+      options.gravity = newOptions.gravity;
     }
     // edge
     var edge = typeof newOptions.edge === 'string' ? newOptions.edge.toLowerCase() : '';
     if (edge === 'start' || edge === 'end' || edge === 'both') {
       options.edge = edge;
     }
-    // origin
-    var origin = typeof newOptions.origin === 'string' ? newOptions.origin.toLowerCase() : '';
-    if (origin === 'containment' || origin === 'document') {
-      options.origin = origin;
+    // base
+    var base = typeof newOptions.base === 'string' ? newOptions.base.toLowerCase() : '';
+    if (base === 'containment' || base === 'document') {
+      options.base = base;
     }
     // side
     var side = typeof newOptions.side === 'string' ? newOptions.side.toLowerCase() : '';
@@ -763,11 +773,12 @@ function _setOptions(props, newOptions) {
     return options;
   }
 
+  // Get value from text (all `/s` were removed)
   function parseLen(text) {
-    var matches = /^(.+)(\%)?$/.test(text);
+    var matches = /^(.+?)(\%)?$/.exec(text);
     var len = void 0,
         isRatio = void 0;
-    return matches && isFinite(len = parseFloat(matches[1])) ? { value: (isRatio = !!(matches[2] && len)) ? len / 100 : len, isRatio: isRatio } : null;
+    return matches && isFinite(len = parseFloat(matches[1])) ? { value: (isRatio = !!(matches[2] && len)) ? len / 100 : len, isRatio: isRatio } : null; // 0% -> 0
   }
 
   // snap
@@ -803,10 +814,10 @@ function _setOptions(props, newOptions) {
                   matches = void 0;
 
               if (parsedLen = parseLen(value)) {
-                // 'n%'
+                // '<n>%'
                 parsedPointOptions = parsedLen;
-                validValue = parsedLen.isRatio ? parsedLen.value * 100 + '%' : parsedLen.value; // 0% -> 0px
-              } else if ((matches = /^s(.+?)(?:\[(.+)\])?$/.test(value)) && ( // 's<step><closed-interval>'
+                validValue = parsedLen.isRatio ? parsedLen.value * 100 + '%' : parsedLen.value;
+              } else if ((matches = /^step:(.+?)(?:\[(.+)\])?$/i.exec(value)) && ( // 'step:<n><closed-interval>'
               parsedLen = parseLen(matches[1])) && (parsedLen.isRatio ? parsedLen.value > 0 : parsedLen.value >= 2)) {
                 // step > 0% || step >= 2px
                 parsedPointOptions.repeat = true;
@@ -834,7 +845,7 @@ function _setOptions(props, newOptions) {
                   parsedPointOptions.end = { value: 1, isRatio: true };
                 }
 
-                validValue = 's' + (parsedPointOptions.step.isRatio ? parsedPointOptions.step.value * 100 + '%' : parsedPointOptions.step.value) + ('[' + (parsedPointOptions.start.isRatio ? parsedPointOptions.start.value * 100 + '%' : parsedPointOptions.start.value)) + (',' + (parsedPointOptions.end.isRatio ? parsedPointOptions.end.value * 100 + '%' : parsedPointOptions.end.value) + ']');
+                validValue = 'step:' + (parsedPointOptions.step.isRatio ? parsedPointOptions.step.value * 100 + '%' : parsedPointOptions.step.value) + ('[' + (parsedPointOptions.start.isRatio ? parsedPointOptions.start.value * 100 + '%' : parsedPointOptions.start.value)) + (',' + (parsedPointOptions.end.isRatio ? parsedPointOptions.end.value * 100 + '%' : parsedPointOptions.end.value) + ']');
               }
             })();
           } else if (isElement(value)) {
@@ -850,14 +861,27 @@ function _setOptions(props, newOptions) {
           return points;
         }, []);
 
-        if (points.length) {
-          parsedSnapOptions[axis] = { points: parsedPoints };
+        if (parsedPoints.length) {
+          parsedSnapOptions[axis] = parsedPoints;
           snapOptions[axis] = commonSnapOptions({ points: points }, newAxisOptions);
         }
       });
 
-      if (snapOptions.x || snapOptions.y) {
+      if (parsedSnapOptions.x || parsedSnapOptions.y) {
         options.snap = commonSnapOptions(snapOptions, newSnapOptions); // Update always
+        // Set default options in top level.
+        if (!snapOptions.gravity) {
+          snapOptions.gravity = SNAP_GRAVITY;
+        }
+        if (!snapOptions.edge) {
+          snapOptions.edge = SNAP_EDGE;
+        }
+        if (!snapOptions.base) {
+          snapOptions.base = SNAP_BASE;
+        }
+        if (!snapOptions.side) {
+          snapOptions.side = SNAP_SIDE;
+        }
 
         // parsedSnapOptions - commonSnapOptions
         ['x', 'y'].forEach(function (axis) {
@@ -865,19 +889,19 @@ function _setOptions(props, newOptions) {
             return;
           }
           var axisOptions = snapOptions[axis];
-          parsedSnapOptions[axis].points.forEach(function (point, i) {
+          parsedSnapOptions[axis].forEach(function (point, i) {
             var pointOptions = axisOptions.points[i];
-            // tolerance
-            point.tolerance = pointOptions.tolerance || axisOptions.tolerance || snapOptions.tolerance || SNAP_TOLERANCE;
+            // gravity
+            point.gravity = pointOptions.gravity || axisOptions.gravity || snapOptions.gravity;
             // edge
-            point.edge = pointOptions.edge || axisOptions.edge || snapOptions.edge || SNAP_EDGE;
-            // origin
+            point.edge = pointOptions.edge || axisOptions.edge || snapOptions.edge;
+            // base
             if (point.isRatio || point.repeat) {
-              point.origin = pointOptions.origin || axisOptions.origin || snapOptions.origin || SNAP_ORIGIN;
+              point.base = pointOptions.base || axisOptions.base || snapOptions.base;
             }
             // side
             if (point.isElement) {
-              point.side = pointOptions.side || axisOptions.side || snapOptions.side || SNAP_SIDE;
+              point.side = pointOptions.side || axisOptions.side || snapOptions.side;
             }
           });
         });
@@ -1082,6 +1106,14 @@ var PlainDraggable = function () {
     },
     set: function set(value) {
       _setOptions(insProps[this._id], { containment: value });
+    }
+  }, {
+    key: 'snap',
+    get: function get() {
+      return copyTree(insProps[this._id].options.snap);
+    },
+    set: function set(value) {
+      _setOptions(insProps[this._id], { snap: value });
     }
   }, {
     key: 'handle',

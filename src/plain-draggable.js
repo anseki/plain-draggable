@@ -11,7 +11,7 @@ import AnimEvent from 'anim-event';
 
 const
   ZINDEX = 99999,
-  SNAP_TOLERANCE = 20, SNAP_EDGE = 'both', SNAP_ORIGIN = 'containment', SNAP_SIDE = 'both',
+  SNAP_GRAVITY = 20, SNAP_EDGE = 'both', SNAP_BASE = 'containment', SNAP_SIDE = 'both',
 
   IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
 
@@ -43,6 +43,10 @@ let insId = 0,
 // [DEBUG]
 window.insProps = insProps;
 window.IS_WEBKIT = IS_WEBKIT;
+window.SNAP_GRAVITY = SNAP_GRAVITY;
+window.SNAP_EDGE = SNAP_EDGE;
+window.SNAP_BASE = SNAP_BASE;
+window.SNAP_SIDE = SNAP_SIDE;
 // [/DEBUG]
 
 function copyTree(obj) {
@@ -311,17 +315,17 @@ function setOptions(props, newOptions) {
 
   // containment
   if (newOptions.containment) {
-    if (isObject(newOptions.containment)) { // bBox
-      let bBox;
-      if ((bBox = validBBox(copyTree(newOptions.containment))) && hasChanged(bBox, options.containment)) {
-        options.containment = bBox;
-        props.containmentIsBBox = true;
+    let bBox;
+    if (isElement(newOptions.containment)) { // Specific element
+      if (newOptions.containment !== options.containment) {
+        options.containment = newOptions.containment;
+        props.containmentIsBBox = false;
         needsInitBBox = true;
       }
-    } else if (isElement(newOptions.containment) &&
-        newOptions.containment !== options.containment) { // Specific element
-      options.containment = newOptions.containment;
-      props.containmentIsBBox = false;
+    } else if (isObject(newOptions.containment) && // bBox
+        (bBox = validBBox(copyTree(newOptions.containment))) && hasChanged(bBox, options.containment)) {
+      options.containment = bBox;
+      props.containmentIsBBox = true;
       needsInitBBox = true;
     }
   }
@@ -330,67 +334,73 @@ function setOptions(props, newOptions) {
    * @typedef {Object} SnapOptions
    * @property {SnapAxisOptions} [x]
    * @property {SnapAxisOptions} [y]
-   * @property {number} [tolerance]
+   * @property {number} [gravity]
    * @property {string} [edge]
-   * @property {string} [origin]
+   * @property {string} [base]
    * @property {string} [side]
    */
 
   /**
    * @typedef {Object} SnapAxisOptions
    * @property {SnapPointOptions[]} points
-   * @property {number} [tolerance]
+   * @property {number} [gravity]
    * @property {string} [edge]
-   * @property {string} [origin]
+   * @property {string} [base]
    * @property {string} [side]
    */
 
   /**
    * @typedef {Object} SnapPointOptions
-   * @property {(number|string|Element)} value - pixels | 'n%' | 's<step><closed-interval>' | Element
-   * @property {number} [tolerance]
+   * @property {(number|string|Element)} value - pixels | '<n>%' | 'step:<n><closed-interval>' | Element
+   * @property {number} [gravity]
    * @property {string} [edge]
-   * @property {string} [origin]
+   * @property {string} [base]
    * @property {string} [side]
    */
 
   /**
-   * @typedef {Object} ParsedSnapPointOptions
-   * @property {(number|Element)} [value] - pixels | ratio (isRatio: true) | Element (isElement: true)
-   * @property {number} tolerance
-   * @property {string} edge
-   * @property {boolean} [isRatio]
-   * @property {string} [origin] - isRatio: true or repeat: true
-   * @property {boolean} [isElement]
-   * @property {string} [side] - isElement: true
-   * @property {boolean} [repeat]
-   * @property {{value, isRatio}} [step] - repeat: true
-   * @property {{value, isRatio}} [start] - repeat: true
-   * @property {{value, isRatio}} [end] - repeat: true
+   * @typedef {Object} ParsedSnapOptions
+   * @property {ParsedSnapPointOptions[]} [x]
+   * @property {ParsedSnapPointOptions[]} [y]
    */
 
-  // Initialize `tolerance`, `edge`, `side`, `origin`
+  /**
+   * @typedef {Object} ParsedSnapPointOptions
+   * @property {(number|Element)} [value] - pixels | ratio (isRatio === true) | Element (isElement === true)
+   * @property {number} gravity
+   * @property {string} edge
+   * @property {boolean} [isRatio]
+   * @property {string} [base] - (isRatio === true || repeat === true)
+   * @property {boolean} [isElement]
+   * @property {string} [side] - (isElement === true)
+   * @property {boolean} [repeat]
+   * @property {{value, isRatio}} [step] - (repeat === true)
+   * @property {{value, isRatio}} [start] - (repeat === true)
+   * @property {{value, isRatio}} [end] - (repeat === true)
+   */
+
+  // Initialize `gravity`, `edge`, `base`, `side`
   function commonSnapOptions(options, newOptions) {
-    // tolerance
-    if (isFinite(newOptions.tolerance) &&
-      newOptions.tolerance > 0) { options.tolerance = newOptions.tolerance; }
+    // gravity
+    if (isFinite(newOptions.gravity) && newOptions.gravity > 0) { options.gravity = newOptions.gravity; }
     // edge
     const edge = typeof newOptions.edge === 'string' ? newOptions.edge.toLowerCase() : '';
     if (edge === 'start' || edge === 'end' || edge === 'both') { options.edge = edge; }
-    // origin
-    const origin = typeof newOptions.origin === 'string' ? newOptions.origin.toLowerCase() : '';
-    if (origin === 'containment' || origin === 'document') { options.origin = origin; }
+    // base
+    const base = typeof newOptions.base === 'string' ? newOptions.base.toLowerCase() : '';
+    if (base === 'containment' || base === 'document') { options.base = base; }
     // side
     const side = typeof newOptions.side === 'string' ? newOptions.side.toLowerCase() : '';
     if (side === 'inner' || side === 'outer' || side === 'both') { options.side = side; }
     return options;
   }
 
+  // Get value from text (all `/s` were removed)
   function parseLen(text) {
-    const matches = /^(.+)(\%)?$/.test(text);
+    const matches = /^(.+?)(\%)?$/.exec(text);
     let len, isRatio;
     return matches && isFinite((len = parseFloat(matches[1]))) ?
-      {value: (isRatio = !!(matches[2] && len)) ? len / 100 : len, isRatio: isRatio} : null;
+      {value: (isRatio = !!(matches[2] && len)) ? len / 100 : len, isRatio: isRatio} : null; // 0% -> 0
   }
 
   // snap
@@ -422,11 +432,11 @@ function setOptions(props, newOptions) {
               value = value.replace(/\s/g, '');
               let parsedLen, matches;
 
-              if ((parsedLen = parseLen(value))) { // 'n%'
+              if ((parsedLen = parseLen(value))) { // '<n>%'
                 parsedPointOptions = parsedLen;
-                validValue = parsedLen.isRatio ? `${parsedLen.value * 100}%` : parsedLen.value; // 0% -> 0px
+                validValue = parsedLen.isRatio ? `${parsedLen.value * 100}%` : parsedLen.value;
 
-              } else if ((matches = /^s(.+?)(?:\[(.+)\])?$/.test(value)) && // 's<step><closed-interval>'
+              } else if ((matches = /^step:(.+?)(?:\[(.+)\])?$/i.exec(value)) && // 'step:<n><closed-interval>'
                   (parsedLen = parseLen(matches[1])) &&
                   (parsedLen.isRatio ? parsedLen.value > 0 : parsedLen.value >= 2)) { // step > 0% || step >= 2px
                 parsedPointOptions.repeat = true;
@@ -448,7 +458,7 @@ function setOptions(props, newOptions) {
                   parsedPointOptions.end = {value: 1, isRatio: true};
                 }
 
-                validValue = `s${parsedPointOptions.step.isRatio ?
+                validValue = `step:${parsedPointOptions.step.isRatio ?
                     `${parsedPointOptions.step.value * 100}%` : parsedPointOptions.step.value}` +
                   `[${parsedPointOptions.start.isRatio ?
                     `${parsedPointOptions.start.value * 100}%` : parsedPointOptions.start.value}` +
@@ -468,33 +478,37 @@ function setOptions(props, newOptions) {
             return points;
           }, []);
 
-      if (points.length) {
-        parsedSnapOptions[axis] = {points: parsedPoints};
+      if (parsedPoints.length) {
+        parsedSnapOptions[axis] = parsedPoints;
         snapOptions[axis] = commonSnapOptions({points: points}, newAxisOptions);
       }
     });
 
-    if (snapOptions.x || snapOptions.y) {
+    if (parsedSnapOptions.x || parsedSnapOptions.y) {
       options.snap = commonSnapOptions(snapOptions, newSnapOptions); // Update always
+      // Set default options in top level.
+      if (!snapOptions.gravity) { snapOptions.gravity = SNAP_GRAVITY; }
+      if (!snapOptions.edge) { snapOptions.edge = SNAP_EDGE; }
+      if (!snapOptions.base) { snapOptions.base = SNAP_BASE; }
+      if (!snapOptions.side) { snapOptions.side = SNAP_SIDE; }
 
       // parsedSnapOptions - commonSnapOptions
       ['x', 'y'].forEach(axis => {
         if (parsedSnapOptions[axis] == null) { return; }
         const axisOptions = snapOptions[axis];
-        parsedSnapOptions[axis].points.forEach((point, i) => {
+        parsedSnapOptions[axis].forEach((point, i) => {
           const pointOptions = axisOptions.points[i];
-          // tolerance
-          point.tolerance = pointOptions.tolerance || axisOptions.tolerance ||
-            snapOptions.tolerance || SNAP_TOLERANCE;
+          // gravity
+          point.gravity = pointOptions.gravity || axisOptions.gravity || snapOptions.gravity;
           // edge
-          point.edge = pointOptions.edge || axisOptions.edge || snapOptions.edge || SNAP_EDGE;
-          // origin
+          point.edge = pointOptions.edge || axisOptions.edge || snapOptions.edge;
+          // base
           if (point.isRatio || point.repeat) {
-            point.origin = pointOptions.origin || axisOptions.origin || snapOptions.origin || SNAP_ORIGIN;
+            point.base = pointOptions.base || axisOptions.base || snapOptions.base;
           }
           // side
           if (point.isElement) {
-            point.side = pointOptions.side || axisOptions.side || snapOptions.side || SNAP_SIDE;
+            point.side = pointOptions.side || axisOptions.side || snapOptions.side;
           }
         });
       });
@@ -661,6 +675,9 @@ class PlainDraggable {
     return props.containmentIsBBox ? copyTree(props.options.containment) : props.options.containment;
   }
   set containment(value) { setOptions(insProps[this._id], {containment: value}); }
+
+  get snap() { return copyTree(insProps[this._id].options.snap); }
+  set snap(value) { setOptions(insProps[this._id], {snap: value}); }
 
   get handle() { return insProps[this._id].options.handle; }
   set handle(value) { setOptions(insProps[this._id], {handle: value}); }
