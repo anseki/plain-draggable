@@ -517,7 +517,7 @@ function setOptions(props, newOptions) {
         needsInitBBox = true;
       }
     }
-  } else if (newOptions.hasOwnProperty('snap')) {
+  } else if (newOptions.hasOwnProperty('snap') && props.parsedSnapOptions) {
     options.snap = props.parsedSnapOptions = props.snap = void 0;
   }
 

@@ -749,7 +749,7 @@ function _setOptions(props, newOptions) {
    * @property {{value, isRatio}} [end] - (repeat === true)
    */
 
-  // Initialize `gravity`, `edge`, `side`, `base`
+  // Initialize `gravity`, `edge`, `base`, `side`
   function commonSnapOptions(options, newOptions) {
     // gravity
     if (isFinite(newOptions.gravity) && newOptions.gravity > 0) {
@@ -911,7 +911,7 @@ function _setOptions(props, newOptions) {
         }
       }
     })();
-  } else if (newOptions.hasOwnProperty('snap')) {
+  } else if (newOptions.hasOwnProperty('snap') && props.parsedSnapOptions) {
     options.snap = props.parsedSnapOptions = props.snap = void 0;
   }
 

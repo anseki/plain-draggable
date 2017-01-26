@@ -605,6 +605,10 @@ describe('setOptions()', function() {
     snap.base = SNAP_BASE;
     expect(draggable.snap).toEqual(snap);
 
+    done();
+  });
+
+  it('should not update same `snap`', function(done) {
     // Ignore same parsed options
     draggable.snap = {
       x: 16,
@@ -621,6 +625,24 @@ describe('setOptions()', function() {
       y: 32
     };
     expect(window.initBBoxDone).toBe(false);
+
+    // ON -> OFF
+    window.initBBoxDone = false;
+    draggable.snap = null;
+    expect(window.initBBoxDone).toBe(false); // initBBox is not called when OFF
+    expect(props.parsedSnapOptions).not.toBeDefined();
+    expect(draggable.snap).not.toBeDefined();
+
+    // OFF -> ON
+    var share;
+    window.initBBoxDone = false;
+    draggable.snap = 16;
+    expect(window.initBBoxDone).toBe(true);
+    share = [{value: 16, gravity: SNAP_GRAVITY, edge: SNAP_EDGE}];
+    expect(props.parsedSnapOptions).toEqual({x: share, y: share});
+    share = {points: [{value: 16}]};
+    expect(draggable.snap).toEqual({x: share, y: share,
+      gravity: SNAP_GRAVITY, edge: SNAP_EDGE, base: SNAP_BASE, side: SNAP_SIDE});
 
     done();
   });
