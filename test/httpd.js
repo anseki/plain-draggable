@@ -34,6 +34,13 @@ http.createServer((request, response) => {
     (new staticAlias.Server(DOC_ROOT, {
       cache: false,
       alias: [
+        // Jasmine
+        {
+          match: /^\/jasmine-core\/.+/,
+          serve: params => `../node_modules${params.reqPath}`,
+          allowOutside: true
+        },
+
         {
           match: '/test-page-loader.js',
           serve: '../node_modules/test-page-loader/test-page-loader.js',
@@ -43,7 +50,7 @@ http.createServer((request, response) => {
         // test-ext
         {
           match: /^\/ext\/.+/,
-          serve: params => params.reqPath.replace(/^\/ext/, EXT_DIR),
+          serve: params => `${EXT_DIR}${params.reqPath}`,
           allowOutside: true
         },
         // test-ext index
