@@ -61,7 +61,7 @@ function hasChanged(a, b) {
       (isObject(b) ? 'obj' : Array.isArray(b) ? 'array' : '') ||
     (
       typeA === 'obj' ?
-        hasChanged((keysA = Object.keys(a)), Object.keys(b)) ||
+        hasChanged((keysA = Object.keys(a).sort()), Object.keys(b).sort()) ||
           keysA.some(prop => hasChanged(a[prop], b[prop])) :
       typeA === 'array' ?
         a.length !== b.length || a.some((aVal, i) => hasChanged(aVal, b[i])) :
@@ -311,12 +311,13 @@ function setOptions(props, newOptions) {
 
   // containment
   if (newOptions.containment) {
-    let bBox;
-    if (isObject(newOptions.containment) && (bBox = validBBox(copyTree(newOptions.containment))) &&
-        hasChanged(bBox, options.containment)) { // bBox
-      options.containment = bBox;
-      props.containmentIsBBox = true;
-      needsInitBBox = true;
+    if (isObject(newOptions.containment)) { // bBox
+      let bBox;
+      if ((bBox = validBBox(copyTree(newOptions.containment))) && hasChanged(bBox, options.containment)) {
+        options.containment = bBox;
+        props.containmentIsBBox = true;
+        needsInitBBox = true;
+      }
     } else if (isElement(newOptions.containment) &&
         newOptions.containment !== options.containment) { // Specific element
       options.containment = newOptions.containment;

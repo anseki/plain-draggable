@@ -65,7 +65,7 @@ describe('setOptions()', function() {
 
   it('should not update when same bBox is passed for `containment`', function(done) {
     window.initBBoxDone = false;
-    draggable.containment = {left: 0, top: 0, width: 128, height: 64};
+    draggable.containment = {x: 0, y: 0, right: 128, bottom: 64}; // Substitutes props
     expect(window.initBBoxDone).toBe(false);
     expect(props.containmentIsBBox).toBe(true);
     expect(props.containmentBBox)
@@ -81,6 +81,27 @@ describe('setOptions()', function() {
     expect(props.containmentIsBBox).toBe(true);
     expect(props.containmentBBox)
       .toEqual({left: 1, top: 0, width: 128, height: 64, x: 1, y: 0, right: 129, bottom: 64});
+
+    done();
+  });
+
+  it('should update `handle`', function(done) {
+    expect(draggable.handle).toBe(elm1); // Default
+    draggable.handle = handle;
+    expect(draggable.handle).toBe(handle);
+
+    done();
+  });
+
+  it('should update `zIndex`', function(done) {
+    draggable.zIndex = 5;
+    expect(draggable.zIndex).toBe(5);
+    draggable.zIndex = 6;
+    expect(draggable.zIndex).toBe(6);
+    draggable.zIndex = true;
+    expect(draggable.zIndex).toBe(6); // Ignored
+    draggable.zIndex = false;
+    expect(draggable.zIndex).toBe(false);
 
     done();
   });

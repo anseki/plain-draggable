@@ -357,6 +357,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var ZINDEX = 99999,
     SNAP_TOLERANCE = 20,
+    SNAP_EDGE = 'both',
+    SNAP_ORIGIN = 'containment',
+    SNAP_SIDE = 'both',
     IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
     isObject = function () {
   var toString = {}.toString,
@@ -408,7 +411,7 @@ function copyTree(obj) {
 function hasChanged(a, b) {
   var typeA = void 0,
       keysA = void 0;
-  return (typeof a === 'undefined' ? 'undefined' : _typeof(a)) !== (typeof b === 'undefined' ? 'undefined' : _typeof(b)) || (typeA = isObject(a) ? 'obj' : Array.isArray(a) ? 'array' : '') !== (isObject(b) ? 'obj' : Array.isArray(b) ? 'array' : '') || (typeA === 'obj' ? hasChanged(keysA = Object.keys(a), Object.keys(b)) || keysA.some(function (prop) {
+  return (typeof a === 'undefined' ? 'undefined' : _typeof(a)) !== (typeof b === 'undefined' ? 'undefined' : _typeof(b)) || (typeA = isObject(a) ? 'obj' : Array.isArray(a) ? 'array' : '') !== (isObject(b) ? 'obj' : Array.isArray(b) ? 'array' : '') || (typeA === 'obj' ? hasChanged(keysA = Object.keys(a).sort(), Object.keys(b).sort()) || keysA.some(function (prop) {
     return hasChanged(a[prop], b[prop]);
   }) : typeA === 'array' ? a.length !== b.length || a.some(function (aVal, i) {
     return hasChanged(aVal, b[i]);
@@ -619,6 +622,16 @@ function initBBox(props) {
   // Adjust position
   move(props, { left: elementBBox.left, top: elementBBox.top });
   window.initBBoxDone = true; // [DEBUG/]
+
+  // points.sort((a, b) => a - b);
+  // let lastPoint = -2;
+  // points = points.filter(point => {
+  //   if (point - lastPoint >= 2) {
+  //     lastPoint = point;
+  //     return true;
+  //   }
+  //   return false;
+  // });
 }
 
 function mousedown(props, event) {
@@ -663,22 +676,18 @@ function dragEnd(props) {
  */
 function _setOptions(props, newOptions) {
   var options = props.options;
-
-  // Gecko, Trident pick drag-event of some elements such as img, a, etc.
-  function dragstart(event) {
-    event.preventDefault();
-  }
-
   var needsInitBBox = void 0;
 
   // containment
   if (newOptions.containment) {
-    var bBox = void 0;
-    if (isObject(newOptions.containment) && (bBox = validBBox(copyTree(newOptions.containment))) && hasChanged(bBox, options.containment)) {
+    if (isObject(newOptions.containment)) {
       // bBox
-      options.containment = bBox;
-      props.containmentIsBBox = true;
-      needsInitBBox = true;
+      var bBox = void 0;
+      if ((bBox = validBBox(copyTree(newOptions.containment))) && hasChanged(bBox, options.containment)) {
+        options.containment = bBox;
+        props.containmentIsBBox = true;
+        needsInitBBox = true;
+      }
     } else if (isElement(newOptions.containment) && newOptions.containment !== options.containment) {
       // Specific element
       options.containment = newOptions.containment;
@@ -687,62 +696,208 @@ function _setOptions(props, newOptions) {
     }
   }
 
+  /**
+   * @typedef {Object} SnapOptions
+   * @property {SnapAxisOptions} [x]
+   * @property {SnapAxisOptions} [y]
+   * @property {number} [tolerance]
+   * @property {string} [edge]
+   * @property {string} [origin]
+   * @property {string} [side]
+   */
+
+  /**
+   * @typedef {Object} SnapAxisOptions
+   * @property {SnapPointOptions[]} points
+   * @property {number} [tolerance]
+   * @property {string} [edge]
+   * @property {string} [origin]
+   * @property {string} [side]
+   */
+
+  /**
+   * @typedef {Object} SnapPointOptions
+   * @property {(number|string|Element)} value - pixels | 'n%' | 's<step><closed-interval>' | Element
+   * @property {number} [tolerance]
+   * @property {string} [edge]
+   * @property {string} [origin]
+   * @property {string} [side]
+   */
+
+  /**
+   * @typedef {Object} ParsedSnapPointOptions
+   * @property {(number|Element)} [value] - pixels | ratio (isRatio: true) | Element (isElement: true)
+   * @property {number} tolerance
+   * @property {string} edge
+   * @property {boolean} [isRatio]
+   * @property {string} [origin] - isRatio: true or repeat: true
+   * @property {boolean} [isElement]
+   * @property {string} [side] - isElement: true
+   * @property {boolean} [repeat]
+   * @property {{value, isRatio}} [step] - repeat: true
+   * @property {{value, isRatio}} [start] - repeat: true
+   * @property {{value, isRatio}} [end] - repeat: true
+   */
+
+  // Initialize `tolerance`, `edge`, `side`, `origin`
+  function commonSnapOptions(options, newOptions) {
+    // tolerance
+    if (isFinite(newOptions.tolerance) && newOptions.tolerance > 0) {
+      options.tolerance = newOptions.tolerance;
+    }
+    // edge
+    var edge = typeof newOptions.edge === 'string' ? newOptions.edge.toLowerCase() : '';
+    if (edge === 'start' || edge === 'end' || edge === 'both') {
+      options.edge = edge;
+    }
+    // origin
+    var origin = typeof newOptions.origin === 'string' ? newOptions.origin.toLowerCase() : '';
+    if (origin === 'containment' || origin === 'document') {
+      options.origin = origin;
+    }
+    // side
+    var side = typeof newOptions.side === 'string' ? newOptions.side.toLowerCase() : '';
+    if (side === 'inner' || side === 'outer' || side === 'both') {
+      options.side = side;
+    }
+    return options;
+  }
+
+  function parseLen(text) {
+    var matches = /^(.+)(\%)?$/.test(text);
+    var len = void 0,
+        isRatio = void 0;
+    return matches && isFinite(len = parseFloat(matches[1])) ? { value: (isRatio = !!(matches[2] && len)) ? len / 100 : len, isRatio: isRatio } : null;
+  }
+
   // snap
-  if (newOptions.snap) {
+  if (newOptions.snap != null) {
     (function () {
-      // `0` is denied.
-      var snap = {},
-          inputSnap = isObject(newOptions.snap) ? newOptions.snap : { x: newOptions.snap, y: newOptions.snap };
+      var parsedSnapOptions = {},
+          snapOptions = {},
+          newSnapOptions = isObject(newOptions.snap) && (newOptions.snap.x != null || newOptions.snap.y != null) ? newOptions.snap : { x: newOptions.snap, y: newOptions.snap };
+
       ['x', 'y'].forEach(function (axis) {
-        var inputAxisOptions = isObject(inputSnap[axis]) ? inputSnap[axis] : { points: inputSnap[axis] };
-        if (!inputAxisOptions.points) {
+        if (newSnapOptions[axis] == null) {
           return;
-        } // `0` is denied.
-
-        var points = void 0;
-        if (Array.isArray(inputAxisOptions.points)) {
-          (function () {
-            points = inputAxisOptions.points.filter(function (point) {
-              return isFinite(point) && point >= 0;
-            });
-            points.sort(function (a, b) {
-              return a - b;
-            });
-            var lastPoint = -2;
-            points = points.filter(function (point) {
-              if (point - lastPoint >= 2) {
-                lastPoint = point;
-                return true;
-              }
-              return false;
-            });
-            if (!points.length) {
-              points = null;
-            }
-          })();
-        } else if (isFinite(inputAxisOptions.points) && inputAxisOptions.points >= 2) {
-          points = inputAxisOptions.points;
         }
+        var newAxisOptions = isObject(newSnapOptions[axis]) && newSnapOptions[axis].points != null ? newSnapOptions[axis] : { points: newSnapOptions[axis] },
+            parsedPoints = [],
+            points = (Array.isArray(newAxisOptions.points) ? newAxisOptions.points : [newAxisOptions.points]).reduce(function (points, point) {
+          if (point == null) {
+            return points;
+          }
+          var newPointOptions = isObject(point) && point.value != null ? point : { value: point };
+          var value = newPointOptions.value,
+              parsedPointOptions = {},
+              validValue = void 0;
 
-        if (points) {
-          var axisOptions = snap[axis] = { points: points };
-          // tolerance
-          axisOptions.tolerance = isFinite(inputAxisOptions.tolerance) && inputAxisOptions.tolerance > 0 ? inputAxisOptions.tolerance : SNAP_TOLERANCE;
-          // edge
-          var edge = typeof inputAxisOptions.edge === 'string' ? inputAxisOptions.edge.toLowerCase() : 'both';
-          axisOptions.edge = edge === 'start' || edge === 'end' ? edge : 'both';
+          // Validate `SnapPointOptions.value`
+          if (isFinite(value)) {
+            // pixels
+            parsedPointOptions.value = validValue = value;
+          } else if (typeof value === 'string') {
+            (function () {
+              value = value.replace(/\s/g, '');
+              var parsedLen = void 0,
+                  matches = void 0;
+
+              if (parsedLen = parseLen(value)) {
+                // 'n%'
+                parsedPointOptions = parsedLen;
+                validValue = parsedLen.isRatio ? parsedLen.value * 100 + '%' : parsedLen.value; // 0% -> 0px
+              } else if ((matches = /^s(.+?)(?:\[(.+)\])?$/.test(value)) && ( // 's<step><closed-interval>'
+              parsedLen = parseLen(matches[1])) && (parsedLen.isRatio ? parsedLen.value > 0 : parsedLen.value >= 2)) {
+                // step > 0% || step >= 2px
+                parsedPointOptions.repeat = true;
+                parsedPointOptions.step = parsedLen;
+
+                if (matches[2]) {
+                  (function () {
+                    var rangeValues = matches[2].split(',');
+                    ['start', 'end'].forEach(function (prop, i) {
+                      if (rangeValues[i] && (parsedLen = parseLen(rangeValues[i]))) {
+                        parsedPointOptions[prop] = parsedLen;
+                      }
+                    });
+                  })();
+                }
+                if (!parsedPointOptions.start) {
+                  parsedPointOptions.start = { value: 0, isRatio: false };
+                }
+                if (!parsedPointOptions.end) {
+                  parsedPointOptions.end = { value: 1, isRatio: true };
+                }
+                if (parsedPointOptions.start.isRatio === parsedPointOptions.end.isRatio && parsedPointOptions.start.value >= parsedPointOptions.end.value) {
+                  // start >= end
+                  parsedPointOptions.start = { value: 0, isRatio: false };
+                  parsedPointOptions.end = { value: 1, isRatio: true };
+                }
+
+                validValue = 's' + (parsedPointOptions.step.isRatio ? parsedPointOptions.step.value * 100 + '%' : parsedPointOptions.step.value) + ('[' + (parsedPointOptions.start.isRatio ? parsedPointOptions.start.value * 100 + '%' : parsedPointOptions.start.value)) + (',' + (parsedPointOptions.end.isRatio ? parsedPointOptions.end.value * 100 + '%' : parsedPointOptions.end.value) + ']');
+              }
+            })();
+          } else if (isElement(value)) {
+            // Element
+            parsedPointOptions.isElement = true;
+            parsedPointOptions.value = validValue = value;
+          }
+
+          if (validValue != null) {
+            parsedPoints.push(parsedPointOptions);
+            points.push(commonSnapOptions({ value: validValue }, newPointOptions));
+          }
+          return points;
+        }, []);
+
+        if (points.length) {
+          parsedSnapOptions[axis] = { points: parsedPoints };
+          snapOptions[axis] = commonSnapOptions({ points: points }, newAxisOptions);
         }
       });
 
-      if ((snap.x || snap.y) && hasChanged(snap, options.snap)) {
-        options.snap = snap;
-        needsInitBBox = true;
+      if (snapOptions.x || snapOptions.y) {
+        options.snap = commonSnapOptions(snapOptions, newSnapOptions); // Update always
+
+        // parsedSnapOptions - commonSnapOptions
+        ['x', 'y'].forEach(function (axis) {
+          if (parsedSnapOptions[axis] == null) {
+            return;
+          }
+          var axisOptions = snapOptions[axis];
+          parsedSnapOptions[axis].points.forEach(function (point, i) {
+            var pointOptions = axisOptions.points[i];
+            // tolerance
+            point.tolerance = pointOptions.tolerance || axisOptions.tolerance || snapOptions.tolerance || SNAP_TOLERANCE;
+            // edge
+            point.edge = pointOptions.edge || axisOptions.edge || snapOptions.edge || SNAP_EDGE;
+            // origin
+            if (point.isRatio || point.repeat) {
+              point.origin = pointOptions.origin || axisOptions.origin || snapOptions.origin || SNAP_ORIGIN;
+            }
+            // side
+            if (point.isElement) {
+              point.side = pointOptions.side || axisOptions.side || snapOptions.side || SNAP_SIDE;
+            }
+          });
+        });
+        if (hasChanged(parsedSnapOptions, props.parsedSnapOptions)) {
+          props.parsedSnapOptions = parsedSnapOptions;
+          needsInitBBox = true;
+        }
       }
     })();
+  } else if (newOptions.hasOwnProperty('snap')) {
+    options.snap = props.parsedSnapOptions = props.snap = void 0;
   }
 
   if (needsInitBBox) {
     initBBox(props);
+  }
+
+  // Gecko, Trident pick drag-event of some elements such as img, a, etc.
+  function dragstart(event) {
+    event.preventDefault();
   }
 
   // handle
