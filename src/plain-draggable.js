@@ -280,7 +280,7 @@ function initBBox(props) {
    */
 
   // snap targets
-  if (props.parsedSnapOptions) {
+  if (props.parsedSnapTargets) {
     const docRect = document.documentElement.getBoundingClientRect();
   }
 
@@ -376,7 +376,7 @@ function setOptions(props, newOptions) {
    */
 
   /**
-   * @typedef {Object} ParsedSnapTargetOptions
+   * @typedef {Object} ParsedSnapTarget
    * @property {SnapValue} [x] - (input: pixels | '<n>%')
    * @property {SnapValue} [y]
    * @property {SnapValue} [xStart] - (input: '<closed-interval>' | 'step:<n><closed-interval>')
@@ -417,13 +417,17 @@ function setOptions(props, newOptions) {
       {value: (isRatio = !!(matches[2] && value)) ? value / 100 : value, isRatio: isRatio} : null; // 0% -> 0
   }
 
-  function validSnapBBox(bBox) {
-    function validSnapValue(value) {
-      return isFinite(value) ? {value: value, isRatio: false} :
-        typeof value === 'string' ? string2SnapValue(value.replace(/\s/g, '')) : null;
-    }
-    window.validSnapValue = validSnapValue; // [DEBUG/]
+  function snapValue2value(snapValue) {
+    return snapValue.isRatio ? `${snapValue.value * 100}%` : snapValue.value;
+  }
 
+  function validSnapValue(value) {
+    return isFinite(value) ? {value: value, isRatio: false} :
+      typeof value === 'string' ? string2SnapValue(value.replace(/\s/g, '')) : null;
+  }
+  window.validSnapValue = validSnapValue; // [DEBUG/]
+
+  function validSnapBBox(bBox) {
     if (!isObject(bBox)) { return null; }
     let snapValue;
     if ((snapValue = validSnapValue(bBox.left)) || (snapValue = validSnapValue(bBox.x))) {
@@ -453,120 +457,152 @@ function setOptions(props, newOptions) {
 
   // snap
   if (newOptions.snap != null) {
-    const parsedSnapOptions = {}, snapOptions = {},
-      newSnapOptions =
-        isObject(newOptions.snap) && (newOptions.snap.x != null || newOptions.snap.y != null) ?
-          newOptions.snap : {x: newOptions.snap, y: newOptions.snap};
+    const newSnapOptions =
+        isObject(newOptions.snap) && (newOptions.snap.targets != null) ? newOptions.snap :
+        {targets: newOptions.snap},
 
-    ['x', 'y'].forEach(axis => {
-      if (newSnapOptions[axis] == null) { return; }
-      const newAxisOptions =
-          isObject(newSnapOptions[axis]) && newSnapOptions[axis].points != null ?
-            newSnapOptions[axis] : {points: newSnapOptions[axis]},
+      snapTargetsOptions = [],
+      parsedSnapTargets = (
+          Array.isArray(newSnapOptions.targets) ? newSnapOptions.targets : [newSnapOptions.targets]
+        ).reduce((parsedSnapTargets, target) => {
+          if (target == null) { return parsedSnapTargets; }
+          const parsedSnapTargetSplit = [];
+          let newSnapTargetOptions = {}, snapTargetOptions, snapBBox;
 
-        parsedPoints = [],
-        points =
-          (Array.isArray(newAxisOptions.points) ? newAxisOptions.points : [newAxisOptions.points])
-          .reduce((points, point) => {
-            if (point == null) { return points; }
-            const newPointOptions = isObject(point) && point.value != null ? point : {value: point};
-            let value = newPointOptions.value, parsedPointOptions = {}, validValue;
+          function snapBBox2Object(snapBBox) {
+            return Object.keys(snapBBox).reduce((obj, prop) => {
+              obj[prop] = snapValue2value(snapBBox[prop]);
+              return obj;
+            }, {});
+          }
 
-            // Validate `SnapPointOptions.value`
-            if (isFinite(value)) { // pixels
-              parsedPointOptions.value = validValue = value;
+          // Validate `SnapTargetOptions`
+          if (isElement(target)) { // Direct - Element
+            parsedSnapTargetSplit.push({element: target});
+            snapTargetOptions = {target: target};
+          } else if ((snapBBox = validSnapBBox(copyTree(target)))) { // Direct - Object -> SnapBBox
+            parsedSnapTargetSplit.push({snapBBox: snapBBox});
+            snapTargetOptions = {target: snapBBox2Object(snapBBox)};
 
-            } else if (typeof value === 'string') {
-              value = value.replace(/\s/g, '');
-              let parsedLen, matches;
+          } else {
+            newSnapTargetOptions = isObject(target) ? target : {x: target, y: target};
+            const newOptionsTarget = newSnapTargetOptions.target;
 
-              if ((parsedLen = string2SnapValue(value))) { // '<n>%'
-                parsedPointOptions = parsedLen;
-                validValue = parsedLen.isRatio ? `${parsedLen.value * 100}%` : parsedLen.value;
+            if (isElement(newOptionsTarget)) { // Element
+              parsedSnapTargetSplit.push({element: newOptionsTarget});
+              snapTargetOptions = {target: newOptionsTarget};
+            } else if ((snapBBox = validSnapBBox(copyTree(newOptionsTarget)))) { // Object -> SnapBBox
+              parsedSnapTargetSplit.push({snapBBox: snapBBox});
+              snapTargetOptions = {target: snapBBox2Object(snapBBox)};
 
-              } else if ((matches = /^step:(.+?)(?:\[(.+)\])?$/i.exec(value)) && // 'step:<n><closed-interval>'
-                  (parsedLen = string2SnapValue(matches[1])) &&
-                  (parsedLen.isRatio ? parsedLen.value > 0 : parsedLen.value >= 2)) { // step > 0% || step >= 2px
-                parsedPointOptions.repeat = true;
-                parsedPointOptions.step = parsedLen;
+            } else {
+              const parsedXY = ['x', 'y'].reduce((parsedXY, axis) => {
+                const newOptionsXY = newSnapTargetOptions[axis];
+                let snapValue, matches;
 
-                if (matches[2]) {
-                  const rangeValues = matches[2].split(',');
-                  ['start', 'end'].forEach((prop, i) => {
-                    if (rangeValues[i] && (parsedLen = string2SnapValue(rangeValues[i]))) {
-                      parsedPointOptions[prop] = parsedLen;
-                    }
-                  });
+                if (typeof newOptionsXY === 'string' &&
+                    (matches = /^(?:step:(.+?))?(?:\[(.+)\])?$/i.exec(newOptionsXY.replace(/\s/g, ''))) &&
+                    (matches[1] || matches[2])) {
+                  // '<closed-interval>' | 'step:<n><closed-interval>'
+
+                  const step = matches[1] ? string2SnapValue(matches[1]) : null, range = {};
+                  if (matches[2]) { // Get range.
+                    const rangeValues = matches[2].split(',');
+                    ['start', 'end'].forEach((prop, i) => {
+                      if (rangeValues[i] != null && (snapValue = string2SnapValue(rangeValues[i]))) {
+                        range[prop] = snapValue;
+                      }
+                    });
+                  }
+                  if (!range.start) { range.start = {value: 0, isRatio: false}; }
+                  if (!range.end) { range.end = {value: 1, isRatio: true}; }
+                  if (range.start.isRatio === range.end.isRatio && range.start.value >= range.end.value) {
+                    range.start = {value: 0, isRatio: false};
+                    range.end = {value: 1, isRatio: true};
+                  }
+
+                  parsedXY[`${axis}Start`] = range.start;
+                  parsedXY[`${axis}End`] = range.end;
+                  if (step && (step.isRatio ? step.value > 0 : step.value >= 2)) { // step > 0% || step >= 2px
+                    parsedXY[`${axis}Step`] = step;
+                  }
+
+                } else {
+                  if ((snapValue = validSnapValue(newOptionsXY))) { // pixels | '<n>%'
+                    parsedXY[axis] = snapValue;
+                  } else { // Default
+                    parsedXY[`${axis}Start`] = {value: 0, isRatio: false};
+                    parsedXY[`${axis}End`] = {value: 1, isRatio: true};
+                  }
                 }
-                if (!parsedPointOptions.start) { parsedPointOptions.start = {value: 0, isRatio: false}; }
-                if (!parsedPointOptions.end) { parsedPointOptions.end = {value: 1, isRatio: true}; }
-                if (parsedPointOptions.start.isRatio === parsedPointOptions.end.isRatio &&
-                    parsedPointOptions.start.value >= parsedPointOptions.end.value) { // start >= end
-                  parsedPointOptions.start = {value: 0, isRatio: false};
-                  parsedPointOptions.end = {value: 1, isRatio: true};
-                }
+                return parsedXY;
+              }, {});
 
-                validValue = `step:${parsedPointOptions.step.isRatio ?
-                    `${parsedPointOptions.step.value * 100}%` : parsedPointOptions.step.value}` +
-                  `[${parsedPointOptions.start.isRatio ?
-                    `${parsedPointOptions.start.value * 100}%` : parsedPointOptions.start.value}` +
-                  `,${parsedPointOptions.end.isRatio ?
-                    `${parsedPointOptions.end.value * 100}%` : parsedPointOptions.end.value}]`;
+              if (parsedXY.xStart && !parsedXY.xStep && parsedXY.yStart && !parsedXY.yStep) {
+                // This can be split to 4 lines.
+                parsedSnapTargetSplit.push(
+                  {xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yStart},
+                  {xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yEnd},
+                  {x: parsedXY.xStart, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd},
+                  {x: parsedXY.xEnd, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd}
+                );
+              } else {
+                parsedSnapTargetSplit.push(parsedXY);
               }
 
-            } else if (isElement(value)) { // Element
-              parsedPointOptions.isElement = true;
-              parsedPointOptions.value = validValue = value;
+              snapTargetOptions = ['x', 'y'].reduce((snapTargetOptions, axis) => {
+                snapTargetOptions[axis] = parsedXY[`${axis}Start`] ?
+                  (parsedXY[`${axis}Step`] ? `step:${snapValue2value(parsedXY[`${axis}Step`])}` : '') +
+                    `[${snapValue2value(parsedXY[`${axis}Start`])},${snapValue2value(parsedXY[`${axis}End`])}]` :
+                  snapValue2value(parsedXY[axis]);
+                return snapTargetOptions;
+              }, {});
             }
+          }
 
-            if (validValue != null) {
-              parsedPoints.push(parsedPointOptions);
-              points.push(commonSnapOptions({value: validValue}, newPointOptions));
-            }
-            return points;
-          }, []);
+          if (parsedSnapTargetSplit.length) {
+            Array.prototype.push.apply(parsedSnapTargets, parsedSnapTargetSplit);
+            snapTargetsOptions.push(commonSnapOptions(snapTargetOptions, newSnapTargetOptions));
+          }
+          return parsedSnapTargets;
+        }, []);
 
-      if (parsedPoints.length) {
-        parsedSnapOptions[axis] = parsedPoints;
-        snapOptions[axis] = commonSnapOptions({points: points}, newAxisOptions);
-      }
-    });
+    if (parsedSnapTargets.length) {
 
-    if (parsedSnapOptions.x || parsedSnapOptions.y) {
-      options.snap = commonSnapOptions(snapOptions, newSnapOptions); // Update always
+      const snapOptions = options.snap = commonSnapOptions({targets: snapTargetsOptions}, newSnapOptions); // Update always
       // Set default options in top level.
       if (!snapOptions.gravity) { snapOptions.gravity = SNAP_GRAVITY; }
       if (!snapOptions.edge) { snapOptions.edge = SNAP_EDGE; }
       if (!snapOptions.base) { snapOptions.base = SNAP_BASE; }
       if (!snapOptions.side) { snapOptions.side = SNAP_SIDE; }
 
-      // parsedSnapOptions - commonSnapOptions
+      // parsedSnapTargets - commonSnapOptions
       ['x', 'y'].forEach(axis => {
-        if (parsedSnapOptions[axis] == null) { return; }
+        if (parsedSnapTargets[axis] == null) { return; }
         const axisOptions = snapOptions[axis];
-        parsedSnapOptions[axis].forEach((point, i) => {
-          const pointOptions = axisOptions.points[i];
+        parsedSnapTargets[axis].forEach((parsedSnapTarget, i) => {
+          const snapTargetOptions = snapTargetsOptions[i];
           // gravity
-          point.gravity = pointOptions.gravity || axisOptions.gravity || snapOptions.gravity;
+          parsedSnapTarget.gravity = snapTargetOptions.gravity || axisOptions.gravity || snapOptions.gravity;
           // edge
-          point.edge = pointOptions.edge || axisOptions.edge || snapOptions.edge;
+          parsedSnapTarget.edge = snapTargetOptions.edge || axisOptions.edge || snapOptions.edge;
           // base
-          if (point.isRatio || point.repeat) {
-            point.base = pointOptions.base || axisOptions.base || snapOptions.base;
+          if (parsedSnapTarget.isRatio || parsedSnapTarget.repeat) {
+            parsedSnapTarget.base = snapTargetOptions.base || axisOptions.base || snapOptions.base;
           }
           // side
-          if (point.isElement) {
-            point.side = pointOptions.side || axisOptions.side || snapOptions.side;
+          if (parsedSnapTarget.isElement) {
+            parsedSnapTarget.side = snapTargetOptions.side || axisOptions.side || snapOptions.side;
           }
         });
       });
-      if (hasChanged(parsedSnapOptions, props.parsedSnapOptions)) {
-        props.parsedSnapOptions = parsedSnapOptions;
+      if (hasChanged(parsedSnapTargets, props.parsedSnapTargets)) {
+        props.parsedSnapTargets = parsedSnapTargets;
         needsInitBBox = true;
       }
     }
-  } else if (newOptions.hasOwnProperty('snap') && props.parsedSnapOptions) {
-    options.snap = props.parsedSnapOptions = props.snap = void 0;
+  } else if (newOptions.hasOwnProperty('snap') && props.parsedSnapTargets) {
+    options.snap = props.parsedSnapTargets = props.snap = void 0;
   }
 
   if (needsInitBBox) { initBBox(props); }
