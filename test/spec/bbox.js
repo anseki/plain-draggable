@@ -24,7 +24,7 @@ describe('BBox', function() {
     pageDone();
   });
 
-  it('keep original bbox if possible', function() {
+  it('keeps original bbox if possible', function() {
     var draggable, element, orgBBox, curBBox;
 
     element = document.getElementById('elm1');

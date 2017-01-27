@@ -9,6 +9,11 @@ describe('functions', function() {
       window = pageWindow;
       document = pageDocument;
       pageDone = done;
+
+      // Export validSnapValue and validSnapBBox
+      new window.PlainDraggable(pageBody.appendChild(document.createElement('div'))); // eslint-disable-line no-new
+      window.validSnapBBox();
+
       beforeDone();
     }, 'functions');
   });
@@ -42,17 +47,17 @@ describe('functions', function() {
       .toEqual({left: 1, top: 2, width: 4, height: 8, x: 1, y: 2, right: 5, bottom: 10});
     expect(validBBox({x: 1, y: 2, width: 4, height: 8, left: 16, top: 32})) // x/y and left/top
       .toEqual({left: 16, top: 32, width: 4, height: 8, x: 16, y: 32, right: 20, bottom: 40});
-    expect(validBBox({top: 2, width: 4, height: 8}) == null).toEqual(true);
+    expect(validBBox({top: 2, width: 4, height: 8}) == null).toBe(true);
 
     expect(validBBox({left: 1, top: 2, right: 5, bottom: 10})) // right/bottom
       .toEqual({left: 1, top: 2, width: 4, height: 8, x: 1, y: 2, right: 5, bottom: 10});
     expect(validBBox({left: 1, top: 2, right: 5, bottom: 10, width: 16, height: 32})) // right/bottom and width/height
       .toEqual({left: 1, top: 2, width: 16, height: 32, x: 1, y: 2, right: 17, bottom: 34});
-    expect(validBBox({left: 1, top: 2, height: 8}) == null).toEqual(true);
+    expect(validBBox({left: 1, top: 2, height: 8}) == null).toBe(true);
     expect(validBBox({left: 1, top: 2, width: 0, height: 8})) // width: 0
       .toEqual({left: 1, top: 2, width: 0, height: 8, x: 1, y: 2, right: 1, bottom: 10});
-    expect(validBBox({left: 1, top: 2, right: 0, height: 8}) == null).toEqual(true);
-    expect(validBBox({left: 1, top: 2, right: 5, bottom: 1}) == null).toEqual(true);
+    expect(validBBox({left: 1, top: 2, right: 0, height: 8}) == null).toBe(true);
+    expect(validBBox({left: 1, top: 2, right: 5, bottom: 1}) == null).toBe(true);
   });
 
   it('getBBox', function() {
@@ -69,6 +74,96 @@ describe('functions', function() {
       .toEqual({left: 200, top: 201, width: 222, height: 214, x: 200, y: 201, right: 422, bottom: 415});
     expect(getBBox(element, true))
       .toEqual({left: 216, top: 203, width: 202, height: 204, x: 216, y: 203, right: 418, bottom: 407});
+  });
+
+  it('validSnapValue', function() {
+    var validSnapValue = window.validSnapValue;
+
+    expect(validSnapValue(1)).toEqual({value: 1, isRatio: false});
+    expect(validSnapValue(0)).toEqual({value: 0, isRatio: false});
+    expect(validSnapValue(-1)).toEqual({value: -1, isRatio: false});
+
+    // Not number, string
+    expect(validSnapValue({}) == null).toBe(true);
+    expect(validSnapValue(true) == null).toBe(true);
+    expect(validSnapValue() == null).toBe(true);
+
+    // string
+    expect(validSnapValue(' 5 ')).toEqual({value: 5, isRatio: false});
+    expect(validSnapValue(' 005.00 ')).toEqual({value: 5, isRatio: false});
+    expect(validSnapValue(' + 5 ')).toEqual({value: 5, isRatio: false});
+    expect(validSnapValue(' - 005.00 ')).toEqual({value: -5, isRatio: false});
+    expect(validSnapValue(' - 5 ')).toEqual({value: -5, isRatio: false});
+    expect(validSnapValue(' - 005.00 ')).toEqual({value: -5, isRatio: false});
+
+    expect(validSnapValue(' + 5 x ')).toEqual({value: 5, isRatio: false});
+    expect(validSnapValue(' - 005.00 x ')).toEqual({value: -5, isRatio: false});
+    expect(validSnapValue(' + 5 % ')).toEqual({value: 0.05, isRatio: true});
+    expect(validSnapValue(' - 005.00 % ')).toEqual({value: -0.05, isRatio: true});
+    expect(validSnapValue(' + 5 x % ')).toEqual({value: 0.05, isRatio: true});
+    expect(validSnapValue(' - 005.00 x % ')).toEqual({value: -0.05, isRatio: true});
+    expect(validSnapValue(' + 5 % x ')).toEqual({value: 5, isRatio: false}); // `%` is ignored
+    expect(validSnapValue(' - 005.00 % x ')).toEqual({value: -5, isRatio: false}); // `%` is ignored
+    expect(validSnapValue(' 0% ')).toEqual({value: 0, isRatio: false}); // 0% -> 0
+
+    expect(validSnapValue('') == null).toBe(true);
+    expect(validSnapValue(' ') == null).toBe(true);
+    expect(validSnapValue('x') == null).toBe(true);
+    expect(validSnapValue(' x 5 ') == null).toBe(true);
+    expect(validSnapValue(' x 005.00 ') == null).toBe(true);
+    expect(validSnapValue(' - x 5 ') == null).toBe(true);
+    expect(validSnapValue(' - x 005.00 ') == null).toBe(true);
+  });
+
+  it('validSnapBBox', function() {
+    var validSnapBBox = window.validSnapBBox;
+
+    // Not Object
+    expect(validSnapBBox(1) == null).toBe(true);
+    expect(validSnapBBox('1') == null).toBe(true);
+    expect(validSnapBBox(true) == null).toBe(true);
+    expect(validSnapBBox() == null).toBe(true);
+
+    expect(validSnapBBox({x: 2, y: 4, width: 8, height: 16}))
+      .toEqual({
+        x: {value: 2, isRatio: false},
+        y: {value: 4, isRatio: false},
+        left: {value: 2, isRatio: false},
+        top: {value: 4, isRatio: false},
+        width: {value: 8, isRatio: false},
+        height: {value: 16, isRatio: false}
+      });
+    expect(validSnapBBox({x: 2, top: 4, width: 8, height: 16})) // Alias
+      .toEqual({
+        x: {value: 2, isRatio: false},
+        y: {value: 4, isRatio: false},
+        left: {value: 2, isRatio: false},
+        top: {value: 4, isRatio: false},
+        width: {value: 8, isRatio: false},
+        height: {value: 16, isRatio: false}
+      });
+
+    expect(validSnapBBox({x: 2, width: 8, height: 16}) == null).toBe(true); // No y
+
+    expect(validSnapBBox({x: 2, y: 4, width: 0, height: 16})) // width: 0
+      .toEqual({
+        x: {value: 2, isRatio: false},
+        y: {value: 4, isRatio: false},
+        left: {value: 2, isRatio: false},
+        top: {value: 4, isRatio: false},
+        width: {value: 0, isRatio: false},
+        height: {value: 16, isRatio: false}
+      });
+    expect(validSnapBBox({x: 2, y: 4, width: -1, height: 16}) == null).toBe(true); // width: -1
+    expect(validSnapBBox({x: 2, y: 4, width: -1, height: 16, right: 32})) // width: -1, right: 32
+      .toEqual({
+        x: {value: 2, isRatio: false},
+        y: {value: 4, isRatio: false},
+        left: {value: 2, isRatio: false},
+        top: {value: 4, isRatio: false},
+        right: {value: 32, isRatio: false},
+        height: {value: 16, isRatio: false}
+      });
   });
 
 });

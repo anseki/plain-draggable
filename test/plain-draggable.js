@@ -625,6 +625,22 @@ function initBBox(props) {
   props.maxTop = containmentBBox.bottom - elementBBox.height;
   // Adjust position
   move(props, { left: elementBBox.left, top: elementBBox.top });
+
+  /**
+   * @typedef {Object} SnapTarget
+   * @property {number} [x] - A coordinate it moves to. It must have x or y or both.
+   * @property {number} [y]
+   * @property {number} [gravityXStart] - Gravity zone. It must have *Start or *End or both, and *X* or *Y* or both.
+   * @property {number} [gravityXEnd]
+   * @property {number} [gravityYStart]
+   * @property {number} [gravityYEnd]
+   */
+
+  // snap targets
+  if (props.parsedSnapOptions) {
+    var docRect = document.documentElement.getBoundingClientRect();
+  }
+
   window.initBBoxDone = true; // [DEBUG/]
 
   // points.sort((a, b) => a - b);
@@ -692,8 +708,8 @@ function _setOptions(props, newOptions) {
         props.containmentIsBBox = false;
         needsInitBBox = true;
       }
-    } else if (isObject(newOptions.containment) && ( // bBox
-    bBox = validBBox(copyTree(newOptions.containment))) && hasChanged(bBox, options.containment)) {
+    } else if ((bBox = validBBox(copyTree(newOptions.containment))) && // bBox
+    hasChanged(bBox, options.containment)) {
       options.containment = bBox;
       props.containmentIsBBox = true;
       needsInitBBox = true;
@@ -702,8 +718,7 @@ function _setOptions(props, newOptions) {
 
   /**
    * @typedef {Object} SnapOptions
-   * @property {SnapAxisOptions} [x]
-   * @property {SnapAxisOptions} [y]
+   * @property {SnapTargetOptions[]} targets
    * @property {number} [gravity]
    * @property {string} [edge]
    * @property {string} [base]
@@ -711,8 +726,10 @@ function _setOptions(props, newOptions) {
    */
 
   /**
-   * @typedef {Object} SnapAxisOptions
-   * @property {SnapPointOptions[]} points
+   * @typedef {Object} SnapTargetOptions
+   * @property {(number|string)} [x] - pixels | '<n>%' | '<closed-interval>' | 'step:<n><closed-interval>'
+   * @property {(number|string)} [y]
+   * @property {(Element|Object)} [target] - Properties of Object are string or number from SnapBBox.
    * @property {number} [gravity]
    * @property {string} [edge]
    * @property {string} [base]
@@ -720,33 +737,30 @@ function _setOptions(props, newOptions) {
    */
 
   /**
-   * @typedef {Object} SnapPointOptions
-   * @property {(number|string|Element)} value - pixels | '<n>%' | 'step:<n><closed-interval>' | Element
-   * @property {number} [gravity]
-   * @property {string} [edge]
-   * @property {string} [base]
-   * @property {string} [side]
+   * @typedef {{value: number, isRatio: boolean}} SnapValue
    */
 
   /**
-   * @typedef {Object} ParsedSnapOptions
-   * @property {ParsedSnapPointOptions[]} [x]
-   * @property {ParsedSnapPointOptions[]} [y]
+   * An object that simulates BBox but properties are SnapValue.
+   * @typedef {Object} SnapBBox
    */
 
   /**
-   * @typedef {Object} ParsedSnapPointOptions
-   * @property {(number|Element)} [value] - pixels | ratio (isRatio === true) | Element (isElement === true)
+   * @typedef {Object} ParsedSnapTargetOptions
+   * @property {SnapValue} [x] - (input: pixels | '<n>%')
+   * @property {SnapValue} [y]
+   * @property {SnapValue} [xStart] - (input: '<closed-interval>' | 'step:<n><closed-interval>')
+   * @property {SnapValue} [xEnd]
+   * @property {SnapValue} [xStep] - (input: 'step:<n><closed-interval>')
+   * @property {SnapValue} [yStart]
+   * @property {SnapValue} [yEnd]
+   * @property {SnapValue} [yStep]
+   * @property {Element} [element]
+   * @property {SnapBBox} [snapBBox]
    * @property {number} gravity
    * @property {string} edge
-   * @property {boolean} [isRatio]
-   * @property {string} [base] - (isRatio === true || repeat === true)
-   * @property {boolean} [isElement]
-   * @property {string} [side] - (isElement === true)
-   * @property {boolean} [repeat]
-   * @property {{value, isRatio}} [step] - (repeat === true)
-   * @property {{value, isRatio}} [start] - (repeat === true)
-   * @property {{value, isRatio}} [end] - (repeat === true)
+   * @property {string} base
+   * @property {string} side
    */
 
   // Initialize `gravity`, `edge`, `base`, `side`
@@ -756,30 +770,73 @@ function _setOptions(props, newOptions) {
       options.gravity = newOptions.gravity;
     }
     // edge
-    var edge = typeof newOptions.edge === 'string' ? newOptions.edge.toLowerCase() : '';
-    if (edge === 'start' || edge === 'end' || edge === 'both') {
+    var edge = typeof newOptions.edge === 'string' ? newOptions.edge.toLowerCase() : null;
+    if (edge && (edge === 'start' || edge === 'end' || edge === 'both')) {
       options.edge = edge;
     }
     // base
-    var base = typeof newOptions.base === 'string' ? newOptions.base.toLowerCase() : '';
-    if (base === 'containment' || base === 'document') {
+    var base = typeof newOptions.base === 'string' ? newOptions.base.toLowerCase() : null;
+    if (base && (base === 'containment' || base === 'document')) {
       options.base = base;
     }
     // side
-    var side = typeof newOptions.side === 'string' ? newOptions.side.toLowerCase() : '';
-    if (side === 'inner' || side === 'outer' || side === 'both') {
+    var side = typeof newOptions.side === 'string' ? newOptions.side.toLowerCase() : null;
+    if (side && (side === 'inner' || side === 'outer' || side === 'both')) {
       options.side = side;
     }
     return options;
   }
 
-  // Get value from text (all `/s` were removed)
-  function parseLen(text) {
+  // Get SnapValue from string (all `/s` were already removed)
+  function getSnapValue(text) {
     var matches = /^(.+?)(\%)?$/.exec(text);
-    var len = void 0,
+    var value = void 0,
         isRatio = void 0;
-    return matches && isFinite(len = parseFloat(matches[1])) ? { value: (isRatio = !!(matches[2] && len)) ? len / 100 : len, isRatio: isRatio } : null; // 0% -> 0
+    return matches && isFinite(value = parseFloat(matches[1])) ? { value: (isRatio = !!(matches[2] && value)) ? value / 100 : value, isRatio: isRatio } : null; // 0% -> 0
   }
+
+  function validSnapBBox(bBox) {
+    function validSnapValue(value) {
+      return isFinite(value) ? { value: value, isRatio: false } : typeof value === 'string' ? getSnapValue(value.replace(/\s/g, '')) : null;
+    }
+    window.validSnapValue = validSnapValue; // [DEBUG/]
+
+    if (!isObject(bBox)) {
+      return null;
+    }
+    var snapValue = void 0;
+    if ((snapValue = validSnapValue(bBox.left)) || (snapValue = validSnapValue(bBox.x))) {
+      bBox.left = bBox.x = snapValue;
+    } else {
+      return null;
+    }
+    if ((snapValue = validSnapValue(bBox.top)) || (snapValue = validSnapValue(bBox.y))) {
+      bBox.top = bBox.y = snapValue;
+    } else {
+      return null;
+    }
+
+    if ((snapValue = validSnapValue(bBox.width)) && snapValue.value >= 0) {
+      bBox.width = snapValue;
+      delete bBox.right;
+    } else if (snapValue = validSnapValue(bBox.right)) {
+      bBox.right = snapValue;
+      delete bBox.width;
+    } else {
+      return null;
+    }
+    if ((snapValue = validSnapValue(bBox.height)) && snapValue.value >= 0) {
+      bBox.height = snapValue;
+      delete bBox.bottom;
+    } else if (snapValue = validSnapValue(bBox.bottom)) {
+      bBox.bottom = snapValue;
+      delete bBox.height;
+    } else {
+      return null;
+    }
+    return bBox;
+  }
+  window.validSnapBBox = validSnapBBox; // [DEBUG/]
 
   // snap
   if (newOptions.snap != null) {
@@ -813,12 +870,12 @@ function _setOptions(props, newOptions) {
               var parsedLen = void 0,
                   matches = void 0;
 
-              if (parsedLen = parseLen(value)) {
+              if (parsedLen = getSnapValue(value)) {
                 // '<n>%'
                 parsedPointOptions = parsedLen;
                 validValue = parsedLen.isRatio ? parsedLen.value * 100 + '%' : parsedLen.value;
               } else if ((matches = /^step:(.+?)(?:\[(.+)\])?$/i.exec(value)) && ( // 'step:<n><closed-interval>'
-              parsedLen = parseLen(matches[1])) && (parsedLen.isRatio ? parsedLen.value > 0 : parsedLen.value >= 2)) {
+              parsedLen = getSnapValue(matches[1])) && (parsedLen.isRatio ? parsedLen.value > 0 : parsedLen.value >= 2)) {
                 // step > 0% || step >= 2px
                 parsedPointOptions.repeat = true;
                 parsedPointOptions.step = parsedLen;
@@ -827,7 +884,7 @@ function _setOptions(props, newOptions) {
                   (function () {
                     var rangeValues = matches[2].split(',');
                     ['start', 'end'].forEach(function (prop, i) {
-                      if (rangeValues[i] && (parsedLen = parseLen(rangeValues[i]))) {
+                      if (rangeValues[i] && (parsedLen = getSnapValue(rangeValues[i]))) {
                         parsedPointOptions[prop] = parsedLen;
                       }
                     });

@@ -410,7 +410,7 @@ function setOptions(props, newOptions) {
   }
 
   // Get SnapValue from string (all `/s` were already removed)
-  function getSnapValue(text) {
+  function string2SnapValue(text) {
     const matches = /^(.+?)(\%)?$/.exec(text);
     let value, isRatio;
     return matches && isFinite((value = parseFloat(matches[1]))) ?
@@ -420,15 +420,14 @@ function setOptions(props, newOptions) {
   function validSnapBBox(bBox) {
     function validSnapValue(value) {
       return isFinite(value) ? {value: value, isRatio: false} :
-        (value = typeof value === 'string' ? value.toLowerCase().replace(/\s/g, '') : null) &&
-        getSnapValue(value);
+        typeof value === 'string' ? string2SnapValue(value.replace(/\s/g, '')) : null;
     }
     window.validSnapValue = validSnapValue; // [DEBUG/]
 
     if (!isObject(bBox)) { return null; }
     let snapValue;
     if ((snapValue = validSnapValue(bBox.left)) || (snapValue = validSnapValue(bBox.x))) {
-      bBox.x = bBox.left = snapValue;
+      bBox.left = bBox.x = snapValue;
     } else { return null; }
     if ((snapValue = validSnapValue(bBox.top)) || (snapValue = validSnapValue(bBox.y))) {
       bBox.top = bBox.y = snapValue;
@@ -436,17 +435,17 @@ function setOptions(props, newOptions) {
 
     if ((snapValue = validSnapValue(bBox.width)) && snapValue.value >= 0) {
       bBox.width = snapValue;
-      bBox.right = null;
+      delete bBox.right;
     } else if ((snapValue = validSnapValue(bBox.right))) {
       bBox.right = snapValue;
-      bBox.width = null;
+      delete bBox.width;
     } else { return null; }
     if ((snapValue = validSnapValue(bBox.height)) && snapValue.value >= 0) {
       bBox.height = snapValue;
-      bBox.bottom = null;
+      delete bBox.bottom;
     } else if ((snapValue = validSnapValue(bBox.bottom))) {
       bBox.bottom = snapValue;
-      bBox.height = null;
+      delete bBox.height;
     } else { return null; }
     return bBox;
   }
@@ -481,12 +480,12 @@ function setOptions(props, newOptions) {
               value = value.replace(/\s/g, '');
               let parsedLen, matches;
 
-              if ((parsedLen = getSnapValue(value))) { // '<n>%'
+              if ((parsedLen = string2SnapValue(value))) { // '<n>%'
                 parsedPointOptions = parsedLen;
                 validValue = parsedLen.isRatio ? `${parsedLen.value * 100}%` : parsedLen.value;
 
               } else if ((matches = /^step:(.+?)(?:\[(.+)\])?$/i.exec(value)) && // 'step:<n><closed-interval>'
-                  (parsedLen = getSnapValue(matches[1])) &&
+                  (parsedLen = string2SnapValue(matches[1])) &&
                   (parsedLen.isRatio ? parsedLen.value > 0 : parsedLen.value >= 2)) { // step > 0% || step >= 2px
                 parsedPointOptions.repeat = true;
                 parsedPointOptions.step = parsedLen;
@@ -494,7 +493,7 @@ function setOptions(props, newOptions) {
                 if (matches[2]) {
                   const rangeValues = matches[2].split(',');
                   ['start', 'end'].forEach((prop, i) => {
-                    if (rangeValues[i] && (parsedLen = getSnapValue(rangeValues[i]))) {
+                    if (rangeValues[i] && (parsedLen = string2SnapValue(rangeValues[i]))) {
                       parsedPointOptions[prop] = parsedLen;
                     }
                   });
