@@ -12,6 +12,9 @@ import AnimEvent from 'anim-event';
 const
   ZINDEX = 99999,
   SNAP_GRAVITY = 20, SNAP_CORNER = 'tl', SNAP_SIDE = 'both', SNAP_EDGE = 'both', SNAP_BASE = 'containment',
+  SNAP_ALL_CORNERS = ['tl', 'tr', 'bl', 'br'],
+  SNAP_ALL_SIDES = ['start', 'end'],
+  SNAP_ALL_EDGES = ['inside', 'outside'],
 
   IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
 
@@ -48,6 +51,9 @@ window.SNAP_CORNER = SNAP_CORNER;
 window.SNAP_SIDE = SNAP_SIDE;
 window.SNAP_EDGE = SNAP_EDGE;
 window.SNAP_BASE = SNAP_BASE;
+window.SNAP_ALL_CORNERS = SNAP_ALL_CORNERS;
+window.SNAP_ALL_SIDES = SNAP_ALL_SIDES;
+window.SNAP_ALL_EDGES = SNAP_ALL_EDGES;
 // [/DEBUG]
 
 function copyTree(obj) {
@@ -448,6 +454,7 @@ function setOptions(props, newOptions) {
   function snapValue2value(snapValue) {
     return snapValue.isRatio ? `${snapValue.value * 100}%` : snapValue.value;
   }
+  window.snapValue2value = snapValue2value; // [DEBUG/]
 
   function validSnapValue(value) {
     return isFinite(value) ? {value: value, isRatio: false} :
@@ -613,23 +620,22 @@ function setOptions(props, newOptions) {
         parsedSnapTarget.gravity = snapTargetOptions.gravity || snapOptions.gravity;
         parsedSnapTarget.base = snapTargetOptions.base || snapOptions.base;
         // split corner
-        const corner = snapTargetOptions.corner || snapOptions.corner,
-          allCorners = ['tl', 'tr', 'bl', 'br'];
+        const corner = snapTargetOptions.corner || snapOptions.corner;
         if (corner === 'all') {
-          parsedSnapTarget.corners = allCorners;
+          parsedSnapTarget.corners = SNAP_ALL_CORNERS;
         } else {
           const corners = corner.split(' ');
-          parsedSnapTarget.corners = allCorners.reduce((sortedCorners, corner) => {
+          parsedSnapTarget.corners = SNAP_ALL_CORNERS.reduce((sortedCorners, corner) => {
             if (corners.indexOf(corner) > -1) { sortedCorners.push(corner); }
             return sortedCorners;
           }, []);
         }
         // split side
         const side = snapTargetOptions.side || snapOptions.side;
-        parsedSnapTarget.sides = side === 'both' ? ['start', 'end'] : [side];
+        parsedSnapTarget.sides = side === 'both' ? SNAP_ALL_SIDES : [side];
         // split edge
         const edge = snapTargetOptions.edge || snapOptions.edge;
-        parsedSnapTarget.edges = edge === 'both' ? ['inside', 'outside'] : [edge];
+        parsedSnapTarget.edges = edge === 'both' ? SNAP_ALL_EDGES : [edge];
       });
       if (hasChanged(parsedSnapTargets, props.parsedSnapTargets)) {
         props.parsedSnapTargets = parsedSnapTargets;
