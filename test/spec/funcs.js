@@ -10,7 +10,7 @@ describe('functions', function() {
       document = pageDocument;
       pageDone = done;
 
-      // Export validSnapValue and validSnapBBox
+      // Export inner functions
       new window.PlainDraggable(pageBody.appendChild(document.createElement('div'))); // eslint-disable-line no-new
       window.validSnapBBox();
 
@@ -74,6 +74,62 @@ describe('functions', function() {
       .toEqual({left: 200, top: 201, width: 222, height: 214, x: 200, y: 201, right: 422, bottom: 415});
     expect(getBBox(element, true))
       .toEqual({left: 216, top: 203, width: 202, height: 204, x: 216, y: 203, right: 418, bottom: 407});
+  });
+
+  it('commonSnapOptions', function() {
+    var commonSnapOptions = window.commonSnapOptions;
+
+    // normal
+    expect(commonSnapOptions({dummy: 1},
+      {gravity: 9, corner: 'tr', side: 'end', edge: 'outside', base: 'document'})
+    ).toEqual(
+      {gravity: 9, corner: 'tr', side: 'end', edge: 'outside', base: 'document', dummy: 1});
+
+    // gravity
+    expect(commonSnapOptions({dummy: 1}, {gravity: '9'})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {gravity: ''})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {gravity: false})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {gravity: 0})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {gravity: -5})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {gravity: 5})).toEqual({gravity: 5, dummy: 1});
+
+    // corner
+    expect(commonSnapOptions({dummy: 1}, {corner: 9})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {corner: ''})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {corner: 'dummy'})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {corner: 'all'})).toEqual({corner: 'all', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {corner: '  tl   br   dummy bl '}))
+      .toEqual({corner: 'tl br bl', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {corner: 'top-left RIGHT-BOTTOM lb'}))
+      .toEqual({corner: 'tl br bl', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {corner: 'top-left tl lt left-top RIGHT-BOTTOM lb'}))
+      .toEqual({corner: 'tl br bl', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {corner: 'dummy1 dummy2 dummy3'})).toEqual({dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {corner: 'top-left RIGHT-BOTTOM lb rt'}))
+      .toEqual({corner: 'all', dummy: 1});
+
+    // side
+    expect(commonSnapOptions({dummy: 1}, {side: 9})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {side: ''})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {side: 'dummy'})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {side: '  sTart '})).toEqual({side: 'start', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {side: '  eNd '})).toEqual({side: 'end', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {side: 'both'})).toEqual({side: 'both', dummy: 1});
+
+    // edge
+    expect(commonSnapOptions({dummy: 1}, {edge: 9})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {edge: ''})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {edge: 'dummy'})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {edge: '  inSide '})).toEqual({edge: 'inside', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {edge: '  oUtside '})).toEqual({edge: 'outside', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {edge: 'both'})).toEqual({edge: 'both', dummy: 1});
+
+    // base
+    expect(commonSnapOptions({dummy: 1}, {base: 9})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {base: ''})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {base: 'dummy'})).toEqual({dummy: 1}); // Invalid
+    expect(commonSnapOptions({dummy: 1}, {base: '  conTAinment '})).toEqual({base: 'containment', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {base: '  docUMent '})).toEqual({base: 'document', dummy: 1});
   });
 
   it('validSnapValue', function() {
