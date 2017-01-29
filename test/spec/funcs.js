@@ -172,7 +172,8 @@ describe('functions', function() {
   });
 
   it('validSnapBBox', function() {
-    var validSnapBBox = window.validSnapBBox;
+    var validSnapBBox = window.validSnapBBox,
+      share;
 
     // Not Object
     expect(validSnapBBox(1) == null).toBe(true);
@@ -180,24 +181,16 @@ describe('functions', function() {
     expect(validSnapBBox(true) == null).toBe(true);
     expect(validSnapBBox() == null).toBe(true);
 
-    expect(validSnapBBox({x: 2, y: 4, width: 8, height: 16}))
-      .toEqual({
-        x: {value: 2, isRatio: false},
-        y: {value: 4, isRatio: false},
-        left: {value: 2, isRatio: false},
-        top: {value: 4, isRatio: false},
-        width: {value: 8, isRatio: false},
-        height: {value: 16, isRatio: false}
-      });
-    expect(validSnapBBox({x: 2, top: 4, width: 8, height: 16})) // Alias
-      .toEqual({
-        x: {value: 2, isRatio: false},
-        y: {value: 4, isRatio: false},
-        left: {value: 2, isRatio: false},
-        top: {value: 4, isRatio: false},
-        width: {value: 8, isRatio: false},
-        height: {value: 16, isRatio: false}
-      });
+    share = {
+      x: {value: 2, isRatio: false},
+      y: {value: 4, isRatio: false},
+      left: {value: 2, isRatio: false},
+      top: {value: 4, isRatio: false},
+      width: {value: 8, isRatio: false},
+      height: {value: 16, isRatio: false}
+    };
+    expect(validSnapBBox({x: 2, y: 4, width: 8, height: 16})).toEqual(share);
+    expect(validSnapBBox({x: 2, top: 4, width: 8, height: 16})).toEqual(share); // Alias
 
     expect(validSnapBBox({x: 2, width: 8, height: 16}) == null).toBe(true); // No y
 
@@ -219,6 +212,16 @@ describe('functions', function() {
         top: {value: 4, isRatio: false},
         right: {value: 32, isRatio: false},
         height: {value: 16, isRatio: false}
+      });
+
+    expect(validSnapBBox({x: 2, y: '4%', width: 8, bottom: ' 16 % '})) // n%
+      .toEqual({
+        x: {value: 2, isRatio: false},
+        y: {value: 0.04, isRatio: true},
+        left: {value: 2, isRatio: false},
+        top: {value: 0.04, isRatio: true},
+        width: {value: 8, isRatio: false},
+        bottom: {value: 0.16, isRatio: true}
       });
   });
 

@@ -774,53 +774,6 @@ function _setOptions(props, newOptions) {
    * @property {string} base
    */
 
-  // Initialize `gravity`, `corner`, `side`, `edge`, `base`
-  function commonSnapOptions(options, newOptions) {
-    // gravity
-    if (isFinite(newOptions.gravity) && newOptions.gravity > 0) {
-      options.gravity = newOptions.gravity;
-    }
-    // corner
-    var corner = typeof newOptions.corner === 'string' ? newOptions.corner.trim().toLowerCase() : null;
-    if (corner) {
-      if (corner !== 'all') {
-        (function () {
-          var added = {},
-              corners = corner.split(/\s/).reduce(function (corners, corner) {
-            corner = corner.trim().replace(/^(.).*?\-(.).*$/, '$1$2');
-            if ((corner = corner === 'tl' || corner === 'lt' ? 'tl' : corner === 'tr' || corner === 'rt' ? 'tr' : corner === 'bl' || corner === 'lb' ? 'bl' : corner === 'br' || corner === 'rb' ? 'br' : null) && !added[corner]) {
-              corners.push(corner);
-              added[corner] = true;
-            }
-            return corners;
-          }, []),
-              cornersLen = corners.length;
-          corner = !cornersLen ? null : cornersLen === 4 ? 'all' : corners.join(' ');
-        })();
-      }
-      if (corner) {
-        options.corner = corner;
-      }
-    }
-    // side
-    var side = typeof newOptions.side === 'string' ? newOptions.side.trim().toLowerCase() : null;
-    if (side && (side === 'start' || side === 'end' || side === 'both')) {
-      options.side = side;
-    }
-    // edge
-    var edge = typeof newOptions.edge === 'string' ? newOptions.edge.trim().toLowerCase() : null;
-    if (edge && (edge === 'inside' || edge === 'outside' || edge === 'both')) {
-      options.edge = edge;
-    }
-    // base
-    var base = typeof newOptions.base === 'string' ? newOptions.base.trim().toLowerCase() : null;
-    if (base && (base === 'containment' || base === 'document')) {
-      options.base = base;
-    }
-    return options;
-  }
-  window.commonSnapOptions = commonSnapOptions; // [DEBUG/]
-
   // Get SnapValue from string (all `/s` were already removed)
   function string2SnapValue(text) {
     var matches = /^(.+?)(\%)?$/.exec(text);
@@ -877,12 +830,78 @@ function _setOptions(props, newOptions) {
   }
   window.validSnapBBox = validSnapBBox; // [DEBUG/]
 
+  // Initialize `gravity`, `corner`, `side`, `edge`, `base`
+  function commonSnapOptions(options, newOptions) {
+    // gravity
+    if (isFinite(newOptions.gravity) && newOptions.gravity > 0) {
+      options.gravity = newOptions.gravity;
+    }
+    // corner
+    var corner = typeof newOptions.corner === 'string' ? newOptions.corner.trim().toLowerCase() : null;
+    if (corner) {
+      if (corner !== 'all') {
+        (function () {
+          var added = {},
+              corners = corner.split(/\s/).reduce(function (corners, corner) {
+            corner = corner.trim().replace(/^(.).*?\-(.).*$/, '$1$2');
+            if ((corner = corner === 'tl' || corner === 'lt' ? 'tl' : corner === 'tr' || corner === 'rt' ? 'tr' : corner === 'bl' || corner === 'lb' ? 'bl' : corner === 'br' || corner === 'rb' ? 'br' : null) && !added[corner]) {
+              corners.push(corner);
+              added[corner] = true;
+            }
+            return corners;
+          }, []),
+              cornersLen = corners.length;
+          corner = !cornersLen ? null : cornersLen === 4 ? 'all' : corners.join(' ');
+        })();
+      }
+      if (corner) {
+        options.corner = corner;
+      }
+    }
+    // side
+    var side = typeof newOptions.side === 'string' ? newOptions.side.trim().toLowerCase() : null;
+    if (side && (side === 'start' || side === 'end' || side === 'both')) {
+      options.side = side;
+    }
+    // edge
+    var edge = typeof newOptions.edge === 'string' ? newOptions.edge.trim().toLowerCase() : null;
+    if (edge && (edge === 'inside' || edge === 'outside' || edge === 'both')) {
+      options.edge = edge;
+    }
+    // base
+    var base = typeof newOptions.base === 'string' ? newOptions.base.trim().toLowerCase() : null;
+    if (base && (base === 'containment' || base === 'document')) {
+      options.base = base;
+    }
+    return options;
+  }
+  window.commonSnapOptions = commonSnapOptions; // [DEBUG/]
+
   // snap
   if (newOptions.snap != null) {
     (function () {
       var newSnapOptions = isObject(newOptions.snap) && newOptions.snap.targets != null ? newOptions.snap : { targets: newOptions.snap },
           snapTargetsOptions = [],
-          parsedSnapTargets = (Array.isArray(newSnapOptions.targets) ? newSnapOptions.targets : [newSnapOptions.targets]).reduce(function (parsedSnapTargets, target) {
+          snapOptions = commonSnapOptions({ targets: snapTargetsOptions }, newSnapOptions);
+
+      // Set default options in top level.
+      if (!snapOptions.gravity) {
+        snapOptions.gravity = SNAP_GRAVITY;
+      }
+      if (!snapOptions.corner) {
+        snapOptions.corner = SNAP_CORNER;
+      }
+      if (!snapOptions.side) {
+        snapOptions.side = SNAP_SIDE;
+      }
+      if (!snapOptions.edge) {
+        snapOptions.edge = SNAP_EDGE;
+      }
+      if (!snapOptions.base) {
+        snapOptions.base = SNAP_BASE;
+      }
+
+      var parsedSnapTargets = (Array.isArray(newSnapOptions.targets) ? newSnapOptions.targets : [newSnapOptions.targets]).reduce(function (parsedSnapTargets, target) {
 
         function snapBBox2Object(snapBBox) {
           return Object.keys(snapBBox).reduce(function (obj, prop) {
@@ -986,65 +1005,37 @@ function _setOptions(props, newOptions) {
         }
 
         if (expandedParsedSnapTargets.length) {
-          Array.prototype.push.apply(parsedSnapTargets, expandedParsedSnapTargets);
-          snapTargetsOptions.push(commonSnapOptions(snapTargetOptions, newSnapTargetOptions));
+          (function () {
+            snapTargetsOptions.push(commonSnapOptions(snapTargetOptions, newSnapTargetOptions));
+            // Copy common SnapOptions
+            var corner = snapTargetOptions.corner || snapOptions.corner,
+                side = snapTargetOptions.side || snapOptions.side,
+                edge = snapTargetOptions.edge || snapOptions.edge,
+                commonOptions = {
+              gravity: snapTargetOptions.gravity || snapOptions.gravity,
+              base: snapTargetOptions.base || snapOptions.base,
+              corners: corner === 'all' ? SNAP_ALL_CORNERS : corner.split(' '), // Split
+              sides: side === 'both' ? SNAP_ALL_SIDES : [side], // Split
+              edges: edge === 'both' ? SNAP_ALL_EDGES : [edge] // Split
+            };
+            expandedParsedSnapTargets.forEach(function (parsedSnapTarget) {
+              // Set common SnapOptions
+              ['gravity', 'corners', 'sides', 'edges', 'base'].forEach(function (option) {
+                parsedSnapTarget[option] = commonOptions[option];
+              });
+              parsedSnapTargets.push(parsedSnapTarget);
+            });
+          })();
         }
         return parsedSnapTargets;
       }, []);
 
       if (parsedSnapTargets.length) {
-        (function () {
-          // Update always
-          var snapOptions = options.snap = commonSnapOptions({ targets: snapTargetsOptions }, newSnapOptions);
-          // Set default options in top level.
-          if (!snapOptions.gravity) {
-            snapOptions.gravity = SNAP_GRAVITY;
-          }
-          if (!snapOptions.corner) {
-            snapOptions.corner = SNAP_CORNER;
-          }
-          if (!snapOptions.side) {
-            snapOptions.side = SNAP_SIDE;
-          }
-          if (!snapOptions.edge) {
-            snapOptions.edge = SNAP_EDGE;
-          }
-          if (!snapOptions.base) {
-            snapOptions.base = SNAP_BASE;
-          }
-
-          // parsedSnapTargets - commonSnapOptions from snapOptions
-          parsedSnapTargets.forEach(function (parsedSnapTarget, i) {
-            var snapTargetOptions = snapTargetsOptions[i];
-            parsedSnapTarget.gravity = snapTargetOptions.gravity || snapOptions.gravity;
-            parsedSnapTarget.base = snapTargetOptions.base || snapOptions.base;
-            // split corner
-            var corner = snapTargetOptions.corner || snapOptions.corner;
-            if (corner === 'all') {
-              parsedSnapTarget.corners = SNAP_ALL_CORNERS;
-            } else {
-              (function () {
-                var corners = corner.split(' ');
-                parsedSnapTarget.corners = SNAP_ALL_CORNERS.reduce(function (sortedCorners, corner) {
-                  if (corners.indexOf(corner) > -1) {
-                    sortedCorners.push(corner);
-                  }
-                  return sortedCorners;
-                }, []);
-              })();
-            }
-            // split side
-            var side = snapTargetOptions.side || snapOptions.side;
-            parsedSnapTarget.sides = side === 'both' ? SNAP_ALL_SIDES : [side];
-            // split edge
-            var edge = snapTargetOptions.edge || snapOptions.edge;
-            parsedSnapTarget.edges = edge === 'both' ? SNAP_ALL_EDGES : [edge];
-          });
-          if (hasChanged(parsedSnapTargets, props.parsedSnapTargets)) {
-            props.parsedSnapTargets = parsedSnapTargets;
-            needsInitBBox = true;
-          }
-        })();
+        options.snap = snapOptions; // Update always
+        if (hasChanged(parsedSnapTargets, props.parsedSnapTargets)) {
+          props.parsedSnapTargets = parsedSnapTargets;
+          needsInitBBox = true;
+        }
       }
     })();
   } else if (newOptions.hasOwnProperty('snap') && props.parsedSnapTargets) {
