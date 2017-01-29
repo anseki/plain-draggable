@@ -403,46 +403,6 @@ function setOptions(props, newOptions) {
    * @property {string} base
    */
 
-  // Initialize `gravity`, `corner`, `side`, `edge`, `base`
-  function commonSnapOptions(options, newOptions) {
-    // gravity
-    if (isFinite(newOptions.gravity) && newOptions.gravity > 0) { options.gravity = newOptions.gravity; }
-    // corner
-    let corner = typeof newOptions.corner === 'string' ? newOptions.corner.trim().toLowerCase() : null;
-    if (corner) {
-      if (corner !== 'all') {
-        const added = {},
-          corners = corner.split(/\s/).reduce((corners, corner) => {
-            corner = corner.trim().replace(/^(.).*?\-(.).*$/, '$1$2');
-            if ((corner =
-                corner === 'tl' || corner === 'lt' ? 'tl' :
-                corner === 'tr' || corner === 'rt' ? 'tr' :
-                corner === 'bl' || corner === 'lb' ? 'bl' :
-                corner === 'br' || corner === 'rb' ? 'br' :
-                null) && !added[corner]) {
-              corners.push(corner);
-              added[corner] = true;
-            }
-            return corners;
-          }, []),
-          cornersLen = corners.length;
-        corner = !cornersLen ? null : cornersLen === 4 ? 'all' : corners.join(' ');
-      }
-      if (corner) { options.corner = corner; }
-    }
-    // side
-    const side = typeof newOptions.side === 'string' ? newOptions.side.trim().toLowerCase() : null;
-    if (side && (side === 'start' || side === 'end' || side === 'both')) { options.side = side; }
-    // edge
-    const edge = typeof newOptions.edge === 'string' ? newOptions.edge.trim().toLowerCase() : null;
-    if (edge && (edge === 'inside' || edge === 'outside' || edge === 'both')) { options.edge = edge; }
-    // base
-    const base = typeof newOptions.base === 'string' ? newOptions.base.trim().toLowerCase() : null;
-    if (base && (base === 'containment' || base === 'document')) { options.base = base; }
-    return options;
-  }
-  window.commonSnapOptions = commonSnapOptions; // [DEBUG/]
-
   // Get SnapValue from string (all `/s` were already removed)
   function string2SnapValue(text) {
     const matches = /^(.+?)(\%)?$/.exec(text);
@@ -489,6 +449,46 @@ function setOptions(props, newOptions) {
     return bBox;
   }
   window.validSnapBBox = validSnapBBox; // [DEBUG/]
+
+  // Initialize `gravity`, `corner`, `side`, `edge`, `base`
+  function commonSnapOptions(options, newOptions) {
+    // gravity
+    if (isFinite(newOptions.gravity) && newOptions.gravity > 0) { options.gravity = newOptions.gravity; }
+    // corner
+    let corner = typeof newOptions.corner === 'string' ? newOptions.corner.trim().toLowerCase() : null;
+    if (corner) {
+      if (corner !== 'all') {
+        const added = {},
+          corners = corner.split(/\s/).reduce((corners, corner) => {
+            corner = corner.trim().replace(/^(.).*?\-(.).*$/, '$1$2');
+            if ((corner =
+                corner === 'tl' || corner === 'lt' ? 'tl' :
+                corner === 'tr' || corner === 'rt' ? 'tr' :
+                corner === 'bl' || corner === 'lb' ? 'bl' :
+                corner === 'br' || corner === 'rb' ? 'br' :
+                null) && !added[corner]) {
+              corners.push(corner);
+              added[corner] = true;
+            }
+            return corners;
+          }, []),
+          cornersLen = corners.length;
+        corner = !cornersLen ? null : cornersLen === 4 ? 'all' : corners.join(' ');
+      }
+      if (corner) { options.corner = corner; }
+    }
+    // side
+    const side = typeof newOptions.side === 'string' ? newOptions.side.trim().toLowerCase() : null;
+    if (side && (side === 'start' || side === 'end' || side === 'both')) { options.side = side; }
+    // edge
+    const edge = typeof newOptions.edge === 'string' ? newOptions.edge.trim().toLowerCase() : null;
+    if (edge && (edge === 'inside' || edge === 'outside' || edge === 'both')) { options.edge = edge; }
+    // base
+    const base = typeof newOptions.base === 'string' ? newOptions.base.trim().toLowerCase() : null;
+    if (base && (base === 'containment' || base === 'document')) { options.base = base; }
+    return options;
+  }
+  window.commonSnapOptions = commonSnapOptions; // [DEBUG/]
 
   // snap
   if (newOptions.snap != null) {
@@ -619,21 +619,11 @@ function setOptions(props, newOptions) {
         const snapTargetOptions = snapTargetsOptions[i];
         parsedSnapTarget.gravity = snapTargetOptions.gravity || snapOptions.gravity;
         parsedSnapTarget.base = snapTargetOptions.base || snapOptions.base;
-        // split corner
+        // Split corner, side, edge
         const corner = snapTargetOptions.corner || snapOptions.corner;
-        if (corner === 'all') {
-          parsedSnapTarget.corners = SNAP_ALL_CORNERS;
-        } else {
-          const corners = corner.split(' ');
-          parsedSnapTarget.corners = SNAP_ALL_CORNERS.reduce((sortedCorners, corner) => {
-            if (corners.indexOf(corner) > -1) { sortedCorners.push(corner); }
-            return sortedCorners;
-          }, []);
-        }
-        // split side
+        parsedSnapTarget.corners = corner === 'all' ? SNAP_ALL_CORNERS : corner.split(' ');
         const side = snapTargetOptions.side || snapOptions.side;
         parsedSnapTarget.sides = side === 'both' ? SNAP_ALL_SIDES : [side];
-        // split edge
         const edge = snapTargetOptions.edge || snapOptions.edge;
         parsedSnapTarget.edges = edge === 'both' ? SNAP_ALL_EDGES : [edge];
       });
