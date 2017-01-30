@@ -554,13 +554,32 @@ function setCursorDragging(element) {
  */
 function move(props, position, cbCheck) {
   var elementBBox = props.elementBBox;
-  position.left = props.minLeft >= props.maxLeft ? elementBBox.left : // Disabled
-  position.left < props.minLeft ? props.minLeft : position.left > props.maxLeft ? props.maxLeft : position.left;
-  position.top = props.minTop >= props.maxTop ? elementBBox.top : // Disabled
-  position.top < props.minTop ? props.minTop : position.top > props.maxTop ? props.maxTop : position.top;
 
-  if (cbCheck && cbCheck(position) === false) {
-    return false;
+  function fix() {
+    if (props.minLeft >= props.maxLeft) {
+      // Disabled
+      position.left = elementBBox.left;
+    } else if (position.left < props.minLeft) {
+      position.left = props.minLeft;
+    } else if (position.left > props.maxLeft) {
+      position.left = props.maxLeft;
+    }
+    if (props.minTop >= props.maxTop) {
+      // Disabled
+      position.top = elementBBox.top;
+    } else if (position.top < props.minTop) {
+      position.top = props.minTop;
+    } else if (position.top > props.maxTop) {
+      position.top = props.maxTop;
+    }
+  }
+
+  fix();
+  if (cbCheck) {
+    if (cbCheck(position) === false) {
+      return false;
+    }
+    fix(); // Again
   }
 
   var elementStyle = props.elementStyle,
