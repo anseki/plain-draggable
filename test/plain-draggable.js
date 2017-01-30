@@ -673,12 +673,16 @@ function initBBox(props) {
             baseSizeXY = { x: baseRect.width, y: baseRect.height },
             elementSizeXY = { x: elementBBox.width, y: elementBBox.height },
             minXY = { x: minLeft, y: minTop },
-            maxXY = { x: maxLeft, y: maxTop };
+            maxXY = { x: maxLeft, y: maxTop },
+            bBoxProp2Axis = { left: 'x', right: 'x', x: 'x', width: 'x',
+          top: 'y', bottom: 'y', y: 'y', height: 'y' };
 
         /**
+         * Shallow copy of parsedSnapTarget
          * @typedef {{x: (number|SnapValue), y, xStart, xEnd, xStep, yStart, yEnd, yStep}} TargetXY
          * @property {string[]} [corners]
          * @property {string[]} [sides]
+         * @property {boolean} center
          */
 
         function resolvedValue(snapValue, baseOrigin, baseSize) {
@@ -691,6 +695,11 @@ function initBBox(props) {
             // Point
             targetXY.x = resolvedValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
             targetXY.y = resolvedValue(targetXY.y, baseOriginXY.y, baseSizeXY.y);
+            if (targetXY.center) {
+              targetXY.x -= elementSizeXY.x / 2;
+              targetXY.y -= elementSizeXY.y / 2;
+              targetXY.corners = ['tl'];
+            }
             (targetXY.corners || parsedSnapTarget.corners).forEach(function (corner) {
               var x = targetXY.x - (corner === 'tr' || corner === 'br' ? elementSizeXY.x : 0),
                   y = targetXY.y - (corner === 'bl' || corner === 'br' ? elementSizeXY.y : 0);
@@ -731,6 +740,10 @@ function initBBox(props) {
               targetXY[specAxis] = resolvedValue(targetXY[specAxis], baseOriginXY[specAxis], baseSizeXY[specAxis]);
               targetXY[startProp] = resolvedValue(targetXY[startProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]);
               targetXY[endProp] = resolvedValue(targetXY[endProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]) - elementSizeXY[rangeAxis]; // Reduce the end of the line.
+              if (targetXY.center) {
+                targetXY[specAxis] -= elementSizeXY[specAxis] / 2;
+                targetXY.sides = ['start'];
+              }
               (targetXY.sides || parsedSnapTarget.sides).forEach(function (side) {
                 var xy = targetXY[specAxis] - (side === 'end' ? elementSizeXY[specAxis] : 0);
                 if (xy >= minXY[specAxis] && xy <= maxXY[specAxis]) {
@@ -757,13 +770,20 @@ function initBBox(props) {
           }
         }
 
-        if (parsedSnapTarget.element) {// Element
-
-        } else if (parsedSnapTarget.snapBBox) {// SnapBBox
-
+        var bBox = void 0;
+        if (bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : // Element
+        parsedSnapTarget.snapBBox ? // SnapBBox
+        validBBox(Object.keys(parsedSnapTarget.snapBBox).reduce(function (bBox, prop) {
+          bBox[prop] = resolvedValue(parsedSnapTarget.snapBBox[prop], prop === 'width' || prop === 'height' ? 0 : baseOriginXY[bBoxProp2Axis[prop]], baseSizeXY[bBoxProp2Axis[prop]]);
+          return bBox;
+        }, {})) : null) {
+          // Expand
         } else {
 
-          addSnapTarget(parsedSnapTarget);
+          addSnapTarget(['x', 'y', 'xStart', 'xEnd', 'xStep', 'yStart', 'yEnd', 'yStep', 'corners', 'sides', 'center'].reduce(function (targetXY, prop) {
+            targetXY[prop] = parsedSnapTarget[prop]; // Shallow copy
+            return targetXY;
+          }, {}));
         }
 
         return snapTargets;
@@ -854,6 +874,7 @@ function _setOptions(props, newOptions) {
    * @property {number} [gravity]
    * @property {string} [corner]
    * @property {string} [side]
+   * @property {boolean} [center]
    * @property {string} [edge]
    * @property {string} [base]
    */
@@ -866,6 +887,7 @@ function _setOptions(props, newOptions) {
    * @property {number} [gravity]
    * @property {string} [corner]
    * @property {string} [side]
+   * @property {boolean} [center]
    * @property {string} [edge]
    * @property {string} [base]
    */
@@ -894,6 +916,7 @@ function _setOptions(props, newOptions) {
    * @property {number} gravity
    * @property {string[]} corners
    * @property {string[]} sides
+   * @property {boolean} center
    * @property {string[]} edges
    * @property {string} base
    */
@@ -954,7 +977,7 @@ function _setOptions(props, newOptions) {
   }
   window.validSnapBBox = validSnapBBox; // [DEBUG/]
 
-  // Initialize `gravity`, `corner`, `side`, `edge`, `base`
+  // Initialize `gravity`, `corner`, `side`, `center`, `edge`, `base`
   function commonSnapOptions(options, newOptions) {
     // gravity
     if (isFinite(newOptions.gravity) && newOptions.gravity > 0) {
@@ -987,6 +1010,10 @@ function _setOptions(props, newOptions) {
     if (side && (side === 'start' || side === 'end' || side === 'both')) {
       options.side = side;
     }
+    // center
+    if (typeof newOptions.center === 'boolean') {
+      options.center = newOptions.center;
+    }
     // edge
     var edge = typeof newOptions.edge === 'string' ? newOptions.edge.trim().toLowerCase() : null;
     if (edge && (edge === 'inside' || edge === 'outside' || edge === 'both')) {
@@ -1017,6 +1044,9 @@ function _setOptions(props, newOptions) {
       }
       if (!snapOptions.side) {
         snapOptions.side = SNAP_SIDE;
+      }
+      if (typeof snapOptions.center !== 'boolean') {
+        snapOptions.center = false;
       }
       if (!snapOptions.edge) {
         snapOptions.edge = SNAP_EDGE;
@@ -1138,13 +1168,14 @@ function _setOptions(props, newOptions) {
                 commonOptions = {
               gravity: snapTargetOptions.gravity || snapOptions.gravity,
               base: snapTargetOptions.base || snapOptions.base,
+              center: typeof snapTargetOptions.center === 'boolean' ? snapTargetOptions.center : snapOptions.center,
               corners: corner === 'all' ? SNAP_ALL_CORNERS : corner.split(' '), // Split
               sides: side === 'both' ? SNAP_ALL_SIDES : [side], // Split
               edges: edge === 'both' ? SNAP_ALL_EDGES : [edge] // Split
             };
             expandedParsedSnapTargets.forEach(function (parsedSnapTarget) {
               // Set common SnapOptions
-              ['gravity', 'corners', 'sides', 'edges', 'base'].forEach(function (option) {
+              ['gravity', 'corners', 'sides', 'center', 'edges', 'base'].forEach(function (option) {
                 parsedSnapTarget[option] = commonOptions[option];
               });
               parsedSnapTargets.push(parsedSnapTarget);
