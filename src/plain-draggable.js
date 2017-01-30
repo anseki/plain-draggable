@@ -281,11 +281,11 @@ function initBBox(props) {
 
   const elementBBox = props.elementBBox = getBBox(element),
     containmentBBox = props.containmentBBox =
-      props.containmentIsBBox ? props.options.containment : getBBox(props.options.containment, true);
-  props.minLeft = containmentBBox.left;
-  props.maxLeft = containmentBBox.right - elementBBox.width;
-  props.minTop = containmentBBox.top;
-  props.maxTop = containmentBBox.bottom - elementBBox.height;
+      props.containmentIsBBox ? props.options.containment : getBBox(props.options.containment, true),
+    minLeft = props.minLeft = containmentBBox.left,
+    maxLeft = props.maxLeft = containmentBBox.right - elementBBox.width,
+    minTop = props.minTop = containmentBBox.top,
+    maxTop = props.maxTop = containmentBBox.bottom - elementBBox.height;
   // Adjust position
   move(props, {left: elementBBox.left, top: elementBBox.top});
 
@@ -301,7 +301,100 @@ function initBBox(props) {
 
   // snap targets
   if (props.parsedSnapTargets) {
-    const docRect = document.documentElement.getBoundingClientRect();
+    const docRect = document.documentElement.getBoundingClientRect(),
+      snapTargets = props.parsedSnapTargets.reduce((snapTargets, parsedSnapTarget) => {
+        const baseRect = parsedSnapTarget.base === 'containment' ? containmentBBox : docRect,
+          baseOriginXY = {x: baseRect.left, y: baseRect.top},
+          baseSizeXY = {x: baseRect.width, y: baseRect.height},
+          elementSizeXY = {x: elementBBox.width, y: elementBBox.height},
+          minXY = {x: minLeft, y: minTop}, maxXY = {x: maxLeft, y: maxTop};
+
+        /**
+         * @typedef {{x: (number|SnapValue), y, xStart, xEnd, xStep, yStart, yEnd, yStep}} TargetXY
+         * @property {string[]} [corners]
+         * @property {string[]} [sides]
+         */
+
+        function resolvedValue(snapValue, baseOrigin, baseSize) {
+          return typeof snapValue === 'number' ? snapValue :
+            baseOrigin + snapValue.value * (snapValue.isRatio ? baseSize : 1);
+        }
+
+        // Add single Point or Line (targetXY has no *Step)
+        function addSnapTarget(targetXY) {
+          if (targetXY.x != null && targetXY.y != null) { // Point
+            targetXY.x = resolvedValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
+            targetXY.y = resolvedValue(targetXY.y, baseOriginXY.y, baseSizeXY.y);
+            (targetXY.corners || parsedSnapTarget.corners).forEach(corner => {
+              const x = targetXY.x - (corner === 'tr' || corner === 'br' ? elementSizeXY.x : 0),
+                y = targetXY.y - (corner === 'bl' || corner === 'br' ? elementSizeXY.y : 0);
+              if (x >= minXY.x && x <= maxXY.x && y >= minXY.y && y <= maxXY.y) {
+                const snapTarget = {x: x, y: y},
+                  gravityXStart = x - parsedSnapTarget.gravity,
+                  gravityXEnd = x + parsedSnapTarget.gravity,
+                  gravityYStart = y - parsedSnapTarget.gravity,
+                  gravityYEnd = y + parsedSnapTarget.gravity;
+                if (gravityXStart > minXY.x) { snapTarget.gravityXStart = gravityXStart; }
+                if (gravityXEnd < maxXY.x) { snapTarget.gravityXEnd = gravityXEnd; }
+                if (gravityYStart > minXY.y) { snapTarget.gravityYStart = gravityYStart; }
+                if (gravityYEnd < maxXY.y) { snapTarget.gravityYEnd = gravityYEnd; }
+                snapTargets.push(snapTarget);
+              }
+            });
+
+          } else { // Line
+            const specAxis = targetXY.x != null ? 'x' : 'y', rangeAxis = specAxis === 'x' ? 'y' : 'x',
+              startProp = `${rangeAxis}Start`, endProp = `${rangeAxis}End`,
+              specAxisL = specAxis.toUpperCase(), rangeAxisL = rangeAxis.toUpperCase(),
+              gravitySpecStartProp = `gravity${specAxisL}Start`,
+              gravitySpecEndProp = `gravity${specAxisL}End`,
+              gravityRangeStartProp = `gravity${rangeAxisL}Start`,
+              gravityRangeEndProp = `gravity${rangeAxisL}End`;
+            targetXY[specAxis] =
+              resolvedValue(targetXY[specAxis], baseOriginXY[specAxis], baseSizeXY[specAxis]);
+            targetXY[startProp] =
+              resolvedValue(targetXY[startProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]);
+            targetXY[endProp] =
+              resolvedValue(targetXY[endProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]) -
+              elementSizeXY[rangeAxis]; // Reduce the end of the line.
+            (targetXY.sides || parsedSnapTarget.sides).forEach(side => {
+              const xy = targetXY[specAxis] - (side === 'end' ? elementSizeXY[specAxis] : 0);
+              if (xy >= minXY[specAxis] && xy <= maxXY[specAxis]) {
+                const snapTarget = {},
+                  gravitySpecStart = xy - parsedSnapTarget.gravity,
+                  gravitySpecEnd = xy + parsedSnapTarget.gravity;
+                snapTarget[specAxis] = xy;
+                if (gravitySpecStart > minXY[specAxis]) {
+                  snapTarget[gravitySpecStartProp] = gravitySpecStart;
+                }
+                if (gravitySpecEnd < maxXY[specAxis]) {
+                  snapTarget[gravitySpecEndProp] = gravitySpecEnd;
+                }
+                if (targetXY[startProp] > minXY.y) {
+                  snapTarget[gravityRangeStartProp] = targetXY[startProp];
+                }
+                if (targetXY[endProp] < maxXY.y) {
+                  snapTarget[gravityRangeEndProp] = targetXY[endProp];
+                }
+                snapTargets.push(snapTarget);
+              }
+            });
+          }
+        }
+
+        if (parsedSnapTarget.element) { // Element
+
+        } else if (parsedSnapTarget.snapBBox) { // SnapBBox
+
+        } else {
+
+          addSnapTarget(parsedSnapTarget);
+        }
+
+        return snapTargets;
+      }, []);
+
+    props.snapTargets = snapTargets.length ? snapTargets : null;
   }
 
   window.initBBoxDone = true; // [DEBUG/]
@@ -536,7 +629,7 @@ function setOptions(props, newOptions) {
           newSnapTargetOptions =
             isElementPre || snapBBoxPre ? {target: target} : // Direct Element | SnapBBox
             isObject(target) &&
-              target.start == null && target.end == null && target.step == null ? target : // Normal options
+              target.start == null && target.end == null && target.step == null ? target : // SnapTargetOptions
             {x: target, y: target}, // Others, it might be {step, start, end}
           expandedParsedSnapTargets = [],
           snapTargetOptions = {},
@@ -650,7 +743,7 @@ function setOptions(props, newOptions) {
       }
     }
   } else if (newOptions.hasOwnProperty('snap') && props.parsedSnapTargets) {
-    options.snap = props.parsedSnapTargets = props.snap = void 0;
+    options.snap = props.parsedSnapTargets = props.snapTargets = void 0;
   }
 
   if (needsInitBBox) { initBBox(props); }
@@ -862,7 +955,29 @@ document.addEventListener('mousemove', AnimEvent.add(event => {
       move(activeItem, {
         left: event.pageX + pointerOffset.left,
         top: event.pageY + pointerOffset.top
-      }, activeItem.onDrag)) {
+      },
+      activeItem.snapTargets ? position => { // Snap
+        let snappedX = false, snappedY = false;
+        activeItem.snapTargets.some(snapTarget => {
+          if ((snapTarget.gravityXStart == null || position.left >= snapTarget.gravityXStart) &&
+              (snapTarget.gravityXEnd == null || position.left <= snapTarget.gravityXEnd) &&
+              (snapTarget.gravityYStart == null || position.top >= snapTarget.gravityYStart) &&
+              (snapTarget.gravityYEnd == null || position.top <= snapTarget.gravityYEnd)) {
+            if (!snappedX && snapTarget.x != null) {
+              position.left = snapTarget.x;
+              snappedX = true;
+            }
+            if (!snappedY && snapTarget.y != null) {
+              position.top = snapTarget.y;
+              snappedY = true;
+            }
+          }
+          return snappedX && snappedY;
+        });
+        position.snapped = snappedX || snappedY;
+        return activeItem.onDrag ? activeItem.onDrag(position) : true;
+      } : activeItem.onDrag)) {
+
     if (!hasMoved) {
       hasMoved = true;
       if (activeItem.onMoveStart) { activeItem.onMoveStart(); }
