@@ -791,9 +791,14 @@ function initBBox(props) {
         }, {})) : null) {
           // Expand into 4 lines.
           parsedSnapTarget.edges.forEach(function (edge) {
-            var lengthenX = edge === 'outside' ? elementBBox.width : 0,
-                lengthenY = edge === 'outside' ? elementBBox.height : 0,
-                xStart = bBox.left - lengthenX,
+            var lengthenX = parsedSnapTarget.gravity,
+                lengthenY = parsedSnapTarget.gravity;
+            if (edge === 'outside') {
+              // Snap it when a part of the element is part of the range.
+              lengthenX += elementBBox.width;
+              lengthenY += elementBBox.height;
+            }
+            var xStart = bBox.left - lengthenX,
                 xEnd = bBox.right + lengthenX,
                 yStart = bBox.top - lengthenY,
                 yEnd = bBox.bottom + lengthenY;
@@ -1519,21 +1524,28 @@ document.addEventListener('mousemove', _animEvent2.default.add(function (event) 
         snappedY = false,
         i = void 0,
         iLen = activeItem.snapTargets.length;
+    console.log('======== snapTargets loop START length: %i', iLen); // [DEBUG/]
     for (i = 0; i < iLen && (!snappedX || !snappedY); i++) {
       var snapTarget = activeItem.snapTargets[i];
+      var curI = i; // [DEBUG/]
+      console.log('[%i] ---- Check snapTarget', curI); // [DEBUG/]
       if ((snapTarget.gravityXStart == null || position.left >= snapTarget.gravityXStart) && (snapTarget.gravityXEnd == null || position.left <= snapTarget.gravityXEnd) && (snapTarget.gravityYStart == null || position.top >= snapTarget.gravityYStart) && (snapTarget.gravityYEnd == null || position.top <= snapTarget.gravityYEnd)) {
+        console.log('[%i] In gravity zone', curI); // [DEBUG/]
         if (!snappedX && snapTarget.x != null) {
+          console.log('[%i] Snap X', curI); // [DEBUG/]
           position.left = snapTarget.x;
           snappedX = true;
           i = -1; // Restart loop
         }
         if (!snappedY && snapTarget.y != null) {
+          console.log('[%i] Snap Y', curI); // [DEBUG/]
           position.top = snapTarget.y;
           snappedY = true;
           i = -1; // Restart loop
         }
       }
     }
+    console.log('======== snapTargets loop END'); // [DEBUG/]
     position.snapped = snappedX || snappedY;
     return activeItem.onDrag ? activeItem.onDrag(position) : true;
   } : activeItem.onDrag)) {

@@ -413,9 +413,12 @@ function initBBox(props) {
               }, {})) : null)) {
           // Expand into 4 lines.
           parsedSnapTarget.edges.forEach(edge => {
-            const lengthenX = edge === 'outside' ? elementBBox.width : 0,
-              lengthenY = edge === 'outside' ? elementBBox.height : 0,
-              xStart = bBox.left - lengthenX, xEnd = bBox.right + lengthenX,
+            let lengthenX = parsedSnapTarget.gravity, lengthenY = parsedSnapTarget.gravity;
+            if (edge === 'outside') { // Snap it when a part of the element is part of the range.
+              lengthenX += elementBBox.width;
+              lengthenY += elementBBox.height;
+            }
+            const xStart = bBox.left - lengthenX, xEnd = bBox.right + lengthenX,
               yStart = bBox.top - lengthenY, yEnd = bBox.bottom + lengthenY;
             let side = edge === 'inside' ? 'start' : 'end';
             addSnapTarget({xStart: xStart, xEnd: xEnd, y: bBox.top, sides: [side], center: false}); // Top
