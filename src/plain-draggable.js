@@ -302,17 +302,18 @@ function initBBox(props) {
   // snap targets
   if (props.parsedSnapTargets) {
     const docRect = document.documentElement.getBoundingClientRect(),
+      elementSizeXY = {x: elementBBox.width, y: elementBBox.height},
+      minXY = {x: minLeft, y: minTop}, maxXY = {x: maxLeft, y: maxTop},
+      bBoxProp2Axis = {left: 'x', right: 'x', x: 'x', width: 'x',
+        top: 'y', bottom: 'y', y: 'y', height: 'y'},
+
       snapTargets = props.parsedSnapTargets.reduce((snapTargets, parsedSnapTarget) => {
         const baseRect = parsedSnapTarget.base === 'containment' ? containmentBBox : docRect,
           baseOriginXY = {x: baseRect.left, y: baseRect.top},
-          baseSizeXY = {x: baseRect.width, y: baseRect.height},
-          elementSizeXY = {x: elementBBox.width, y: elementBBox.height},
-          minXY = {x: minLeft, y: minTop}, maxXY = {x: maxLeft, y: maxTop},
-          bBoxProp2Axis = {left: 'x', right: 'x', x: 'x', width: 'x',
-            top: 'y', bottom: 'y', y: 'y', height: 'y'};
+          baseSizeXY = {x: baseRect.width, y: baseRect.height};
 
         /**
-         * Shallow copy of parsedSnapTarget
+         * Basically, shallow copy from parsedSnapTarget.
          * @typedef {{x: (number|SnapValue), y, xStart, xEnd, xStep, yStart, yEnd, yStep}} TargetXY
          * @property {string[]} [corners]
          * @property {string[]} [sides]
@@ -326,14 +327,17 @@ function initBBox(props) {
 
         // Add single Point or Line (targetXY has no *Step)
         function addSnapTarget(targetXY) {
+          const center = typeof targetXY.center === 'boolean' ? targetXY.center : parsedSnapTarget.center;
           if (targetXY.x != null && targetXY.y != null) { // Point
             targetXY.x = resolvedValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
             targetXY.y = resolvedValue(targetXY.y, baseOriginXY.y, baseSizeXY.y);
-            if (targetXY.center) {
+
+            if (center) {
               targetXY.x -= elementSizeXY.x / 2;
               targetXY.y -= elementSizeXY.y / 2;
               targetXY.corners = ['tl'];
             }
+
             (targetXY.corners || parsedSnapTarget.corners).forEach(corner => {
               const x = targetXY.x - (corner === 'tr' || corner === 'br' ? elementSizeXY.x : 0),
                 y = targetXY.y - (corner === 'bl' || corner === 'br' ? elementSizeXY.y : 0);
@@ -366,10 +370,13 @@ function initBBox(props) {
             targetXY[endProp] =
               resolvedValue(targetXY[endProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]) -
               elementSizeXY[rangeAxis]; // Reduce the end of the line.
-            if (targetXY.center) {
+            if (targetXY[startProp] > targetXY[endProp]) { return; } // Smaller than element size.
+
+            if (center) {
               targetXY[specAxis] -= elementSizeXY[specAxis] / 2;
               targetXY.sides = ['start'];
             }
+
             (targetXY.sides || parsedSnapTarget.sides).forEach(side => {
               const xy = targetXY[specAxis] - (side === 'end' ? elementSizeXY[specAxis] : 0);
               if (xy >= minXY[specAxis] && xy <= maxXY[specAxis]) {
@@ -383,10 +390,10 @@ function initBBox(props) {
                 if (gravitySpecEnd < maxXY[specAxis]) {
                   snapTarget[gravitySpecEndProp] = gravitySpecEnd;
                 }
-                if (targetXY[startProp] > minXY.y) {
+                if (targetXY[startProp] > minXY[rangeAxis]) {
                   snapTarget[gravityRangeStartProp] = targetXY[startProp];
                 }
-                if (targetXY[endProp] < maxXY.y) {
+                if (targetXY[endProp] < maxXY[rangeAxis]) {
                   snapTarget[gravityRangeEndProp] = targetXY[endProp];
                 }
                 snapTargets.push(snapTarget);
@@ -404,12 +411,24 @@ function initBBox(props) {
                   baseSizeXY[bBoxProp2Axis[prop]]);
                 return bBox;
               }, {})) : null)) {
-          // Expand
+          // Expand into 4 lines.
+          parsedSnapTarget.edges.forEach(edge => {
+            const lengthenX = edge === 'outside' ? elementBBox.width : 0,
+              lengthenY = edge === 'outside' ? elementBBox.height : 0,
+              xStart = bBox.left - lengthenX, xEnd = bBox.right + lengthenX,
+              yStart = bBox.top - lengthenY, yEnd = bBox.bottom + lengthenY;
+            let side = edge === 'inside' ? 'start' : 'end';
+            addSnapTarget({xStart: xStart, xEnd: xEnd, y: bBox.top, sides: [side], center: false}); // Top
+            addSnapTarget({x: bBox.left, yStart: yStart, yEnd: yEnd, sides: [side], center: false}); // Left
+            side = edge === 'inside' ? 'end' : 'start';
+            addSnapTarget({xStart: xStart, xEnd: xEnd, y: bBox.bottom, sides: [side], center: false}); // Bottom
+            addSnapTarget({x: bBox.right, yStart: yStart, yEnd: yEnd, sides: [side], center: false}); // Right
+          });
+
         } else {
 
           addSnapTarget(
-            ['x', 'y', 'xStart', 'xEnd', 'xStep', 'yStart', 'yEnd', 'yStep', 'corners', 'sides', 'center']
-            .reduce((targetXY, prop) => {
+            ['x', 'y', 'xStart', 'xEnd', 'yStart', 'yEnd'].reduce((targetXY, prop) => {
               targetXY[prop] = parsedSnapTarget[prop]; // Shallow copy
               return targetXY;
             }, {}));
@@ -707,10 +726,10 @@ function setOptions(props, newOptions) {
           if (parsedXY.xStart && !parsedXY.xStep && parsedXY.yStart && !parsedXY.yStep) {
             // Expand into 4 lines.
             expandedParsedSnapTargets.push(
-              {xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yStart},
-              {xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yEnd},
-              {x: parsedXY.xStart, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd},
-              {x: parsedXY.xEnd, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd}
+              {xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yStart}, // Top
+              {xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yEnd}, // Bottom
+              {x: parsedXY.xStart, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd}, // Left
+              {x: parsedXY.xEnd, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd} // Right
             );
           } else {
             let expanded = [parsedXY];
@@ -989,8 +1008,9 @@ document.addEventListener('mousemove', AnimEvent.add(event => {
         top: event.pageY + pointerOffset.top
       },
       activeItem.snapTargets ? position => { // Snap
-        let snappedX = false, snappedY = false;
-        activeItem.snapTargets.some(snapTarget => {
+        let snappedX = false, snappedY = false, i, iLen = activeItem.snapTargets.length;
+        for (i = 0; i < iLen && (!snappedX || !snappedY); i++) {
+          const snapTarget = activeItem.snapTargets[i];
           if ((snapTarget.gravityXStart == null || position.left >= snapTarget.gravityXStart) &&
               (snapTarget.gravityXEnd == null || position.left <= snapTarget.gravityXEnd) &&
               (snapTarget.gravityYStart == null || position.top >= snapTarget.gravityYStart) &&
@@ -998,14 +1018,15 @@ document.addEventListener('mousemove', AnimEvent.add(event => {
             if (!snappedX && snapTarget.x != null) {
               position.left = snapTarget.x;
               snappedX = true;
+              i = -1; // Restart loop
             }
             if (!snappedY && snapTarget.y != null) {
               position.top = snapTarget.y;
               snappedY = true;
+              i = -1; // Restart loop
             }
           }
-          return snappedX && snappedY;
-        });
+        }
         position.snapped = snappedX || snappedY;
         return activeItem.onDrag ? activeItem.onDrag(position) : true;
       } : activeItem.onDrag)) {
