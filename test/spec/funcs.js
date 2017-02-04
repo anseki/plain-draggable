@@ -107,6 +107,8 @@ describe('functions', function() {
     expect(commonSnapOptions({dummy: 1}, {corner: 'dummy1 dummy2 dummy3'})).toEqual({dummy: 1});
     expect(commonSnapOptions({dummy: 1}, {corner: 'top-left RIGHT-BOTTOM lb rt'}))
       .toEqual({corner: 'all', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {corner: ' lb lb lb rt lb lb'}))
+      .toEqual({corner: 'bl tr', dummy: 1});
 
     // side
     expect(commonSnapOptions({dummy: 1}, {side: 9})).toEqual({dummy: 1}); // Invalid
