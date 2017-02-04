@@ -411,7 +411,7 @@ function initBBox(props) {
         if ((bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : null) || // Element
             parsedSnapTarget.snapBBox) {
           if (parsedSnapTarget.snapBBox) { // SnapBBox (It might be invalid)
-            bBox = validBBox(Object.keys(parsedSnapTarget.snapBBox).reduce((bBox, prop) => {
+            bBox = validBBox(Object.keys(parsedSnapTarget.snapBBox).reduce((bBox, prop) => { // SnapBBox -> BBox
               bBox[prop] = resolvedValue(parsedSnapTarget.snapBBox[prop],
                 prop === 'width' || prop === 'height' ? 0 : baseOriginXY[bBoxProp2Axis[prop]],
                 baseSizeXY[bBoxProp2Axis[prop]]);
@@ -459,8 +459,8 @@ function initBBox(props) {
 
           ['x', 'y'].forEach(axis => {
             const propStart = `${axis}Start`, propEnd = `${axis}End`, propStep = `${axis}Step`;
-            expanded = expanded.reduce((expanded, parsedXY) => {
-              let step = parsedXY[propStep], start = parsedXY[propStart], end = parsedXY[propEnd];
+            expanded = expanded.reduce((expanded, targetXY) => {
+              let start = targetXY[propStart], end = targetXY[propEnd], step = targetXY[propStep];
 
               if (start != null && end != null && start >= end) { // start >= end -> {0, 100%}
                 start = defaultStart[axis];
@@ -469,21 +469,27 @@ function initBBox(props) {
 
               if (step != null && step >= 2) { // step >= 2px
                 // Expand by step
-                let curValue = start;
+                let middleGravity = step / 2; // max
+                middleGravity = parsedSnapTarget.gravity > middleGravity ? middleGravity : null;
+                let curValue = start, added;
                 while (curValue <= end) {
-                  const expandedXY = Object.keys(parsedXY).reduce((expandedXY, prop) => {
-                    expandedXY[prop] = parsedXY[prop];
+                  const expandedXY = Object.keys(targetXY).reduce((expandedXY, prop) => {
+                    if (prop !== propStart && prop !== propEnd && prop !== propStep) {
+                      expandedXY[prop] = targetXY[prop];
+                    }
                     return expandedXY;
                   }, {});
-                  delete expandedXY[propStep];
-                  delete expandedXY[propStart];
-                  delete expandedXY[propEnd];
                   expandedXY[axis] = curValue;
+                  if (added) { expandedXY.startGravity = middleGravity; } // Set startGravity exept 1st item.
+                  expandedXY.endGravity = middleGravity; // Set endGravity exept last item. (remove it, after)
+                  added = true;
+
                   expanded.push(expandedXY);
                   curValue += step;
                 }
+                if (added) { expanded[expanded.length - 1].endGravity = null; } // Remove from last item.
               } else {
-                expanded.push(parsedXY);
+                expanded.push(targetXY);
               }
               return expanded;
             }, []);
