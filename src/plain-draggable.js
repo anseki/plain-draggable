@@ -291,15 +291,15 @@ function initBBox(props) {
 
   /**
    * @typedef {Object} SnapTarget
-   * @property {number} [x] - A coordinate it moves to. It must have x or y or both.
+   * @property {number} [x] - A coordinate it moves to. It has x or y or both.
    * @property {number} [y]
-   * @property {number} [gravityXStart] - Gravity zone. It must have *Start or *End or both, and *X* or *Y* or both.
+   * @property {number} [gravityXStart] - Gravity zone. It has *Start or *End or both, and *X* or *Y* or both.
    * @property {number} [gravityXEnd]
    * @property {number} [gravityYStart]
    * @property {number} [gravityYEnd]
    */
 
-  // snap targets
+  // Snap targets
   if (props.parsedSnapTargets) {
     const docRect = document.documentElement.getBoundingClientRect(),
       elementSizeXY = {x: elementBBox.width, y: elementBBox.height},
@@ -313,11 +313,13 @@ function initBBox(props) {
           baseSizeXY = {x: baseRect.width, y: baseRect.height};
 
         /**
-         * Basically, shallow copy from parsedSnapTarget.
+         * Basically, shallow copy from parsedSnapTarget, and it can have resolved values.
          * @typedef {{x: (number|SnapValue), y, xStart, xEnd, xStep, yStart, yEnd, yStep}} TargetXY
-         * @property {string[]} [corners]
+         * @property {string[]} [corners] - Applied value.
          * @property {string[]} [sides]
          * @property {boolean} center
+         * @property {number} [startGravity] - Override parsedSnapTarget.gravity.
+         * @property {number} [endGravity]
          */
 
         function resolvedValue(snapValue, baseOrigin, baseSize) {
@@ -327,12 +329,15 @@ function initBBox(props) {
 
         // Add single Point or Line (targetXY has no *Step)
         function addSnapTarget(targetXY) {
-          const center = typeof targetXY.center === 'boolean' ? targetXY.center : parsedSnapTarget.center;
+          if (targetXY.center == null) { targetXY.center = parsedSnapTarget.center; }
+          if (targetXY.startGravity == null) { targetXY.startGravity = parsedSnapTarget.gravity; }
+          if (targetXY.endGravity == null) { targetXY.endGravity = parsedSnapTarget.gravity; }
+
           if (targetXY.x != null && targetXY.y != null) { // Point
             targetXY.x = resolvedValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
             targetXY.y = resolvedValue(targetXY.y, baseOriginXY.y, baseSizeXY.y);
 
-            if (center) {
+            if (targetXY.center) {
               targetXY.x -= elementSizeXY.x / 2;
               targetXY.y -= elementSizeXY.y / 2;
               targetXY.corners = ['tl'];
@@ -343,10 +348,10 @@ function initBBox(props) {
                 y = targetXY.y - (corner === 'bl' || corner === 'br' ? elementSizeXY.y : 0);
               if (x >= minXY.x && x <= maxXY.x && y >= minXY.y && y <= maxXY.y) {
                 const snapTarget = {x: x, y: y},
-                  gravityXStart = x - parsedSnapTarget.gravity,
-                  gravityXEnd = x + parsedSnapTarget.gravity,
-                  gravityYStart = y - parsedSnapTarget.gravity,
-                  gravityYEnd = y + parsedSnapTarget.gravity;
+                  gravityXStart = x - targetXY.startGravity,
+                  gravityXEnd = x + targetXY.endGravity,
+                  gravityYStart = y - targetXY.startGravity,
+                  gravityYEnd = y + targetXY.endGravity;
                 if (gravityXStart > minXY.x) { snapTarget.gravityXStart = gravityXStart; }
                 if (gravityXEnd < maxXY.x) { snapTarget.gravityXEnd = gravityXEnd; }
                 if (gravityYStart > minXY.y) { snapTarget.gravityYStart = gravityYStart; }
@@ -372,7 +377,7 @@ function initBBox(props) {
               elementSizeXY[rangeAxis]; // Reduce the end of the line.
             if (targetXY[startProp] > targetXY[endProp]) { return; } // Smaller than element size.
 
-            if (center) {
+            if (targetXY.center) {
               targetXY[specAxis] -= elementSizeXY[specAxis] / 2;
               targetXY.sides = ['start'];
             }
@@ -381,8 +386,8 @@ function initBBox(props) {
               const xy = targetXY[specAxis] - (side === 'end' ? elementSizeXY[specAxis] : 0);
               if (xy >= minXY[specAxis] && xy <= maxXY[specAxis]) {
                 const snapTarget = {},
-                  gravitySpecStart = xy - parsedSnapTarget.gravity,
-                  gravitySpecEnd = xy + parsedSnapTarget.gravity;
+                  gravitySpecStart = xy - targetXY.startGravity,
+                  gravitySpecEnd = xy + targetXY.endGravity;
                 snapTarget[specAxis] = xy;
                 if (gravitySpecStart > minXY[specAxis]) {
                   snapTarget[gravitySpecStartProp] = gravitySpecStart;
@@ -815,8 +820,7 @@ function setOptions(props, newOptions) {
         if (expandedParsedSnapTargets.length) {
           snapTargetsOptions.push(commonSnapOptions(snapTargetOptions, newSnapTargetOptions));
           // Copy common SnapOptions
-          const
-            corner = snapTargetOptions.corner || snapOptions.corner,
+          const corner = snapTargetOptions.corner || snapOptions.corner,
             side = snapTargetOptions.side || snapOptions.side,
             edge = snapTargetOptions.edge || snapOptions.edge,
             commonOptions = {
