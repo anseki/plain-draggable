@@ -304,8 +304,8 @@ function initBBox(props) {
     const docRect = document.documentElement.getBoundingClientRect(),
       elementSizeXY = {x: elementBBox.width, y: elementBBox.height},
       minXY = {x: minLeft, y: minTop}, maxXY = {x: maxLeft, y: maxTop},
-      bBoxProp2Axis = {left: 'x', right: 'x', x: 'x', width: 'x',
-        top: 'y', bottom: 'y', y: 'y', height: 'y'},
+      prop2Axis = {left: 'x', right: 'x', x: 'x', width: 'x', xStart: 'x', xEnd: 'x', xStep: 'x',
+        top: 'y', bottom: 'y', y: 'y', height: 'y', yStart: 'y', yEnd: 'y', yStep: 'y'},
 
       snapTargets = props.parsedSnapTargets.reduce((snapTargets, parsedSnapTarget) => {
         const baseRect = parsedSnapTarget.base === 'containment' ? containmentBBox : docRect,
@@ -413,8 +413,8 @@ function initBBox(props) {
           if (parsedSnapTarget.snapBBox) { // SnapBBox (It might be invalid)
             bBox = validBBox(Object.keys(parsedSnapTarget.snapBBox).reduce((bBox, prop) => { // SnapBBox -> BBox
               bBox[prop] = resolvedValue(parsedSnapTarget.snapBBox[prop],
-                prop === 'width' || prop === 'height' ? 0 : baseOriginXY[bBoxProp2Axis[prop]],
-                baseSizeXY[bBoxProp2Axis[prop]]);
+                prop === 'width' || prop === 'height' ? 0 : baseOriginXY[prop2Axis[prop]],
+                baseSizeXY[prop2Axis[prop]]);
               return bBox;
             }, {}));
           }
@@ -450,8 +450,8 @@ function initBBox(props) {
             ['x', 'y', 'xStart', 'xEnd', 'xStep', 'yStart', 'yEnd', 'yStep'].reduce((targetXY, prop) => {
               if (parsedSnapTarget[prop]) {
                 targetXY[prop] = resolvedValue(parsedSnapTarget[prop],
-                  prop === 'xStep' || prop === 'yStep' ? 0 : baseOriginXY[bBoxProp2Axis[prop]],
-                  baseSizeXY[bBoxProp2Axis[prop]]);
+                  prop === 'xStep' || prop === 'yStep' ? 0 : baseOriginXY[prop2Axis[prop]],
+                  baseSizeXY[prop2Axis[prop]]);
               }
               return targetXY;
             }, {})

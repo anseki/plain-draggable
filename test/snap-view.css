@@ -1,0 +1,33 @@
+
+.snap-view-point {
+  position: absolute;
+  background-color: rgba(242, 9, 108, 0.4);
+}
+
+.snap-view-point > div {
+  position: absolute;
+  right: 100%;
+  bottom: 100%;
+  background-color: rgba(24, 98, 208, 0.4);
+}
+
+.snap-view-line { /* horizontal */
+  position: absolute;
+  background-color: rgba(242, 9, 108, 0.4);
+}
+
+.snap-view-line > div {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  background-color: rgba(24, 98, 208, 0.4);
+  width: 100%;
+}
+
+.snap-view-line.snap-view-v > div { /* vertical */
+  left: auto;
+  right: 100%;
+  bottom: auto;
+  top: 0;
+  height: 100%;
+}

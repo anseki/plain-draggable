@@ -655,34 +655,36 @@ function initBBox(props) {
 
   /**
    * @typedef {Object} SnapTarget
-   * @property {number} [x] - A coordinate it moves to. It must have x or y or both.
+   * @property {number} [x] - A coordinate it moves to. It has x or y or both.
    * @property {number} [y]
-   * @property {number} [gravityXStart] - Gravity zone. It must have *Start or *End or both, and *X* or *Y* or both.
+   * @property {number} [gravityXStart] - Gravity zone. It has *Start or *End or both, and *X* or *Y* or both.
    * @property {number} [gravityXEnd]
    * @property {number} [gravityYStart]
    * @property {number} [gravityYEnd]
    */
 
-  // snap targets
+  // Snap targets
   if (props.parsedSnapTargets) {
     (function () {
       var docRect = document.documentElement.getBoundingClientRect(),
           elementSizeXY = { x: elementBBox.width, y: elementBBox.height },
           minXY = { x: minLeft, y: minTop },
           maxXY = { x: maxLeft, y: maxTop },
-          bBoxProp2Axis = { left: 'x', right: 'x', x: 'x', width: 'x',
-        top: 'y', bottom: 'y', y: 'y', height: 'y' },
+          prop2Axis = { left: 'x', right: 'x', x: 'x', width: 'x', xStart: 'x', xEnd: 'x', xStep: 'x',
+        top: 'y', bottom: 'y', y: 'y', height: 'y', yStart: 'y', yEnd: 'y', yStep: 'y' },
           snapTargets = props.parsedSnapTargets.reduce(function (snapTargets, parsedSnapTarget) {
         var baseRect = parsedSnapTarget.base === 'containment' ? containmentBBox : docRect,
             baseOriginXY = { x: baseRect.left, y: baseRect.top },
             baseSizeXY = { x: baseRect.width, y: baseRect.height };
 
         /**
-         * Basically, shallow copy from parsedSnapTarget.
+         * Basically, shallow copy from parsedSnapTarget, and it can have resolved values.
          * @typedef {{x: (number|SnapValue), y, xStart, xEnd, xStep, yStart, yEnd, yStep}} TargetXY
-         * @property {string[]} [corners]
+         * @property {string[]} [corners] - Applied value.
          * @property {string[]} [sides]
          * @property {boolean} center
+         * @property {number} [startGravity] - Override parsedSnapTarget.gravity.
+         * @property {number} [endGravity]
          */
 
         function resolvedValue(snapValue, baseOrigin, baseSize) {
@@ -691,13 +693,22 @@ function initBBox(props) {
 
         // Add single Point or Line (targetXY has no *Step)
         function addSnapTarget(targetXY) {
-          var center = typeof targetXY.center === 'boolean' ? targetXY.center : parsedSnapTarget.center;
+          if (targetXY.center == null) {
+            targetXY.center = parsedSnapTarget.center;
+          }
+          if (targetXY.startGravity == null) {
+            targetXY.startGravity = parsedSnapTarget.gravity;
+          }
+          if (targetXY.endGravity == null) {
+            targetXY.endGravity = parsedSnapTarget.gravity;
+          }
+
           if (targetXY.x != null && targetXY.y != null) {
             // Point
             targetXY.x = resolvedValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
             targetXY.y = resolvedValue(targetXY.y, baseOriginXY.y, baseSizeXY.y);
 
-            if (center) {
+            if (targetXY.center) {
               targetXY.x -= elementSizeXY.x / 2;
               targetXY.y -= elementSizeXY.y / 2;
               targetXY.corners = ['tl'];
@@ -708,10 +719,10 @@ function initBBox(props) {
                   y = targetXY.y - (corner === 'bl' || corner === 'br' ? elementSizeXY.y : 0);
               if (x >= minXY.x && x <= maxXY.x && y >= minXY.y && y <= maxXY.y) {
                 var snapTarget = { x: x, y: y },
-                    gravityXStart = x - parsedSnapTarget.gravity,
-                    gravityXEnd = x + parsedSnapTarget.gravity,
-                    gravityYStart = y - parsedSnapTarget.gravity,
-                    gravityYEnd = y + parsedSnapTarget.gravity;
+                    gravityXStart = x - targetXY.startGravity,
+                    gravityXEnd = x + targetXY.endGravity,
+                    gravityYStart = y - targetXY.startGravity,
+                    gravityYEnd = y + targetXY.endGravity;
                 if (gravityXStart > minXY.x) {
                   snapTarget.gravityXStart = gravityXStart;
                 }
@@ -749,7 +760,7 @@ function initBBox(props) {
                 };
               } // Smaller than element size.
 
-              if (center) {
+              if (targetXY.center) {
                 targetXY[specAxis] -= elementSizeXY[specAxis] / 2;
                 targetXY.sides = ['start'];
               }
@@ -758,8 +769,8 @@ function initBBox(props) {
                 var xy = targetXY[specAxis] - (side === 'end' ? elementSizeXY[specAxis] : 0);
                 if (xy >= minXY[specAxis] && xy <= maxXY[specAxis]) {
                   var snapTarget = {},
-                      gravitySpecStart = xy - parsedSnapTarget.gravity,
-                      gravitySpecEnd = xy + parsedSnapTarget.gravity;
+                      gravitySpecStart = xy - targetXY.startGravity,
+                      gravitySpecEnd = xy + targetXY.endGravity;
                   snapTarget[specAxis] = xy;
                   if (gravitySpecStart > minXY[specAxis]) {
                     snapTarget[gravitySpecStartProp] = gravitySpecStart;
@@ -783,38 +794,107 @@ function initBBox(props) {
         }
 
         var bBox = void 0;
-        if (bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : // Element
-        parsedSnapTarget.snapBBox ? // SnapBBox
-        validBBox(Object.keys(parsedSnapTarget.snapBBox).reduce(function (bBox, prop) {
-          bBox[prop] = resolvedValue(parsedSnapTarget.snapBBox[prop], prop === 'width' || prop === 'height' ? 0 : baseOriginXY[bBoxProp2Axis[prop]], baseSizeXY[bBoxProp2Axis[prop]]);
-          return bBox;
-        }, {})) : null) {
-          // Expand into 4 lines.
-          parsedSnapTarget.edges.forEach(function (edge) {
-            var lengthenX = parsedSnapTarget.gravity,
-                lengthenY = parsedSnapTarget.gravity;
-            if (edge === 'outside') {
-              // Snap it when a part of the element is part of the range.
-              lengthenX += elementBBox.width;
-              lengthenY += elementBBox.height;
-            }
-            var xStart = bBox.left - lengthenX,
-                xEnd = bBox.right + lengthenX,
-                yStart = bBox.top - lengthenY,
-                yEnd = bBox.bottom + lengthenY;
-            var side = edge === 'inside' ? 'start' : 'end';
-            addSnapTarget({ xStart: xStart, xEnd: xEnd, y: bBox.top, sides: [side], center: false }); // Top
-            addSnapTarget({ x: bBox.left, yStart: yStart, yEnd: yEnd, sides: [side], center: false }); // Left
-            side = edge === 'inside' ? 'end' : 'start';
-            addSnapTarget({ xStart: xStart, xEnd: xEnd, y: bBox.bottom, sides: [side], center: false }); // Bottom
-            addSnapTarget({ x: bBox.right, yStart: yStart, yEnd: yEnd, sides: [side], center: false }); // Right
-          });
+        if ((bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : null) || // Element
+        parsedSnapTarget.snapBBox) {
+          if (parsedSnapTarget.snapBBox) {
+            // SnapBBox (It might be invalid)
+            bBox = validBBox(Object.keys(parsedSnapTarget.snapBBox).reduce(function (bBox, prop) {
+              // SnapBBox -> BBox
+              bBox[prop] = resolvedValue(parsedSnapTarget.snapBBox[prop], prop === 'width' || prop === 'height' ? 0 : baseOriginXY[prop2Axis[prop]], baseSizeXY[prop2Axis[prop]]);
+              return bBox;
+            }, {}));
+          }
+          if (bBox) {
+            // Expand into 4 lines.
+            parsedSnapTarget.edges.forEach(function (edge) {
+              var lengthenX = parsedSnapTarget.gravity,
+                  lengthenY = parsedSnapTarget.gravity;
+              if (edge === 'outside') {
+                // Snap it when a part of the element is part of the range.
+                lengthenX += elementBBox.width;
+                lengthenY += elementBBox.height;
+              }
+              var xStart = bBox.left - lengthenX,
+                  xEnd = bBox.right + lengthenX,
+                  yStart = bBox.top - lengthenY,
+                  yEnd = bBox.bottom + lengthenY;
+              var side = edge === 'inside' ? 'start' : 'end';
+              addSnapTarget({ xStart: xStart, xEnd: xEnd, y: bBox.top, sides: [side], center: false }); // Top
+              addSnapTarget({ x: bBox.left, yStart: yStart, yEnd: yEnd, sides: [side], center: false }); // Left
+              side = edge === 'inside' ? 'end' : 'start';
+              addSnapTarget({ xStart: xStart, xEnd: xEnd, y: bBox.bottom, sides: [side], center: false }); // Bottom
+              addSnapTarget({ x: bBox.right, yStart: yStart, yEnd: yEnd, sides: [side], center: false }); // Right
+            });
+          }
         } else {
+          (function () {
+            var defaultStart = {
+              x: resolvedValue({ value: 0, isRatio: false }, baseOriginXY.x, baseSizeXY.x),
+              y: resolvedValue({ value: 0, isRatio: false }, baseOriginXY.y, baseSizeXY.y)
+            },
+                defaultEnd = {
+              x: resolvedValue({ value: 1, isRatio: true }, baseOriginXY.x, baseSizeXY.x),
+              y: resolvedValue({ value: 1, isRatio: true }, baseOriginXY.y, baseSizeXY.y)
+            };
+            var expanded = [['x', 'y', 'xStart', 'xEnd', 'xStep', 'yStart', 'yEnd', 'yStep'].reduce(function (targetXY, prop) {
+              if (parsedSnapTarget[prop]) {
+                targetXY[prop] = resolvedValue(parsedSnapTarget[prop], prop === 'xStep' || prop === 'yStep' ? 0 : baseOriginXY[prop2Axis[prop]], baseSizeXY[prop2Axis[prop]]);
+              }
+              return targetXY;
+            }, {})];
 
-          addSnapTarget(['x', 'y', 'xStart', 'xEnd', 'yStart', 'yEnd'].reduce(function (targetXY, prop) {
-            targetXY[prop] = parsedSnapTarget[prop]; // Shallow copy
-            return targetXY;
-          }, {}));
+            ['x', 'y'].forEach(function (axis) {
+              var propStart = axis + 'Start',
+                  propEnd = axis + 'End',
+                  propStep = axis + 'Step';
+              expanded = expanded.reduce(function (expanded, targetXY) {
+                var start = targetXY[propStart],
+                    end = targetXY[propEnd],
+                    step = targetXY[propStep];
+
+                if (start != null && end != null && start >= end) {
+                  // start >= end -> {0, 100%}
+                  start = defaultStart[axis];
+                  end = defaultEnd[axis];
+                }
+
+                if (step != null && step >= 2) {
+                  // step >= 2px
+                  // Expand by step
+                  var middleGravity = step / 2; // max
+                  middleGravity = parsedSnapTarget.gravity > middleGravity ? middleGravity : null;
+                  var curValue = start,
+                      added = void 0;
+                  while (curValue <= end) {
+                    var expandedXY = Object.keys(targetXY).reduce(function (expandedXY, prop) {
+                      if (prop !== propStart && prop !== propEnd && prop !== propStep) {
+                        expandedXY[prop] = targetXY[prop];
+                      }
+                      return expandedXY;
+                    }, {});
+                    expandedXY[axis] = curValue;
+                    if (added) {
+                      expandedXY.startGravity = middleGravity;
+                    } // Set startGravity exept 1st item.
+                    expandedXY.endGravity = middleGravity; // Set endGravity exept last item. (remove it, after)
+                    added = true;
+
+                    expanded.push(expandedXY);
+                    curValue += step;
+                  }
+                  if (added) {
+                    expanded[expanded.length - 1].endGravity = null;
+                  } // Remove from last item.
+                } else {
+                  expanded.push(targetXY);
+                }
+                return expanded;
+              }, []);
+            });
+            expanded.forEach(function (targetXY) {
+              addSnapTarget(targetXY);
+            });
+          })();
         }
 
         return snapTargets;
@@ -1140,7 +1220,7 @@ function _setOptions(props, newOptions) {
                 step = validSnapValue(newOptionsXY.step);
                 if (start && end && start.isRatio === end.isRatio && start.value >= end.value) {
                   // start >= end
-                  start = end = null;
+                  start = end = null; // {0, 100%}
                 }
               }
               start = parsedXY[axis + 'Start'] = start || { value: 0, isRatio: false };
@@ -1166,18 +1246,21 @@ function _setOptions(props, newOptions) {
             (function () {
               var expanded = [parsedXY];
               ['x', 'y'].forEach(function (axis) {
+                var propStart = axis + 'Start',
+                    propEnd = axis + 'End',
+                    propStep = axis + 'Step';
                 expanded = expanded.reduce(function (expanded, parsedXY) {
-                  var step = parsedXY[axis + 'Step'],
-                      start = parsedXY[axis + 'Start'],
-                      end = parsedXY[axis + 'End'];
+                  var step = parsedXY[propStep],
+                      start = parsedXY[propStart],
+                      end = parsedXY[propEnd];
                   if (step && (!start.value || start.isRatio === step.isRatio) && (!end.value || end.isRatio === step.isRatio)) {
                     // Expand by step
                     var curValue = start.value;
                     while (curValue <= end.value) {
                       var expandedXY = copyTree(parsedXY);
-                      delete expandedXY[axis + 'Step'];
-                      delete expandedXY[axis + 'Start'];
-                      delete expandedXY[axis + 'End'];
+                      delete expandedXY[propStep];
+                      delete expandedXY[propStart];
+                      delete expandedXY[propEnd];
                       expandedXY[axis] = { value: curValue, isRatio: !!curValue && step.isRatio };
                       expanded.push(expandedXY);
                       curValue += step.value;
@@ -1524,28 +1607,21 @@ document.addEventListener('mousemove', _animEvent2.default.add(function (event) 
         snappedY = false,
         i = void 0,
         iLen = activeItem.snapTargets.length;
-    console.log('======== snapTargets loop START length: %i', iLen); // [DEBUG/]
     for (i = 0; i < iLen && (!snappedX || !snappedY); i++) {
       var snapTarget = activeItem.snapTargets[i];
-      var curI = i; // [DEBUG/]
-      console.log('[%i] ---- Check snapTarget', curI); // [DEBUG/]
       if ((snapTarget.gravityXStart == null || position.left >= snapTarget.gravityXStart) && (snapTarget.gravityXEnd == null || position.left <= snapTarget.gravityXEnd) && (snapTarget.gravityYStart == null || position.top >= snapTarget.gravityYStart) && (snapTarget.gravityYEnd == null || position.top <= snapTarget.gravityYEnd)) {
-        console.log('[%i] In gravity zone', curI); // [DEBUG/]
         if (!snappedX && snapTarget.x != null) {
-          console.log('[%i] Snap X', curI); // [DEBUG/]
           position.left = snapTarget.x;
           snappedX = true;
           i = -1; // Restart loop
         }
         if (!snappedY && snapTarget.y != null) {
-          console.log('[%i] Snap Y', curI); // [DEBUG/]
           position.top = snapTarget.y;
           snappedY = true;
           i = -1; // Restart loop
         }
       }
     }
-    console.log('======== snapTargets loop END'); // [DEBUG/]
     position.snapped = snappedX || snappedY;
     return activeItem.onDrag ? activeItem.onDrag(position) : true;
   } : activeItem.onDrag)) {
