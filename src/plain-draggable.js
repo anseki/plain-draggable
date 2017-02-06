@@ -773,8 +773,7 @@ function setOptions(props, newOptions) {
               }
               start = parsedXY[`${axis}Start`] = start || {value: 0, isRatio: false};
               end = parsedXY[`${axis}End`] = end || {value: 1, isRatio: true};
-              snapTargetOptions[axis] =
-                {start: snapValue2value(start), end: snapValue2value(end)};
+              snapTargetOptions[axis] = {start: snapValue2value(start), end: snapValue2value(end)};
               if (step && (step.isRatio ? step.value > 0 : step.value >= 2)) { // step > 0% || step >= 2px
                 parsedXY[`${axis}Step`] = step;
                 snapTargetOptions[axis].step = snapValue2value(step);
@@ -784,7 +783,7 @@ function setOptions(props, newOptions) {
           }, {});
 
           if (parsedXY.xStart && !parsedXY.xStep && parsedXY.yStart && !parsedXY.yStep) {
-            // Expand into 4 lines.
+            // Expand into 4 lines. This is not BBox, and `edge` is ignored.
             expandedParsedSnapTargets.push(
               {xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yStart}, // Top
               {xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yEnd}, // Bottom
@@ -792,31 +791,7 @@ function setOptions(props, newOptions) {
               {x: parsedXY.xEnd, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd} // Right
             );
           } else {
-            let expanded = [parsedXY];
-            ['x', 'y'].forEach(axis => {
-              const propStart = `${axis}Start`, propEnd = `${axis}End`, propStep = `${axis}Step`;
-              expanded = expanded.reduce((expanded, parsedXY) => {
-                const step = parsedXY[propStep], start = parsedXY[propStart], end = parsedXY[propEnd];
-                if (step && (!start.value || start.isRatio === step.isRatio) &&
-                    (!end.value || end.isRatio === step.isRatio)) {
-                  // Expand by step
-                  let curValue = start.value;
-                  while (curValue <= end.value) {
-                    const expandedXY = copyTree(parsedXY);
-                    delete expandedXY[propStep];
-                    delete expandedXY[propStart];
-                    delete expandedXY[propEnd];
-                    expandedXY[axis] = {value: curValue, isRatio: !!curValue && step.isRatio};
-                    expanded.push(expandedXY);
-                    curValue += step.value;
-                  }
-                } else {
-                  expanded.push(parsedXY);
-                }
-                return expanded;
-              }, []);
-            });
-            Array.prototype.push.apply(expandedParsedSnapTargets, expanded);
+            expandedParsedSnapTargets.push(parsedXY);
           }
         }
 
