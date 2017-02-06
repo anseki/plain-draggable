@@ -289,6 +289,8 @@ function initBBox(props) {
   // Adjust position
   move(props, {left: elementBBox.left, top: elementBBox.top});
 
+  // Snap targets
+
   /**
    * @typedef {Object} SnapTarget
    * @property {number} [x] - A coordinate it moves to. It has x or y or both.
@@ -299,7 +301,6 @@ function initBBox(props) {
    * @property {number} [gravityYEnd]
    */
 
-  // Snap targets
   if (props.parsedSnapTargets) {
     const docRect = document.documentElement.getBoundingClientRect(),
       elementSizeXY = {x: elementBBox.width, y: elementBBox.height},
@@ -502,18 +503,7 @@ function initBBox(props) {
 
     props.snapTargets = snapTargets.length ? snapTargets : null;
   }
-
   window.initBBoxDone = true; // [DEBUG/]
-
-        // points.sort((a, b) => a - b);
-        // let lastPoint = -2;
-        // points = points.filter(point => {
-        //   if (point - lastPoint >= 2) {
-        //     lastPoint = point;
-        //     return true;
-        //   }
-        //   return false;
-        // });
 }
 
 function mousedown(props, event) {

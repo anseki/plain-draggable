@@ -4,7 +4,9 @@
 var snapView = (function() {
   'use strict';
 
-  var items = [], offset;
+  var items = [], offset,
+    isFinite = Number.isFinite ||
+      function(value) { return typeof value === 'number' && window.isFinite(value); };
 
   function initOffset(element) {
     element.style.left = element.style.top = '0';
@@ -75,6 +77,9 @@ var snapView = (function() {
         props.snapTargets.forEach(function(snapTarget) {
           items.push(newItem(snapTarget, props.minLeft, props.maxLeft, props.minTop, props.maxTop));
         });
+        if (!isFinite(parseFloat(getComputedStyle(props.element, '').zIndex))) {
+          props.orgZIndex = props.elementStyle.zIndex = 2;
+        }
       }
     });
   }

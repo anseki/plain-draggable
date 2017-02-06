@@ -2,6 +2,7 @@
 .snap-view-point {
   position: absolute;
   background-color: rgba(242, 9, 108, 0.4);
+  z-index: 1;
 }
 
 .snap-view-point > div {
@@ -14,6 +15,7 @@
 .snap-view-line { /* horizontal */
   position: absolute;
   background-color: rgba(242, 9, 108, 0.4);
+  z-index: 1;
 }
 
 .snap-view-line > div {
