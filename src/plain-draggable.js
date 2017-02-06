@@ -319,8 +319,10 @@ function initBBox(props) {
          * @property {string[]} [corners] - Applied value.
          * @property {string[]} [sides]
          * @property {boolean} center
-         * @property {number} [startGravity] - Override parsedSnapTarget.gravity.
-         * @property {number} [endGravity]
+         * @property {number} [xStartGravity] - Override parsedSnapTarget.gravity.
+         * @property {number} [xEndGravity]
+         * @property {number} [yStartGravity]
+         * @property {number} [yEndGravity]
          */
 
         function resolvedValue(snapValue, baseOrigin, baseSize) {
@@ -331,8 +333,10 @@ function initBBox(props) {
         // Add single Point or Line (targetXY has no *Step)
         function addSnapTarget(targetXY) {
           if (targetXY.center == null) { targetXY.center = parsedSnapTarget.center; }
-          if (targetXY.startGravity == null) { targetXY.startGravity = parsedSnapTarget.gravity; }
-          if (targetXY.endGravity == null) { targetXY.endGravity = parsedSnapTarget.gravity; }
+          if (targetXY.xStartGravity == null) { targetXY.xStartGravity = parsedSnapTarget.gravity; }
+          if (targetXY.xEndGravity == null) { targetXY.xEndGravity = parsedSnapTarget.gravity; }
+          if (targetXY.yStartGravity == null) { targetXY.yStartGravity = parsedSnapTarget.gravity; }
+          if (targetXY.yEndGravity == null) { targetXY.yEndGravity = parsedSnapTarget.gravity; }
 
           if (targetXY.x != null && targetXY.y != null) { // Point
             targetXY.x = resolvedValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
@@ -349,10 +353,10 @@ function initBBox(props) {
                 y = targetXY.y - (corner === 'bl' || corner === 'br' ? elementSizeXY.y : 0);
               if (x >= minXY.x && x <= maxXY.x && y >= minXY.y && y <= maxXY.y) {
                 const snapTarget = {x: x, y: y},
-                  gravityXStart = x - targetXY.startGravity,
-                  gravityXEnd = x + targetXY.endGravity,
-                  gravityYStart = y - targetXY.startGravity,
-                  gravityYEnd = y + targetXY.endGravity;
+                  gravityXStart = x - targetXY.xStartGravity,
+                  gravityXEnd = x + targetXY.xEndGravity,
+                  gravityYStart = y - targetXY.yStartGravity,
+                  gravityYEnd = y + targetXY.yEndGravity;
                 if (gravityXStart > minXY.x) { snapTarget.gravityXStart = gravityXStart; }
                 if (gravityXEnd < maxXY.x) { snapTarget.gravityXEnd = gravityXEnd; }
                 if (gravityYStart > minXY.y) { snapTarget.gravityYStart = gravityYStart; }
@@ -368,7 +372,9 @@ function initBBox(props) {
               gravitySpecStartProp = `gravity${specAxisL}Start`,
               gravitySpecEndProp = `gravity${specAxisL}End`,
               gravityRangeStartProp = `gravity${rangeAxisL}Start`,
-              gravityRangeEndProp = `gravity${rangeAxisL}End`;
+              gravityRangeEndProp = `gravity${rangeAxisL}End`,
+              startGravityProp = `${specAxis}StartGravity`,
+              endGravityProp = `${specAxis}EndGravity`;
             targetXY[specAxis] =
               resolvedValue(targetXY[specAxis], baseOriginXY[specAxis], baseSizeXY[specAxis]);
             targetXY[startProp] =
@@ -387,8 +393,8 @@ function initBBox(props) {
               const xy = targetXY[specAxis] - (side === 'end' ? elementSizeXY[specAxis] : 0);
               if (xy >= minXY[specAxis] && xy <= maxXY[specAxis]) {
                 const snapTarget = {},
-                  gravitySpecStart = xy - targetXY.startGravity,
-                  gravitySpecEnd = xy + targetXY.endGravity;
+                  gravitySpecStart = xy - targetXY[startGravityProp],
+                  gravitySpecEnd = xy + targetXY[endGravityProp];
                 snapTarget[specAxis] = xy;
                 if (gravitySpecStart > minXY[specAxis]) {
                   snapTarget[gravitySpecStartProp] = gravitySpecStart;
@@ -459,9 +465,10 @@ function initBBox(props) {
           ];
 
           ['x', 'y'].forEach(axis => {
-            const propStart = `${axis}Start`, propEnd = `${axis}End`, propStep = `${axis}Step`;
+            const startProp = `${axis}Start`, endProp = `${axis}End`, stepProp = `${axis}Step`,
+              startGravityProp = `${axis}StartGravity`, endGravityProp = `${axis}EndGravity`;
             expanded = expanded.reduce((expanded, targetXY) => {
-              let start = targetXY[propStart], end = targetXY[propEnd], step = targetXY[propStep];
+              let start = targetXY[startProp], end = targetXY[endProp], step = targetXY[stepProp];
 
               if (start != null && end != null && start >= end) { // start >= end -> {0, 100%}
                 start = defaultStart[axis];
@@ -475,20 +482,20 @@ function initBBox(props) {
                 let curValue = start, added;
                 while (curValue <= end) {
                   const expandedXY = Object.keys(targetXY).reduce((expandedXY, prop) => {
-                    if (prop !== propStart && prop !== propEnd && prop !== propStep) {
+                    if (prop !== startProp && prop !== endProp && prop !== stepProp) {
                       expandedXY[prop] = targetXY[prop];
                     }
                     return expandedXY;
                   }, {});
                   expandedXY[axis] = curValue;
-                  if (added) { expandedXY.startGravity = middleGravity; } // Set startGravity exept 1st item.
-                  expandedXY.endGravity = middleGravity; // Set endGravity exept last item. (remove it, after)
+                  if (added) { expandedXY[startGravityProp] = middleGravity; } // Set startGravity exept 1st item.
+                  expandedXY[endGravityProp] = middleGravity; // Set endGravity exept last item. (remove it, after)
                   added = true;
 
                   expanded.push(expandedXY);
                   curValue += step;
                 }
-                if (added) { expanded[expanded.length - 1].endGravity = null; } // Remove from last item.
+                if (added) { expanded[expanded.length - 1][endGravityProp] = null; } // Remove from last item.
               } else {
                 expanded.push(targetXY);
               }
