@@ -248,6 +248,10 @@ describe('functions', function() {
     expect(ppBBox == null).toBe(false); // It's ok.
     expect(resolvePPBBox(ppBBox, baseBBox) == null).toBe(true);
 
+    ppBBox = validPPBBox({x: '50%', y: '0%', right: 127, bottom: '100%'}); // Invalid
+    expect(ppBBox == null).toBe(false); // It's ok.
+    expect(resolvePPBBox(ppBBox, baseBBox) == null).toBe(true);
+
     ppBBox = validPPBBox({x: 129, y: '0%', right: '50%', bottom: '100%'}); // Invalid
     expect(ppBBox == null).toBe(false); // It's ok.
     expect(resolvePPBBox(ppBBox, baseBBox) == null).toBe(true);

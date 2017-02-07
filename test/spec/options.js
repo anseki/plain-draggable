@@ -21,7 +21,7 @@ describe('setOptions()', function() {
   }
 
   beforeAll(function(beforeDone) {
-    loadPage('spec/common.html', function(pageWindow, pageDocument, pageBody, done) {
+    loadPage('spec/common-window.html', function(pageWindow, pageDocument, pageBody, done) {
       window = pageWindow;
       document = pageDocument;
       body = pageBody;
@@ -100,7 +100,7 @@ describe('setOptions()', function() {
     done();
   });
 
-  it('should accept an bBox as `containment`', function(done) {
+  it('should accept an BBox as `containment`', function(done) {
     window.initBBoxDone = false;
     draggable.containment = {left: 0, top: 0, width: 128, height: 64};
     expect(window.initBBoxDone).toBe(true);
@@ -108,12 +108,12 @@ describe('setOptions()', function() {
     expect(props.containmentBBox)
       .toEqual({left: 0, top: 0, width: 128, height: 64, x: 0, y: 0, right: 128, bottom: 64});
     expect(draggable.containment)
-      .toEqual({left: 0, top: 0, x: 0, y: 0, width: 128, height: 64}); // x/y are copied, but no right/bottom
+      .toEqual({left: 0, top: 0, x: 0, y: 0, width: 128, height: 64}); // x/y are copied, but not right/bottom
 
     done();
   });
 
-  it('should not update when same bBox is passed for `containment`', function(done) {
+  it('should not update when same BBox is passed for `containment`', function(done) {
     window.initBBoxDone = false;
     draggable.containment = {x: 0, y: 0, width: 128, height: 64}; // Substitutes props x/y
     expect(window.initBBoxDone).toBe(false);
@@ -121,12 +121,12 @@ describe('setOptions()', function() {
     expect(props.containmentBBox)
       .toEqual({left: 0, top: 0, width: 128, height: 64, x: 0, y: 0, right: 128, bottom: 64});
     expect(draggable.containment)
-      .toEqual({left: 0, top: 0, x: 0, y: 0, width: 128, height: 64}); // x/y are copied, but no right/bottom
+      .toEqual({left: 0, top: 0, x: 0, y: 0, width: 128, height: 64}); // x/y are copied, but not right/bottom
 
     done();
   });
 
-  it('should update when new bBox is passed for `containment`', function(done) {
+  it('should update when new BBox is passed for `containment`', function(done) {
     window.initBBoxDone = false;
     draggable.containment = {left: 1, top: 0, width: 128, height: 64};
     expect(window.initBBoxDone).toBe(true);
@@ -134,7 +134,7 @@ describe('setOptions()', function() {
     expect(props.containmentBBox)
       .toEqual({left: 1, top: 0, width: 128, height: 64, x: 1, y: 0, right: 129, bottom: 64});
     expect(draggable.containment)
-      .toEqual({left: 1, top: 0, x: 1, y: 0, width: 128, height: 64}); // x/y are copied, but no right/bottom
+      .toEqual({left: 1, top: 0, x: 1, y: 0, width: 128, height: 64}); // x/y are copied, but not right/bottom
 
     done();
   });
@@ -929,6 +929,110 @@ describe('setOptions()', function() {
     ));
 
     done();
+  });
+
+  it('should accept an PPBBox as `containment`', function(done) {
+    var iframe = document.getElementById('iframe'),
+      iWindow = iframe.contentWindow,
+      iDocument = iWindow.document, iBody = iDocument.body,
+      element, draggable, props,
+      left, top, width, height;
+
+    element = iDocument.getElementById('elm1');
+    iBody.style.margin = iBody.style.borderWidth = iBody.style.padding = '0';
+    iBody.style.overflow = 'hidden'; // Hide vertical scroll bar that change width of document.
+    draggable = new iWindow.PlainDraggable(element);
+    props = iWindow.insProps[draggable._id];
+
+    iframe.style.width = '480px';
+    iBody.style.height = '320px';
+    draggable.containment = {left: 0, top: 0, width: '100%', height: '100%'};
+    left = 0;
+    top = 0;
+    width = 480;
+    height = 320;
+    expect(props.containmentBBox).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
+
+    draggable.containment = {left: '10%', top: '10%', width: '50%', height: '50%'};
+    left = 48;
+    top = 32;
+    width = 240;
+    height = 160;
+    expect(props.containmentBBox).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
+
+    draggable.containment = {left: 240, top: 160, width: '50%', height: '50%'};
+    left = 240;
+    top = 160;
+    width = 240;
+    height = 160;
+    expect(props.containmentBBox).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
+
+    draggable.containment = {left: '50%', top: '50%', right: '100%', bottom: '100%'}; // Same as above.
+    left = 240;
+    top = 160;
+    width = 240;
+    height = 160;
+    expect(props.containmentBBox).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
+
+    draggable.containment = {left: 241, top: 0, right: '50%', bottom: '100%'}; // Invalid -> document size
+    left = 0;
+    top = 0;
+    width = 480;
+    height = 320;
+    expect(props.containmentBBox).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
+
+    draggable.containment = {left: 0, top: '20%', right: '50%', bottom: '10%'}; // Invalid -> document size
+    left = 0;
+    top = 0;
+    width = 480;
+    height = 320;
+    expect(props.containmentBBox).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
+
+    draggable.containment = {left: '10%', top: 0, width: '80%', height: '50%'};
+    left = 48;
+    top = 0;
+    width = 480 * 0.8;
+    height = 160;
+    expect(props.containmentBBox).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
+
+    // Resize window
+    iframe.style.width = '500px';
+    setTimeout(function() {
+      left = 50;
+      top = 0;
+      width = 500 * 0.8;
+      height = 160;
+      expect(props.containmentBBox).toEqual({left: left, top: top, width: width, height: height,
+        x: left, y: top, right: left + width, bottom: top + height});
+
+      // Invalid, by resize window
+      draggable.containment = {left: 240, top: 0, right: '50%'/* 250*/, bottom: '100%'}; // Valid
+      left = 240;
+      top = 0;
+      width = 10;
+      height = 320;
+      expect(props.containmentBBox).toEqual({left: left, top: top, width: width, height: height,
+        x: left, y: top, right: left + width, bottom: top + height});
+
+      iframe.style.width = '460px'; // right: 230 -> Invalid -> document size
+      setTimeout(function() {
+        left = 0;
+        top = 0;
+        width = 460;
+        height = 320;
+        expect(props.containmentBBox).toEqual({left: left, top: top, width: width, height: height,
+          x: left, y: top, right: left + width, bottom: top + height});
+
+        done();
+      }, 50);
+    }, 50);
   });
 
 });

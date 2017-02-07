@@ -17,7 +17,7 @@ describe('BBox', function() {
     pageDone();
   });
 
-  it('keeps original bbox if possible', function() {
+  it('keeps original BBox if possible', function() {
     var draggable, element, orgBBox, curBBox;
 
     element = document.getElementById('elm1');
@@ -162,7 +162,6 @@ describe('BBox', function() {
     iBody.style.paddingLeft = '16px';
     iBody.style.paddingTop = '32px';
     draggable = new iWindow.PlainDraggable(element);
-    console.log(iWindow.insProps[draggable._id].offset);
     expect(iWindow.insProps[draggable._id].offset).toEqual({left: -21, top: -42});
   });
 
