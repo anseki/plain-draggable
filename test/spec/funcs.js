@@ -152,6 +152,7 @@ describe('functions', function() {
   it('PPBBox', function() {
     var validPPBBox = window.validPPBBox,
       ppBBox2OptionObject = window.ppBBox2OptionObject,
+      resolvePPBBox = window.resolvePPBBox,
       share, ppBBox;
 
     // Not Object
@@ -208,6 +209,58 @@ describe('functions', function() {
       bottom: {value: 0.16, isRatio: true}
     });
     expect(ppBBox2OptionObject(ppBBox)).toEqual({x: 2, y: '4%', left: 2, top: '4%', width: 8, bottom: '16%'});
+
+    var baseBBox = {left: 64, top: 32, width: 256, height: 128},
+      left, top, width, height;
+
+    ppBBox = validPPBBox({x: 2, y: '25%', width: 8, bottom: '50%'});
+    expect(ppBBox == null).toBe(false);
+    left = 64 + 2;
+    top = 32 + 32;
+    width = 8;
+    height = 32 + 64 - top;
+    expect(resolvePPBBox(ppBBox, baseBBox)).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
+
+    ppBBox = validPPBBox({x: 0, y: '0%', right: '100%', bottom: '100%'});
+    expect(ppBBox == null).toBe(false);
+    left = baseBBox.left;
+    top = baseBBox.top;
+    width = baseBBox.width;
+    height = baseBBox.height;
+    expect(resolvePPBBox(ppBBox, baseBBox)).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
+
+    ppBBox = validPPBBox({x: 128, y: '0%', right: '50%', bottom: '100%'});
+    expect(ppBBox == null).toBe(false);
+    left = 64 + 128;
+    top = baseBBox.top;
+    width = 0;
+    height = baseBBox.height;
+    expect(resolvePPBBox(ppBBox, baseBBox)).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
+
+    ppBBox = validPPBBox({x: 240, y: '0%', right: '50%', bottom: '100%'}); // Invalid
+    expect(ppBBox == null).toBe(false); // It's ok.
+    expect(resolvePPBBox(ppBBox, baseBBox) == null).toBe(true);
+
+    ppBBox = validPPBBox({x: 0, y: '20%', right: '50%', bottom: '10%'}); // Invalid
+    expect(ppBBox == null).toBe(false); // It's ok.
+    expect(resolvePPBBox(ppBBox, baseBBox) == null).toBe(true);
+
+    ppBBox = validPPBBox({x: 129, y: '0%', right: '50%', bottom: '100%'}); // Invalid
+    expect(ppBBox == null).toBe(false); // It's ok.
+    expect(resolvePPBBox(ppBBox, baseBBox) == null).toBe(true);
+
+    baseBBox.width = 258;
+    ppBBox = validPPBBox({x: 129, y: '0%', right: '50%', bottom: '100%'});
+    expect(ppBBox == null).toBe(false);
+    left = 64 + 129;
+    top = baseBBox.top;
+    width = 0;
+    height = baseBBox.height;
+    expect(resolvePPBBox(ppBBox, baseBBox)).toEqual({left: left, top: top, width: width, height: height,
+      x: left, y: top, right: left + width, bottom: top + height});
   });
 
   it('commonSnapOptions', function() {

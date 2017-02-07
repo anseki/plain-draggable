@@ -222,6 +222,7 @@ function resolvePPBBox(ppBBox, baseBBox) {
     return bBox;
   }, {}));
 }
+window.resolvePPBBox = resolvePPBBox; // [DEBUG/]
 
 /**
  * @param {Element} element - A target element.
@@ -986,7 +987,8 @@ class PlainDraggable {
 
   get containment() {
     const props = insProps[this._id];
-    return props.containmentIsBBox ? copyTree(props.options.containment) : props.options.containment;
+    return props.containmentIsBBox ?
+      ppBBox2OptionObject(props.options.containment) : props.options.containment;
   }
   set containment(value) { setOptions(insProps[this._id], {containment: value}); }
 
