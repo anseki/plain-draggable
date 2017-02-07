@@ -10,7 +10,7 @@ describe('setOptions()', function() {
     DEFAULT_PARSED_SNAP_TARGET, DEFAULT_SNAP_OPTIONS,
     DEFAULT_START = {value: 0, isRatio: false},
     DEFAULT_END = {value: 1, isRatio: true},
-    snapValue2value;
+    ppValue2OptionValue;
 
   function merge() {
     var obj = {};
@@ -64,7 +64,7 @@ describe('setOptions()', function() {
         edge: SNAP_EDGE,
         base: SNAP_BASE
       };
-      snapValue2value = window.snapValue2value;
+      ppValue2OptionValue = window.ppValue2OptionValue;
 
       beforeDone();
     }, 'setOptions()');
@@ -181,7 +181,7 @@ describe('setOptions()', function() {
     expect(props.parsedSnapTargets).toEqual([merge(DEFAULT_PARSED_SNAP_TARGET,
       {x: share, y: share}
     )]);
-    share = snapValue2value(share);
+    share = ppValue2OptionValue(share);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [{x: share, y: share}]}
     ));
@@ -194,7 +194,7 @@ describe('setOptions()', function() {
     expect(props.parsedSnapTargets).toEqual([merge(DEFAULT_PARSED_SNAP_TARGET,
       {x: share, y: share}
     )]);
-    share = snapValue2value(share);
+    share = ppValue2OptionValue(share);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [{x: share, y: share}]}
     ));
@@ -211,7 +211,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // {start, end} n%
@@ -226,7 +226,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // {step, start, end}
@@ -242,8 +242,8 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd),
-        step: snapValue2value(share.xStep)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd),
+        step: ppValue2OptionValue(share.xStep)}, y: 5}]}
     ));
 
     // {step, start, end} n%
@@ -259,8 +259,8 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd),
-        step: snapValue2value(share.xStep)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd),
+        step: ppValue2OptionValue(share.xStep)}, y: 5}]}
     ));
 
     // Element
@@ -270,12 +270,12 @@ describe('setOptions()', function() {
     expect(props.parsedSnapTargets).toEqual([merge(DEFAULT_PARSED_SNAP_TARGET,
       {element: parent}
     )]);
-    share = snapValue2value(share);
+    share = ppValue2OptionValue(share);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [{target: parent}]}
     ));
 
-    // SnapBBox
+    // PPBBox
     window.initBBoxDone = false;
     draggable.snap = {x: 1, top: '2%', width: 128, bottom: '25%'};
     expect(window.initBBoxDone).toBe(true);
@@ -288,12 +288,12 @@ describe('setOptions()', function() {
     share.left = share.x;
     share.top = share.y;
     expect(props.parsedSnapTargets).toEqual([merge(DEFAULT_PARSED_SNAP_TARGET,
-      {snapBBox: share}
+      {ppBBox: share}
     )]);
-    share.left = share.x = snapValue2value(share.x);
-    share.top = share.y = snapValue2value(share.y);
-    share.width = snapValue2value(share.width);
-    share.bottom = snapValue2value(share.bottom);
+    share.left = share.x = ppValue2OptionValue(share.x);
+    share.top = share.y = ppValue2OptionValue(share.y);
+    share.width = ppValue2OptionValue(share.width);
+    share.bottom = ppValue2OptionValue(share.bottom);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [{target: share}]}
     ));
@@ -316,7 +316,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // percent
@@ -331,7 +331,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // px/percent and same number
@@ -346,7 +346,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // Invalid start >= end px
@@ -358,7 +358,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // Invalid start >= end percent
@@ -370,7 +370,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // `start` px
@@ -385,7 +385,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // `start` percent
@@ -400,7 +400,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // `end` px
@@ -415,7 +415,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // `end` percent
@@ -430,7 +430,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // Expand - 4 lines
@@ -452,8 +452,8 @@ describe('setOptions()', function() {
       merge(DEFAULT_PARSED_SNAP_TARGET, {x: share.xEnd}, share2)
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)},
-        y: {start: snapValue2value(share2.yStart), end: snapValue2value(share2.yEnd)}}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)},
+        y: {start: ppValue2OptionValue(share2.yStart), end: ppValue2OptionValue(share2.yEnd)}}]}
     ));
 
     done();
@@ -475,8 +475,8 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd),
-        step: snapValue2value(share.xStep)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd),
+        step: ppValue2OptionValue(share.xStep)}, y: 5}]}
     ));
 
     // Invalid px step < 2px
@@ -488,7 +488,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // Invalid percent step <= 0%
@@ -500,7 +500,7 @@ describe('setOptions()', function() {
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: snapValue2value(share.xStart), end: snapValue2value(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
     // No expand - Point * x-step
@@ -568,7 +568,7 @@ describe('setOptions()', function() {
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [{x: {step: 2, start: 1, end: 6},
-        y: {start: snapValue2value(DEFAULT_START), end: snapValue2value(DEFAULT_END)}}]}
+        y: {start: ppValue2OptionValue(DEFAULT_START), end: ppValue2OptionValue(DEFAULT_END)}}]}
     ));
 
     // No expand - Line * y-step
@@ -597,13 +597,13 @@ describe('setOptions()', function() {
       target1 = {x: 8, y: 16, gravity: 17},
       target2 = {x: '30%'},
       value1 = 64, value2 = '5%',
-      snapValuesTarget1 = {x: {value: target1.x, isRatio: false}, y: {value: target1.y, isRatio: false}},
-      snapValuesTarget2 = {x: {value: 0.3, isRatio: true}},
-      snapValue1 = {value: value1, isRatio: false},
-      snapValue2 = {value: 0.05, isRatio: true},
-      optionValuesTarget1 = {x: snapValue2value(snapValuesTarget1.x), y: snapValue2value(snapValuesTarget1.y)},
-      optionValuesTarget2 = {x: snapValue2value(snapValuesTarget2.x)},
-      defaultXYOptions = {start: snapValue2value(DEFAULT_START), end: snapValue2value(DEFAULT_END)};
+      ppValuesTarget1 = {x: {value: target1.x, isRatio: false}, y: {value: target1.y, isRatio: false}},
+      ppValuesTarget2 = {x: {value: 0.3, isRatio: true}},
+      ppValue1 = {value: value1, isRatio: false},
+      ppValue2 = {value: 0.05, isRatio: true},
+      optionValuesTarget1 = {x: ppValue2OptionValue(ppValuesTarget1.x), y: ppValue2OptionValue(ppValuesTarget1.y)},
+      optionValuesTarget2 = {x: ppValue2OptionValue(ppValuesTarget2.x)},
+      defaultXYOptions = {start: ppValue2OptionValue(DEFAULT_START), end: ppValue2OptionValue(DEFAULT_END)};
 
     // Check
     expect(merge(optionValuesTarget1, {gravity: target1.gravity})).toEqual(target1);
@@ -616,7 +616,7 @@ describe('setOptions()', function() {
     };
     expect(window.initBBoxDone).toBe(true);
     expect(props.parsedSnapTargets).toEqual([
-      merge(snapValuesTarget1, {
+      merge(ppValuesTarget1, {
         gravity: target1.gravity,
         corners: DEFAULT_SNAP_CORNERS,
         sides: DEFAULT_SNAP_SIDES,
@@ -624,7 +624,7 @@ describe('setOptions()', function() {
         edges: DEFAULT_SNAP_EDGES,
         base: SNAP_BASE
       }),
-      merge(snapValuesTarget2, {
+      merge(ppValuesTarget2, {
         yStart: DEFAULT_START,
         yEnd: DEFAULT_END,
         gravity: SNAP_GRAVITY,
@@ -650,10 +650,10 @@ describe('setOptions()', function() {
     expect(window.initBBoxDone).toBe(true);
     expect(props.parsedSnapTargets).toEqual([
       merge(DEFAULT_PARSED_SNAP_TARGET, {
-        x: snapValuesTarget1.x,
-        y: snapValuesTarget1.x  // Copy x
+        x: ppValuesTarget1.x,
+        y: ppValuesTarget1.x  // Copy x
       }),
-      merge(snapValuesTarget2, DEFAULT_PARSED_SNAP_TARGET, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
+      merge(ppValuesTarget2, DEFAULT_PARSED_SNAP_TARGET, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [
@@ -671,11 +671,11 @@ describe('setOptions()', function() {
     expect(window.initBBoxDone).toBe(true);
     expect(props.parsedSnapTargets).toEqual([
       // Expand
-      merge(DEFAULT_PARSED_SNAP_TARGET, {xStart: snapValue1, xEnd: snapValue2, y: snapValue1}),
-      merge(DEFAULT_PARSED_SNAP_TARGET, {xStart: snapValue1, xEnd: snapValue2, y: snapValue2}),
-      merge(DEFAULT_PARSED_SNAP_TARGET, {x: snapValue1, yStart: snapValue1, yEnd: snapValue2}),
-      merge(DEFAULT_PARSED_SNAP_TARGET, {x: snapValue2, yStart: snapValue1, yEnd: snapValue2}),
-      merge(snapValuesTarget2, DEFAULT_PARSED_SNAP_TARGET, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
+      merge(DEFAULT_PARSED_SNAP_TARGET, {xStart: ppValue1, xEnd: ppValue2, y: ppValue1}),
+      merge(DEFAULT_PARSED_SNAP_TARGET, {xStart: ppValue1, xEnd: ppValue2, y: ppValue2}),
+      merge(DEFAULT_PARSED_SNAP_TARGET, {x: ppValue1, yStart: ppValue1, yEnd: ppValue2}),
+      merge(DEFAULT_PARSED_SNAP_TARGET, {x: ppValue2, yStart: ppValue1, yEnd: ppValue2}),
+      merge(ppValuesTarget2, DEFAULT_PARSED_SNAP_TARGET, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [
@@ -692,7 +692,7 @@ describe('setOptions()', function() {
     expect(window.initBBoxDone).toBe(true);
     expect(props.parsedSnapTargets).toEqual([
       merge(DEFAULT_PARSED_SNAP_TARGET, {element: parent}),
-      merge(snapValuesTarget2, DEFAULT_PARSED_SNAP_TARGET, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
+      merge(ppValuesTarget2, DEFAULT_PARSED_SNAP_TARGET, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [
@@ -701,7 +701,7 @@ describe('setOptions()', function() {
       ]}
     ));
 
-    // target = value (SnapBBox)
+    // target = value (PPBBox)
     window.initBBoxDone = false;
     draggable.snap = {
       targets: [{x: 1, top: '2%', width: 128, bottom: '25%'}, target2]
@@ -716,13 +716,13 @@ describe('setOptions()', function() {
     share.left = share.x;
     share.top = share.y;
     expect(props.parsedSnapTargets).toEqual([
-      merge(DEFAULT_PARSED_SNAP_TARGET, {snapBBox: share}),
-      merge(snapValuesTarget2, DEFAULT_PARSED_SNAP_TARGET, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
+      merge(DEFAULT_PARSED_SNAP_TARGET, {ppBBox: share}),
+      merge(ppValuesTarget2, DEFAULT_PARSED_SNAP_TARGET, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
     ]);
-    share.left = share.x = snapValue2value(share.x);
-    share.top = share.y = snapValue2value(share.y);
-    share.width = snapValue2value(share.width);
-    share.bottom = snapValue2value(share.bottom);
+    share.left = share.x = ppValue2OptionValue(share.x);
+    share.top = share.y = ppValue2OptionValue(share.y);
+    share.width = ppValue2OptionValue(share.width);
+    share.bottom = ppValue2OptionValue(share.bottom);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [
         {target: share},
@@ -737,7 +737,7 @@ describe('setOptions()', function() {
     };
     expect(window.initBBoxDone).toBe(true);
     expect(props.parsedSnapTargets).toEqual([
-      merge(DEFAULT_PARSED_SNAP_TARGET, snapValuesTarget1, {gravity: target1.gravity})
+      merge(DEFAULT_PARSED_SNAP_TARGET, ppValuesTarget1, {gravity: target1.gravity})
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [
@@ -753,8 +753,8 @@ describe('setOptions()', function() {
     expect(window.initBBoxDone).toBe(true);
     expect(props.parsedSnapTargets).toEqual([
       merge(DEFAULT_PARSED_SNAP_TARGET, {
-        x: snapValuesTarget1.x,
-        y: snapValuesTarget1.x  // Copy x
+        x: ppValuesTarget1.x,
+        y: ppValuesTarget1.x  // Copy x
       })
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
@@ -768,8 +768,8 @@ describe('setOptions()', function() {
     draggable.snap = [target1, target2];
     expect(window.initBBoxDone).toBe(true);
     expect(props.parsedSnapTargets).toEqual([
-      merge(DEFAULT_PARSED_SNAP_TARGET, snapValuesTarget1, {gravity: target1.gravity}),
-      merge(DEFAULT_PARSED_SNAP_TARGET, snapValuesTarget2, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
+      merge(DEFAULT_PARSED_SNAP_TARGET, ppValuesTarget1, {gravity: target1.gravity}),
+      merge(DEFAULT_PARSED_SNAP_TARGET, ppValuesTarget2, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [
@@ -783,7 +783,7 @@ describe('setOptions()', function() {
     draggable.snap = target1;
     expect(window.initBBoxDone).toBe(true);
     expect(props.parsedSnapTargets).toEqual([
-      merge(DEFAULT_PARSED_SNAP_TARGET, snapValuesTarget1, {gravity: target1.gravity})
+      merge(DEFAULT_PARSED_SNAP_TARGET, ppValuesTarget1, {gravity: target1.gravity})
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [
@@ -797,8 +797,8 @@ describe('setOptions()', function() {
     expect(window.initBBoxDone).toBe(true);
     expect(props.parsedSnapTargets).toEqual([
       merge(DEFAULT_PARSED_SNAP_TARGET, {
-        x: snapValuesTarget1.x,
-        y: snapValuesTarget1.x  // Copy x
+        x: ppValuesTarget1.x,
+        y: ppValuesTarget1.x  // Copy x
       })
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
@@ -849,32 +849,31 @@ describe('setOptions()', function() {
           }
         ]
       },
-      snapValueX1 = {value: x1, isRatio: false},
-      snapValueX2 = {value: x2, isRatio: false},
-      snapValueY1 = {value: y1, isRatio: false},
-      snapValuesX1Y1 = {x: snapValueX1, y: snapValueY1};
+      ppValueX1 = {value: x1, isRatio: false},
+      ppValueX2 = {value: x2, isRatio: false},
+      ppValueY1 = {value: y1, isRatio: false},
+      ppValuesX1Y1 = {x: ppValueX1, y: ppValueY1};
 
     window.initBBoxDone = false;
     draggable.snap = snap;
     expect(window.initBBoxDone).toBe(true);
-    console.log(props.parsedSnapTargets);
     expect(props.parsedSnapTargets).toEqual([
-      merge(DEFAULT_PARSED_SNAP_TARGET, snapValuesX1Y1, {center: true, edges: [snap.edge]}), // No common options
-      merge(DEFAULT_PARSED_SNAP_TARGET, snapValuesX1Y1, {center: false, edges: [snap.targets[1].edge]}),
-      merge(DEFAULT_PARSED_SNAP_TARGET, snapValuesX1Y1,
+      merge(DEFAULT_PARSED_SNAP_TARGET, ppValuesX1Y1, {center: true, edges: [snap.edge]}), // No common options
+      merge(DEFAULT_PARSED_SNAP_TARGET, ppValuesX1Y1, {center: false, edges: [snap.targets[1].edge]}),
+      merge(DEFAULT_PARSED_SNAP_TARGET, ppValuesX1Y1,
         {center: true, edges: [snap.edge], sides: [snap.targets[2].side]}),
-      merge(DEFAULT_PARSED_SNAP_TARGET, snapValuesX1Y1,
+      merge(DEFAULT_PARSED_SNAP_TARGET, ppValuesX1Y1,
         {center: true, edges: [snap.targets[3].edge], sides: [snap.targets[3].side]}),
       // No expand
       merge(DEFAULT_PARSED_SNAP_TARGET,
-        {xStep: {value: x2 - x1, isRatio: false}, xStart: snapValueX1, xEnd: snapValueX2,
-          y: snapValueY1, center: true, edges: [snap.edge], gravity: snap.targets[4].gravity}),
+        {xStep: {value: x2 - x1, isRatio: false}, xStart: ppValueX1, xEnd: ppValueX2,
+          y: ppValueY1, center: true, edges: [snap.edge], gravity: snap.targets[4].gravity}),
       // No expand
       merge(DEFAULT_PARSED_SNAP_TARGET,
-        {xStep: {value: x2 - x1, isRatio: false}, xStart: snapValueX1, xEnd: snapValueX2,
-          y: snapValueY1, center: true, edges: [snap.targets[5].edge]}),
+        {xStep: {value: x2 - x1, isRatio: false}, xStart: ppValueX1, xEnd: ppValueX2,
+          y: ppValueY1, center: true, edges: [snap.targets[5].edge]}),
       // No common options, again
-      merge(DEFAULT_PARSED_SNAP_TARGET, snapValuesX1Y1, {center: true, edges: [snap.edge]})
+      merge(DEFAULT_PARSED_SNAP_TARGET, ppValuesX1Y1, {center: true, edges: [snap.edge]})
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS, snap));
 

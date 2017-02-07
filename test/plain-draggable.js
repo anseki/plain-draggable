@@ -454,21 +454,22 @@ window.isElement = isElement; // [DEBUG/]
  * @property {(number|null)} height
  */
 
+/**
+ * @param {Object} bBox - A target object.
+ * @returns {(BBox|null)} - A normalized `BBox`, or null if `bBox` is invalid.
+ */
 function validBBox(bBox) {
   if (!isObject(bBox)) {
     return null;
   }
-  if (isFinite(bBox.left)) {
-    bBox.x = bBox.left;
-  } else if (isFinite(bBox.x)) {
-    bBox.left = bBox.x;
+  var value = void 0;
+  if (isFinite(value = bBox.left) || isFinite(value = bBox.x)) {
+    bBox.left = bBox.x = value;
   } else {
     return null;
   }
-  if (isFinite(bBox.top)) {
-    bBox.y = bBox.top;
-  } else if (isFinite(bBox.y)) {
-    bBox.top = bBox.y;
+  if (isFinite(value = bBox.top) || isFinite(value = bBox.y)) {
+    bBox.top = bBox.y = value;
   } else {
     return null;
   }
@@ -490,6 +491,85 @@ function validBBox(bBox) {
   return bBox;
 }
 window.validBBox = validBBox; // [DEBUG/]
+
+/**
+ * A value that is Pixels or Ratio
+ * @typedef {{value: number, isRatio: boolean}} PPValue
+ */
+
+function validPPValue(value) {
+
+  // Get PPValue from string (all `/s` were already removed)
+  function string2PPValue(inString) {
+    var matches = /^(.+?)(\%)?$/.exec(inString);
+    var value = void 0,
+        isRatio = void 0;
+    return matches && isFinite(value = parseFloat(matches[1])) ? { value: (isRatio = !!(matches[2] && value)) ? value / 100 : value, isRatio: isRatio } : null; // 0% -> 0
+  }
+
+  return isFinite(value) ? { value: value, isRatio: false } : typeof value === 'string' ? string2PPValue(value.replace(/\s/g, '')) : null;
+}
+window.validPPValue = validPPValue; // [DEBUG/]
+
+function ppValue2OptionValue(ppValue) {
+  return ppValue.isRatio ? ppValue.value * 100 + '%' : ppValue.value;
+}
+window.ppValue2OptionValue = ppValue2OptionValue; // [DEBUG/]
+
+/**
+ * An object that simulates BBox but properties are PPValue.
+ * @typedef {Object} PPBBox
+ */
+
+/**
+ * @param {Object} bBox - A target object.
+ * @returns {(PPBBox|null)} - A normalized `PPBBox`, or null if `bBox` is invalid.
+ */
+function validPPBBox(bBox) {
+  if (!isObject(bBox)) {
+    return null;
+  }
+  var ppValue = void 0;
+  if ((ppValue = validPPValue(bBox.left)) || (ppValue = validPPValue(bBox.x))) {
+    bBox.left = bBox.x = ppValue;
+  } else {
+    return null;
+  }
+  if ((ppValue = validPPValue(bBox.top)) || (ppValue = validPPValue(bBox.y))) {
+    bBox.top = bBox.y = ppValue;
+  } else {
+    return null;
+  }
+
+  if ((ppValue = validPPValue(bBox.width)) && ppValue.value >= 0) {
+    bBox.width = ppValue;
+    delete bBox.right;
+  } else if (ppValue = validPPValue(bBox.right)) {
+    bBox.right = ppValue;
+    delete bBox.width;
+  } else {
+    return null;
+  }
+  if ((ppValue = validPPValue(bBox.height)) && ppValue.value >= 0) {
+    bBox.height = ppValue;
+    delete bBox.bottom;
+  } else if (ppValue = validPPValue(bBox.bottom)) {
+    bBox.bottom = ppValue;
+    delete bBox.height;
+  } else {
+    return null;
+  }
+  return bBox;
+}
+window.validPPBBox = validPPBBox; // [DEBUG/]
+
+function ppBBox2OptionObject(ppBBox) {
+  return Object.keys(ppBBox).reduce(function (obj, prop) {
+    obj[prop] = ppValue2OptionValue(ppBBox[prop]);
+    return obj;
+  }, {});
+}
+window.ppBBox2OptionObject = ppBBox2OptionObject; // [DEBUG/]
 
 /**
  * @param {Element} element - A target element.
@@ -680,7 +760,7 @@ function initBBox(props) {
 
         /**
          * Basically, shallow copy from parsedSnapTarget, and it can have resolved values.
-         * @typedef {{x: (number|SnapValue), y, xStart, xEnd, xStep, yStart, yEnd, yStep}} TargetXY
+         * @typedef {{x: (number|PPValue), y, xStart, xEnd, xStep, yStart, yEnd, yStep}} TargetXY
          * @property {string[]} [corners] - Applied value.
          * @property {string[]} [sides]
          * @property {boolean} center
@@ -688,8 +768,8 @@ function initBBox(props) {
          * @property {number} [yGravity]
          */
 
-        function resolvedValue(snapValue, baseOrigin, baseSize) {
-          return typeof snapValue === 'number' ? snapValue : baseOrigin + snapValue.value * (snapValue.isRatio ? baseSize : 1);
+        function resolvedValue(ppValue, baseOrigin, baseSize) {
+          return typeof ppValue === 'number' ? ppValue : baseOrigin + ppValue.value * (ppValue.isRatio ? baseSize : 1);
         }
 
         // Add single Point or Line (i.e. targetXY has no *Step)
@@ -797,12 +877,12 @@ function initBBox(props) {
 
         var bBox = void 0;
         if ((bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : null) || // Element
-        parsedSnapTarget.snapBBox) {
-          if (parsedSnapTarget.snapBBox) {
-            // SnapBBox (It might be invalid)
-            bBox = validBBox(Object.keys(parsedSnapTarget.snapBBox).reduce(function (bBox, prop) {
-              // SnapBBox -> BBox
-              bBox[prop] = resolvedValue(parsedSnapTarget.snapBBox[prop], prop === 'width' || prop === 'height' ? 0 : baseOriginXY[prop2Axis[prop]], baseSizeXY[prop2Axis[prop]]);
+        parsedSnapTarget.ppBBox) {
+          if (parsedSnapTarget.ppBBox) {
+            // PPBBox (It might be invalid)
+            bBox = validBBox(Object.keys(parsedSnapTarget.ppBBox).reduce(function (bBox, prop) {
+              // PPBBox -> BBox
+              bBox[prop] = resolvedValue(parsedSnapTarget.ppBBox[prop], prop === 'width' || prop === 'height' ? 0 : baseOriginXY[prop2Axis[prop]], baseSizeXY[prop2Axis[prop]]);
               return bBox;
             }, {}));
           }
@@ -975,7 +1055,7 @@ function _setOptions(props, newOptions) {
    * @typedef {Object} SnapTargetOptions
    * @property {(number|string)} [x] - pixels | '<n>%' | {start, end} | {step, start, end}
    * @property {(number|string)} [y]
-   * @property {(Element|Object)} [target] - Properties of Object are string or number from SnapBBox.
+   * @property {(Element|Object)} [target] - Properties of Object are string or number from PPBBox.
    * @property {number} [gravity]
    * @property {string} [corner]
    * @property {string} [side]
@@ -985,26 +1065,17 @@ function _setOptions(props, newOptions) {
    */
 
   /**
-   * @typedef {{value: number, isRatio: boolean}} SnapValue
-   */
-
-  /**
-   * An object that simulates BBox but properties are SnapValue.
-   * @typedef {Object} SnapBBox
-   */
-
-  /**
    * @typedef {Object} ParsedSnapTarget
-   * @property {SnapValue} [x] - (input: pixels | '<n>%')
-   * @property {SnapValue} [y]
-   * @property {SnapValue} [xStart] - (input: {start, end} | {step, start, end})
-   * @property {SnapValue} [xEnd]
-   * @property {SnapValue} [xStep] - (input: {step, start, end})
-   * @property {SnapValue} [yStart]
-   * @property {SnapValue} [yEnd]
-   * @property {SnapValue} [yStep]
+   * @property {PPValue} [x] - (input: pixels | '<n>%')
+   * @property {PPValue} [y]
+   * @property {PPValue} [xStart] - (input: {start, end} | {step, start, end})
+   * @property {PPValue} [xEnd]
+   * @property {PPValue} [xStep] - (input: {step, start, end})
+   * @property {PPValue} [yStart]
+   * @property {PPValue} [yEnd]
+   * @property {PPValue} [yStep]
    * @property {Element} [element]
-   * @property {SnapBBox} [snapBBox]
+   * @property {PPBBox} [ppBBox]
    * @property {number} gravity
    * @property {string[]} corners
    * @property {string[]} sides
@@ -1012,62 +1083,6 @@ function _setOptions(props, newOptions) {
    * @property {string[]} edges
    * @property {string} base
    */
-
-  // Get SnapValue from string (all `/s` were already removed)
-  function string2SnapValue(text) {
-    var matches = /^(.+?)(\%)?$/.exec(text);
-    var value = void 0,
-        isRatio = void 0;
-    return matches && isFinite(value = parseFloat(matches[1])) ? { value: (isRatio = !!(matches[2] && value)) ? value / 100 : value, isRatio: isRatio } : null; // 0% -> 0
-  }
-
-  function snapValue2value(snapValue) {
-    return snapValue.isRatio ? snapValue.value * 100 + '%' : snapValue.value;
-  }
-  window.snapValue2value = snapValue2value; // [DEBUG/]
-
-  function validSnapValue(value) {
-    return isFinite(value) ? { value: value, isRatio: false } : typeof value === 'string' ? string2SnapValue(value.replace(/\s/g, '')) : null;
-  }
-  window.validSnapValue = validSnapValue; // [DEBUG/]
-
-  function validSnapBBox(bBox) {
-    if (!isObject(bBox)) {
-      return null;
-    }
-    var snapValue = void 0;
-    if ((snapValue = validSnapValue(bBox.left)) || (snapValue = validSnapValue(bBox.x))) {
-      bBox.left = bBox.x = snapValue;
-    } else {
-      return null;
-    }
-    if ((snapValue = validSnapValue(bBox.top)) || (snapValue = validSnapValue(bBox.y))) {
-      bBox.top = bBox.y = snapValue;
-    } else {
-      return null;
-    }
-
-    if ((snapValue = validSnapValue(bBox.width)) && snapValue.value >= 0) {
-      bBox.width = snapValue;
-      delete bBox.right;
-    } else if (snapValue = validSnapValue(bBox.right)) {
-      bBox.right = snapValue;
-      delete bBox.width;
-    } else {
-      return null;
-    }
-    if ((snapValue = validSnapValue(bBox.height)) && snapValue.value >= 0) {
-      bBox.height = snapValue;
-      delete bBox.bottom;
-    } else if (snapValue = validSnapValue(bBox.bottom)) {
-      bBox.bottom = snapValue;
-      delete bBox.height;
-    } else {
-      return null;
-    }
-    return bBox;
-  }
-  window.validSnapBBox = validSnapBBox; // [DEBUG/]
 
   // Initialize `gravity`, `corner`, `side`, `center`, `edge`, `base`
   function commonSnapOptions(options, newOptions) {
@@ -1148,57 +1163,49 @@ function _setOptions(props, newOptions) {
       }
 
       var parsedSnapTargets = (Array.isArray(newSnapOptions.targets) ? newSnapOptions.targets : [newSnapOptions.targets]).reduce(function (parsedSnapTargets, target) {
-
-        function snapBBox2Object(snapBBox) {
-          return Object.keys(snapBBox).reduce(function (obj, prop) {
-            obj[prop] = snapValue2value(snapBBox[prop]);
-            return obj;
-          }, {});
-        }
-
         if (target == null) {
           return parsedSnapTargets;
         }
 
         var isElementPre = isElement(target),
             // Pre-check direct value
-        snapBBoxPre = validSnapBBox(copyTree(target)),
+        ppBBoxPre = validPPBBox(copyTree(target)),
             // Pre-check direct value
-        newSnapTargetOptions = isElementPre || snapBBoxPre ? { target: target } : // Direct Element | SnapBBox
+        newSnapTargetOptions = isElementPre || ppBBoxPre ? { target: target } : // Direct Element | PPBBox
         isObject(target) && target.start == null && target.end == null && target.step == null ? target : // SnapTargetOptions
         { x: target, y: target },
             // Others, it might be {step, start, end}
         expandedParsedSnapTargets = [],
             snapTargetOptions = {},
             newOptionsTarget = newSnapTargetOptions.target;
-        var snapBBox = void 0;
+        var ppBBox = void 0;
 
         if (isElementPre || isElement(newOptionsTarget)) {
           // Element
           expandedParsedSnapTargets.push({ element: newOptionsTarget });
           snapTargetOptions.target = newOptionsTarget;
-        } else if (snapBBox = snapBBoxPre || validSnapBBox(copyTree(newOptionsTarget))) {
-          // Object -> SnapBBox
-          expandedParsedSnapTargets.push({ snapBBox: snapBBox });
-          snapTargetOptions.target = snapBBox2Object(snapBBox);
+        } else if (ppBBox = ppBBoxPre || validPPBBox(copyTree(newOptionsTarget))) {
+          // Object -> PPBBox
+          expandedParsedSnapTargets.push({ ppBBox: ppBBox });
+          snapTargetOptions.target = ppBBox2OptionObject(ppBBox);
         } else {
           var parsedXY = ['x', 'y'].reduce(function (parsedXY, axis) {
             var newOptionsXY = newSnapTargetOptions[axis];
-            var snapValue = void 0;
+            var ppValue = void 0;
 
-            if (snapValue = validSnapValue(newOptionsXY)) {
+            if (ppValue = validPPValue(newOptionsXY)) {
               // pixels | '<n>%'
-              parsedXY[axis] = snapValue;
-              snapTargetOptions[axis] = snapValue2value(snapValue);
+              parsedXY[axis] = ppValue;
+              snapTargetOptions[axis] = ppValue2OptionValue(ppValue);
             } else {
               // {start, end} | {step, start, end}
               var start = void 0,
                   end = void 0,
                   step = void 0;
               if (isObject(newOptionsXY)) {
-                start = validSnapValue(newOptionsXY.start);
-                end = validSnapValue(newOptionsXY.end);
-                step = validSnapValue(newOptionsXY.step);
+                start = validPPValue(newOptionsXY.start);
+                end = validPPValue(newOptionsXY.end);
+                step = validPPValue(newOptionsXY.step);
                 if (start && end && start.isRatio === end.isRatio && start.value >= end.value) {
                   // start >= end
                   start = end = null; // {0, 100%}
@@ -1206,11 +1213,11 @@ function _setOptions(props, newOptions) {
               }
               start = parsedXY[axis + 'Start'] = start || { value: 0, isRatio: false };
               end = parsedXY[axis + 'End'] = end || { value: 1, isRatio: true };
-              snapTargetOptions[axis] = { start: snapValue2value(start), end: snapValue2value(end) };
+              snapTargetOptions[axis] = { start: ppValue2OptionValue(start), end: ppValue2OptionValue(end) };
               if (step && (step.isRatio ? step.value > 0 : step.value >= 2)) {
                 // step > 0% || step >= 2px
                 parsedXY[axis + 'Step'] = step;
-                snapTargetOptions[axis].step = snapValue2value(step);
+                snapTargetOptions[axis].step = ppValue2OptionValue(step);
               }
             }
             return parsedXY;
