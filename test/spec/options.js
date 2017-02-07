@@ -107,19 +107,21 @@ describe('setOptions()', function() {
     expect(props.containmentIsBBox).toBe(true);
     expect(props.containmentBBox)
       .toEqual({left: 0, top: 0, width: 128, height: 64, x: 0, y: 0, right: 128, bottom: 64});
-    expect(draggable.containment).toEqual(props.containmentBBox);
+    expect(draggable.containment)
+      .toEqual({left: 0, top: 0, x: 0, y: 0, width: 128, height: 64}); // x/y are copied, but no right/bottom
 
     done();
   });
 
   it('should not update when same bBox is passed for `containment`', function(done) {
     window.initBBoxDone = false;
-    draggable.containment = {x: 0, y: 0, right: 128, bottom: 64}; // Substitutes props
+    draggable.containment = {x: 0, y: 0, width: 128, height: 64}; // Substitutes props x/y
     expect(window.initBBoxDone).toBe(false);
     expect(props.containmentIsBBox).toBe(true);
     expect(props.containmentBBox)
       .toEqual({left: 0, top: 0, width: 128, height: 64, x: 0, y: 0, right: 128, bottom: 64});
-    expect(draggable.containment).toEqual(props.containmentBBox);
+    expect(draggable.containment)
+      .toEqual({left: 0, top: 0, x: 0, y: 0, width: 128, height: 64}); // x/y are copied, but no right/bottom
 
     done();
   });
@@ -131,7 +133,8 @@ describe('setOptions()', function() {
     expect(props.containmentIsBBox).toBe(true);
     expect(props.containmentBBox)
       .toEqual({left: 1, top: 0, width: 128, height: 64, x: 1, y: 0, right: 129, bottom: 64});
-    expect(draggable.containment).toEqual(props.containmentBBox);
+    expect(draggable.containment)
+      .toEqual({left: 1, top: 0, x: 1, y: 0, width: 128, height: 64}); // x/y are copied, but no right/bottom
 
     done();
   });

@@ -1470,7 +1470,7 @@ var PlainDraggable = function () {
     key: 'containment',
     get: function get() {
       var props = insProps[this._id];
-      return props.containmentIsBBox ? copyTree(props.options.containment) : props.options.containment;
+      return props.containmentIsBBox ? ppBBox2OptionObject(props.options.containment) : props.options.containment;
     },
     set: function set(value) {
       _setOptions(insProps[this._id], { containment: value });
