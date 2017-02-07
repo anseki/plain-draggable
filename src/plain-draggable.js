@@ -159,6 +159,11 @@ function ppValue2OptionValue(ppValue) {
 }
 window.ppValue2OptionValue = ppValue2OptionValue; // [DEBUG/]
 
+function resolvePPValue(ppValue, baseOrigin, baseSize) {
+  return typeof ppValue === 'number' ? ppValue :
+    baseOrigin + ppValue.value * (ppValue.isRatio ? baseSize : 1);
+}
+
 /**
  * An object that simulates BBox but properties are PPValue.
  * @typedef {Object} PPBBox
@@ -203,6 +208,20 @@ function ppBBox2OptionObject(ppBBox) {
   }, {});
 }
 window.ppBBox2OptionObject = ppBBox2OptionObject; // [DEBUG/]
+
+// PPBBox -> BBox
+function resolvePPBBox(ppBBox, baseBBox) {
+  const prop2Axis = {left: 'x', right: 'x', x: 'x', width: 'x',
+      top: 'y', bottom: 'y', y: 'y', height: 'y'},
+    baseOriginXY = {x: baseBBox.left, y: baseBBox.top},
+    baseSizeXY = {x: baseBBox.width, y: baseBBox.height};
+  return validBBox(Object.keys(ppBBox).reduce((bBox, prop) => {
+    bBox[prop] = resolvePPValue(ppBBox[prop],
+      prop === 'width' || prop === 'height' ? 0 : baseOriginXY[prop2Axis[prop]],
+      baseSizeXY[prop2Axis[prop]]);
+    return bBox;
+  }, {}));
+}
 
 /**
  * @param {Element} element - A target element.
@@ -311,7 +330,7 @@ function move(props, position, cbCheck) {
 }
 
 /**
- * Set `elementBBox`, `containmentBBox` and `min/max``Left/Top`.
+ * Set `elementBBox`, `containmentBBox`, `min/max``Left/Top` and `snapTargets`.
  * @param {props} props - `props` of instance.
  * @returns {void}
  */
@@ -344,15 +363,17 @@ function initBBox(props) {
       // Ignore `box-sizing`
       elementStyle[prop] = orgSize[prop] + 'px';
       newBBox = getBBox(element);
-      if (newBBox[prop] !== orgSize[prop]) {
+      if (newBBox[prop] !== orgSize[prop]) { // Retry
         elementStyle[prop] = orgSize[prop] - (newBBox[prop] - orgSize[prop]) + 'px';
       }
     }
   });
 
-  const elementBBox = props.elementBBox = getBBox(element),
+  const docBBox = getBBox(document.documentElement),
+    elementBBox = props.elementBBox = getBBox(element),
     containmentBBox = props.containmentBBox =
-      props.containmentIsBBox ? props.options.containment : getBBox(props.options.containment, true),
+      props.containmentIsBBox ? (resolvePPBBox(props.options.containment, docBBox) || docBBox) :
+        getBBox(props.options.containment, true),
     minLeft = props.minLeft = containmentBBox.left,
     maxLeft = props.maxLeft = containmentBBox.right - elementBBox.width,
     minTop = props.minTop = containmentBBox.top,
@@ -373,14 +394,13 @@ function initBBox(props) {
    */
 
   if (props.parsedSnapTargets) {
-    const docRect = document.documentElement.getBoundingClientRect(),
-      elementSizeXY = {x: elementBBox.width, y: elementBBox.height},
+    const elementSizeXY = {x: elementBBox.width, y: elementBBox.height},
       minXY = {x: minLeft, y: minTop}, maxXY = {x: maxLeft, y: maxTop},
       prop2Axis = {left: 'x', right: 'x', x: 'x', width: 'x', xStart: 'x', xEnd: 'x', xStep: 'x',
         top: 'y', bottom: 'y', y: 'y', height: 'y', yStart: 'y', yEnd: 'y', yStep: 'y'},
 
       snapTargets = props.parsedSnapTargets.reduce((snapTargets, parsedSnapTarget) => {
-        const baseRect = parsedSnapTarget.base === 'containment' ? containmentBBox : docRect,
+        const baseRect = parsedSnapTarget.base === 'containment' ? containmentBBox : docBBox,
           baseOriginXY = {x: baseRect.left, y: baseRect.top},
           baseSizeXY = {x: baseRect.width, y: baseRect.height};
 
@@ -394,11 +414,6 @@ function initBBox(props) {
          * @property {number} [yGravity]
          */
 
-        function resolvedValue(ppValue, baseOrigin, baseSize) {
-          return typeof ppValue === 'number' ? ppValue :
-            baseOrigin + ppValue.value * (ppValue.isRatio ? baseSize : 1);
-        }
-
         // Add single Point or Line (i.e. targetXY has no *Step)
         function addSnapTarget(targetXY) {
           if (targetXY.center == null) { targetXY.center = parsedSnapTarget.center; }
@@ -406,8 +421,8 @@ function initBBox(props) {
           if (targetXY.yGravity == null) { targetXY.yGravity = parsedSnapTarget.gravity; }
 
           if (targetXY.x != null && targetXY.y != null) { // Point
-            targetXY.x = resolvedValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
-            targetXY.y = resolvedValue(targetXY.y, baseOriginXY.y, baseSizeXY.y);
+            targetXY.x = resolvePPValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
+            targetXY.y = resolvePPValue(targetXY.y, baseOriginXY.y, baseSizeXY.y);
 
             if (targetXY.center) {
               targetXY.x -= elementSizeXY.x / 2;
@@ -442,11 +457,11 @@ function initBBox(props) {
               gravityRangeStartProp = `gravity${rangeAxisL}Start`,
               gravityRangeEndProp = `gravity${rangeAxisL}End`;
             targetXY[specAxis] =
-              resolvedValue(targetXY[specAxis], baseOriginXY[specAxis], baseSizeXY[specAxis]);
+              resolvePPValue(targetXY[specAxis], baseOriginXY[specAxis], baseSizeXY[specAxis]);
             targetXY[startProp] =
-              resolvedValue(targetXY[startProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]);
+              resolvePPValue(targetXY[startProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]);
             targetXY[endProp] =
-              resolvedValue(targetXY[endProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]) -
+              resolvePPValue(targetXY[endProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]) -
               elementSizeXY[rangeAxis]; // Reduce the end of the line.
             if (targetXY[startProp] > targetXY[endProp]) { return; } // Smaller than element size.
 
@@ -483,14 +498,7 @@ function initBBox(props) {
         let bBox;
         if ((bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : null) || // Element
             parsedSnapTarget.ppBBox) {
-          if (parsedSnapTarget.ppBBox) { // PPBBox (It might be invalid)
-            bBox = validBBox(Object.keys(parsedSnapTarget.ppBBox).reduce((bBox, prop) => { // PPBBox -> BBox
-              bBox[prop] = resolvedValue(parsedSnapTarget.ppBBox[prop],
-                prop === 'width' || prop === 'height' ? 0 : baseOriginXY[prop2Axis[prop]],
-                baseSizeXY[prop2Axis[prop]]);
-              return bBox;
-            }, {}));
-          }
+          if (parsedSnapTarget.ppBBox) { bBox = resolvePPBBox(parsedSnapTarget.ppBBox, baseRect); }
           if (bBox) {
             // Expand into 4 lines.
             parsedSnapTarget.edges.forEach(edge => {
@@ -512,17 +520,17 @@ function initBBox(props) {
 
         } else {
           const defaultStart = {
-              x: resolvedValue({value: 0, isRatio: false}, baseOriginXY.x, baseSizeXY.x),
-              y: resolvedValue({value: 0, isRatio: false}, baseOriginXY.y, baseSizeXY.y),
+              x: resolvePPValue({value: 0, isRatio: false}, baseOriginXY.x, baseSizeXY.x),
+              y: resolvePPValue({value: 0, isRatio: false}, baseOriginXY.y, baseSizeXY.y),
             },
             defaultEnd = {
-              x: resolvedValue({value: 1, isRatio: true}, baseOriginXY.x, baseSizeXY.x),
-              y: resolvedValue({value: 1, isRatio: true}, baseOriginXY.y, baseSizeXY.y),
+              x: resolvePPValue({value: 1, isRatio: true}, baseOriginXY.x, baseSizeXY.x),
+              y: resolvePPValue({value: 1, isRatio: true}, baseOriginXY.y, baseSizeXY.y),
             };
           let expanded = [
             ['x', 'y', 'xStart', 'xEnd', 'xStep', 'yStart', 'yEnd', 'yStep'].reduce((targetXY, prop) => {
               if (parsedSnapTarget[prop]) {
-                targetXY[prop] = resolvedValue(parsedSnapTarget[prop],
+                targetXY[prop] = resolvePPValue(parsedSnapTarget[prop],
                   prop === 'xStep' || prop === 'yStep' ? 0 : baseOriginXY[prop2Axis[prop]],
                   baseSizeXY[prop2Axis[prop]]);
               }
@@ -614,7 +622,7 @@ function setOptions(props, newOptions) {
         props.containmentIsBBox = false;
         needsInitBBox = true;
       }
-    } else if ((bBox = validBBox(copyTree(newOptions.containment))) && // bBox
+    } else if ((bBox = validPPBBox(copyTree(newOptions.containment))) && // bBox
         hasChanged(bBox, options.containment)) {
       options.containment = bBox;
       props.containmentIsBBox = true;
