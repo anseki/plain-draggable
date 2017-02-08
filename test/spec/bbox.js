@@ -18,7 +18,7 @@ describe('BBox', function() {
   });
 
   it('keeps original BBox if possible', function() {
-    var draggable, element, orgBBox, curBBox;
+    var draggable, element, orgBBox, curBBox, saveWidth;
 
     element = document.getElementById('elm1');
     orgBBox = window.getBBox(element);
@@ -33,6 +33,7 @@ describe('BBox', function() {
     expect(element.style.top).toBe('0px');
 
     element = document.getElementById('elm2');
+    saveWidth = element.style.width;
     orgBBox = window.getBBox(element);
     expect(orgBBox).toEqual({left: 0, top: 30, x: 0, y: 30, width: 300, height: 26, right: 300, bottom: 56});
     draggable = new window.PlainDraggable(element);
@@ -43,6 +44,16 @@ describe('BBox', function() {
     expect(element.style.height).toBe('');
     expect(element.style.left).toBe('0px');
     expect(element.style.top).toBe('30px');
+
+    // Change size (width was already changed by init)
+    expect(element.style.width).not.toBe(saveWidth);
+    element.style.width = '160px'; // border: 1, padding 2 -> BBox.width: 166
+    orgBBox = window.getBBox(element);
+    expect(orgBBox).toEqual({left: 0, top: 30, x: 0, y: 30, width: 166, height: 26, right: 166, bottom: 56});
+    draggable.position();
+    curBBox = window.getBBox(element);
+    expect(curBBox).toEqual(orgBBox);
+    expect(element.style.width).toBe('160px'); // Don't change
 
     element = document.getElementById('elm3');
     orgBBox = window.getBBox(element);
@@ -57,6 +68,7 @@ describe('BBox', function() {
     expect(element.style.top).toBe('60px');
 
     element = document.getElementById('elm4');
+    saveWidth = element.style.width;
     orgBBox = window.getBBox(element);
     expect(orgBBox).toEqual({left: 0, top: 120, x: 0, y: 120, width: 300, height: 30, right: 300, bottom: 150});
     draggable = new window.PlainDraggable(element);
@@ -67,6 +79,16 @@ describe('BBox', function() {
     expect(element.style.height).toBe('30px');
     expect(element.style.left).toBe('0px');
     expect(element.style.top).toBe('120px');
+
+    // Change size (width was not changed by init)
+    expect(element.style.width).toBe(saveWidth);
+    element.style.width = '160px';
+    orgBBox = window.getBBox(element);
+    expect(orgBBox).toEqual({left: 0, top: 120, x: 0, y: 120, width: 160, height: 30, right: 160, bottom: 150});
+    draggable.position();
+    curBBox = window.getBBox(element);
+    expect(curBBox).toEqual(orgBBox);
+    expect(element.style.width).toBe('160px'); // Don't change
 
     element = document.getElementById('elm5');
     orgBBox = window.getBBox(element);

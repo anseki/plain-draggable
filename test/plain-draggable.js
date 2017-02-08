@@ -716,9 +716,13 @@ function initBBox(props) {
       orgStyle[prop] = elementStyle[prop] || '';
       return orgStyle;
     }, {});
+    props.lastStyle = {};
   } else {
     RESTORE_PROPS.forEach(function (prop) {
-      elementStyle[prop] = props.orgStyle[prop];
+      // Skip this if it seems user changed it. (Perfect check is impossible.)
+      if (props.lastStyle[prop] == null || elementStyle[prop] === props.lastStyle[prop]) {
+        elementStyle[prop] = props.orgStyle[prop];
+      }
     });
   }
   var orgSize = getBBox(element);
@@ -740,6 +744,7 @@ function initBBox(props) {
         elementStyle[prop] = orgSize[prop] - (newBBox[prop] - orgSize[prop]) + 'px';
       }
     }
+    props.lastStyle[prop] = elementStyle[prop];
   });
 
   var docBBox = getBBox(document.documentElement),
