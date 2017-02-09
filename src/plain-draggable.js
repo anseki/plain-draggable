@@ -527,14 +527,6 @@ function initBBox(props) {
           }
 
         } else {
-          const defaultStart = {
-              x: resolvePPValue({value: 0, isRatio: false}, baseOriginXY.x, baseSizeXY.x),
-              y: resolvePPValue({value: 0, isRatio: false}, baseOriginXY.y, baseSizeXY.y),
-            },
-            defaultEnd = {
-              x: resolvePPValue({value: 1, isRatio: true}, baseOriginXY.x, baseSizeXY.x),
-              y: resolvePPValue({value: 1, isRatio: true}, baseOriginXY.y, baseSizeXY.y),
-            };
           let expanded = [
             ['x', 'y', 'xStart', 'xEnd', 'xStep', 'yStart', 'yEnd', 'yStep'].reduce((targetXY, prop) => {
               if (parsedSnapTarget[prop]) {
@@ -551,13 +543,11 @@ function initBBox(props) {
               gravityProp = `${axis}Gravity`;
             expanded = expanded.reduce((expanded, targetXY) => {
               let start = targetXY[startProp], end = targetXY[endProp], step = targetXY[stepProp];
+              if (start != null && end != null && start >= end) { return expanded; } // start >= end
 
-              if (start != null && end != null && start >= end) { // start >= end -> {0, 100%}
-                start = defaultStart[axis];
-                end = defaultEnd[axis];
-              }
-
-              if (step != null && step >= 2) { // step >= 2px -> Expand by step
+              if (step != null) {
+                if (step < 2) { return expanded; }
+                // step >= 2px -> Expand by step
                 let gravity = step / 2; // max
                 gravity = parsedSnapTarget.gravity > gravity ? gravity : null;
                 for (let curValue = start; curValue <= end; curValue += step) {
@@ -782,6 +772,7 @@ function setOptions(props, newOptions) {
           snapTargetOptions.target = ppBBox2OptionObject(ppBBox);
 
         } else {
+          let invalid; // `true` if valid PPValue was given but the contained value is invalid.
           const parsedXY = ['x', 'y'].reduce((parsedXY, axis) => {
             const newOptionsXY = newSnapTargetOptions[axis];
             let ppValue;
@@ -797,19 +788,24 @@ function setOptions(props, newOptions) {
                 end = validPPValue(newOptionsXY.end);
                 step = validPPValue(newOptionsXY.step);
                 if (start && end && start.isRatio === end.isRatio && start.value >= end.value) { // start >= end
-                  start = end = null; // {0, 100%}
+                  invalid = true;
                 }
               }
               start = parsedXY[`${axis}Start`] = start || {value: 0, isRatio: false};
               end = parsedXY[`${axis}End`] = end || {value: 1, isRatio: true};
               snapTargetOptions[axis] = {start: ppValue2OptionValue(start), end: ppValue2OptionValue(end)};
-              if (step && (step.isRatio ? step.value > 0 : step.value >= 2)) { // step > 0% || step >= 2px
-                parsedXY[`${axis}Step`] = step;
-                snapTargetOptions[axis].step = ppValue2OptionValue(step);
+              if (step) {
+                if (step.isRatio ? step.value > 0 : step.value >= 2) { // step > 0% || step >= 2px
+                  parsedXY[`${axis}Step`] = step;
+                  snapTargetOptions[axis].step = ppValue2OptionValue(step);
+                } else {
+                  invalid = true;
+                }
               }
             }
             return parsedXY;
           }, {});
+          if (invalid) { return parsedSnapTargets; }
 
           if (parsedXY.xStart && !parsedXY.xStep && parsedXY.yStart && !parsedXY.yStep) {
             // Expand into 4 lines. This is not BBox, and `edge` is ignored.

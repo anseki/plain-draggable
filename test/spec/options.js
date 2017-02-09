@@ -217,6 +217,20 @@ describe('setOptions()', function() {
       {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
 
+    // {start, end} Invalid (start >= end)
+    var parsedSnapTargetsSave = props.parsedSnapTargets,
+      snapSave = draggable.snap;
+    window.initBBoxDone = false;
+    draggable.snap = {x: {start: 32, end: 32}, y: 5}; // start === end
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
+    window.initBBoxDone = false;
+    draggable.snap = {x: {start: 33, end: 32}, y: 5}; // start > end
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
+
     // {start, end} n%
     window.initBBoxDone = false;
     draggable.snap = {x: {start: '8%', end: 256}, y: 5};
@@ -231,6 +245,20 @@ describe('setOptions()', function() {
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
     ));
+
+    // {start, end} n% Invalid (start >= end)
+    parsedSnapTargetsSave = props.parsedSnapTargets;
+    snapSave = draggable.snap;
+    window.initBBoxDone = false;
+    draggable.snap = {x: {start: '8%', end: '8%'}, y: 5}; // start === end
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
+    window.initBBoxDone = false;
+    draggable.snap = {x: {start: '8.1%', end: '8%'}, y: 5}; // start > end
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
 
     // {step, start, end}
     window.initBBoxDone = false;
@@ -353,28 +381,32 @@ describe('setOptions()', function() {
     ));
 
     // Invalid start >= end px
+    var parsedSnapTargetsSave = props.parsedSnapTargets,
+      snapSave = draggable.snap;
     window.initBBoxDone = false;
-    draggable.snap = {x: {start: 2, end: 2}, y: 5};
-    expect(window.initBBoxDone).toBe(true);
-    share = {xStart: DEFAULT_START, xEnd: DEFAULT_END};
-    expect(props.parsedSnapTargets).toEqual([merge(DEFAULT_PARSED_SNAP_TARGET,
-      share, {y: {value: 5, isRatio: false}}
-    )]);
-    expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
-    ));
+    draggable.snap = {x: {start: 2, end: 2}, y: 5}; // start === end
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
+    window.initBBoxDone = false;
+    draggable.snap = {x: {start: 3, end: 2}, y: 5}; // start > end
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
 
     // Invalid start >= end percent
+    parsedSnapTargetsSave = props.parsedSnapTargets;
+    snapSave = draggable.snap;
     window.initBBoxDone = false;
-    draggable.snap = {x: {start: '5%', end: '5%'}, y: 5};
-    expect(window.initBBoxDone).toBe(false); // Not update
-    share = {xStart: DEFAULT_START, xEnd: DEFAULT_END};
-    expect(props.parsedSnapTargets).toEqual([merge(DEFAULT_PARSED_SNAP_TARGET,
-      share, {y: {value: 5, isRatio: false}}
-    )]);
-    expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
-    ));
+    draggable.snap = {x: {start: '5%', end: '5%'}, y: 5}; // start === end
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
+    window.initBBoxDone = false;
+    draggable.snap = {x: {start: '5.1%', end: '5%'}, y: 5}; // start > end
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
 
     // `start` px
     window.initBBoxDone = false;
@@ -484,27 +516,41 @@ describe('setOptions()', function() {
 
     // Invalid px step < 2px
     window.initBBoxDone = false;
-    draggable.snap = {x: {step: 1}, y: 5};
+    draggable.snap = {x: {step: 2}, y: 5}; // step === 2
     expect(window.initBBoxDone).toBe(true);
-    share = {xStart: DEFAULT_START, xEnd: DEFAULT_END};
+    share = {
+      xStart: DEFAULT_START,
+      xEnd: DEFAULT_END,
+      xStep: {value: 2, isRatio: false}
+    };
     expect(props.parsedSnapTargets).toEqual([merge(DEFAULT_PARSED_SNAP_TARGET,
       share, {y: {value: 5, isRatio: false}}
     )]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
+      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd),
+        step: ppValue2OptionValue(share.xStep)}, y: 5}]}
     ));
+    var parsedSnapTargetsSave = props.parsedSnapTargets,
+      snapSave = draggable.snap;
+    window.initBBoxDone = false;
+    draggable.snap = {x: {step: 1}, y: 5}; // step < 2
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
 
     // Invalid percent step <= 0%
+    parsedSnapTargetsSave = props.parsedSnapTargets;
+    snapSave = draggable.snap;
     window.initBBoxDone = false;
-    draggable.snap = {x: {step: '-5%'}, y: 5};
-    expect(window.initBBoxDone).toBe(false); // Not update
-    share = {xStart: DEFAULT_START, xEnd: DEFAULT_END};
-    expect(props.parsedSnapTargets).toEqual([merge(DEFAULT_PARSED_SNAP_TARGET,
-      share, {y: {value: 5, isRatio: false}}
-    )]);
-    expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{x: {start: ppValue2OptionValue(share.xStart), end: ppValue2OptionValue(share.xEnd)}, y: 5}]}
-    ));
+    draggable.snap = {x: {step: '0%'}, y: 5}; // step === 0%
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
+    window.initBBoxDone = false;
+    draggable.snap = {x: {step: '-0.1%'}, y: 5}; // step < 0%
+    expect(window.initBBoxDone).toBe(false);
+    expect(props.parsedSnapTargets).toEqual(parsedSnapTargetsSave);
+    expect(draggable.snap).toEqual(snapSave);
 
     // No expand - Point * x-step
     window.initBBoxDone = false;
