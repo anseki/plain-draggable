@@ -241,19 +241,19 @@ describe('functions', function() {
       x: left, y: top, right: left + width, bottom: top + height});
 
     ppBBox = validPPBBox({x: 240, y: '0%', right: '50%', bottom: '100%'}); // Invalid
-    expect(ppBBox == null).toBe(false); // It's ok.
+    expect(ppBBox == null).toBe(false); // PPBBox is accepted.
     expect(resolvePPBBox(ppBBox, baseBBox) == null).toBe(true);
 
     ppBBox = validPPBBox({x: 0, y: '20%', right: '50%', bottom: '10%'}); // Invalid
-    expect(ppBBox == null).toBe(false); // It's ok.
+    expect(ppBBox == null).toBe(false); // PPBBox is accepted.
     expect(resolvePPBBox(ppBBox, baseBBox) == null).toBe(true);
 
     ppBBox = validPPBBox({x: '50%', y: '0%', right: 127, bottom: '100%'}); // Invalid
-    expect(ppBBox == null).toBe(false); // It's ok.
+    expect(ppBBox == null).toBe(false); // PPBBox is accepted.
     expect(resolvePPBBox(ppBBox, baseBBox) == null).toBe(true);
 
     ppBBox = validPPBBox({x: 129, y: '0%', right: '50%', bottom: '100%'}); // Invalid
-    expect(ppBBox == null).toBe(false); // It's ok.
+    expect(ppBBox == null).toBe(false); // PPBBox is accepted.
     expect(resolvePPBBox(ppBBox, baseBBox) == null).toBe(true);
 
     baseBBox.width = 258;
@@ -295,10 +295,16 @@ describe('functions', function() {
       .toEqual({corner: 'tl br bl', dummy: 1});
     expect(commonSnapOptions({dummy: 1}, {corner: 'top-left RIGHT-BOTTOM lb'}))
       .toEqual({corner: 'tl br bl', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {corner: 'top-left,RIGHT-BOTTOM,,,lb'})) // `,`
+      .toEqual({corner: 'tl br bl', dummy: 1});
     expect(commonSnapOptions({dummy: 1}, {corner: 'top-left tl lt left-top RIGHT-BOTTOM lb'}))
       .toEqual({corner: 'tl br bl', dummy: 1});
     expect(commonSnapOptions({dummy: 1}, {corner: 'dummy1 dummy2 dummy3'})).toEqual({dummy: 1});
-    expect(commonSnapOptions({dummy: 1}, {corner: 'top-left RIGHT-BOTTOM lb rt'}))
+    expect(commonSnapOptions({dummy: 1}, {corner: 'tl,tr,,bl,br'})) // -> all
+      .toEqual({corner: 'all', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {corner: ',tl,tr,,bl,,br,'})) // -> all
+      .toEqual({corner: 'all', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {corner: 'top-left RIGHT-BOTTOM lb rt'})) // -> all
       .toEqual({corner: 'all', dummy: 1});
     expect(commonSnapOptions({dummy: 1}, {corner: ' lb lb lb rt lb lb'}))
       .toEqual({corner: 'bl tr', dummy: 1});
@@ -310,6 +316,9 @@ describe('functions', function() {
     expect(commonSnapOptions({dummy: 1}, {side: '  sTart '})).toEqual({side: 'start', dummy: 1});
     expect(commonSnapOptions({dummy: 1}, {side: '  eNd '})).toEqual({side: 'end', dummy: 1});
     expect(commonSnapOptions({dummy: 1}, {side: 'both'})).toEqual({side: 'both', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {side: ' start  end'})).toEqual({side: 'both', dummy: 1}); // -> both
+    expect(commonSnapOptions({dummy: 1}, {side: 'end,,start'})).toEqual({side: 'both', dummy: 1}); // => both
+    expect(commonSnapOptions({dummy: 1}, {side: ',end,,start,'})).toEqual({side: 'both', dummy: 1}); // => both
 
     // center
     expect(commonSnapOptions({dummy: 1}, {center: 9})).toEqual({dummy: 1}); // Invalid
@@ -325,6 +334,12 @@ describe('functions', function() {
     expect(commonSnapOptions({dummy: 1}, {edge: '  inSide '})).toEqual({edge: 'inside', dummy: 1});
     expect(commonSnapOptions({dummy: 1}, {edge: '  oUtside '})).toEqual({edge: 'outside', dummy: 1});
     expect(commonSnapOptions({dummy: 1}, {edge: 'both'})).toEqual({edge: 'both', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {edge: ' inSide outside'})) // -> both
+      .toEqual({edge: 'both', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {edge: ' inSide,, outside'})) // -> both
+      .toEqual({edge: 'both', dummy: 1});
+    expect(commonSnapOptions({dummy: 1}, {edge: ',inside,, outside'})) // -> both
+      .toEqual({edge: 'both', dummy: 1});
 
     // base
     expect(commonSnapOptions({dummy: 1}, {base: 9})).toEqual({dummy: 1}); // Invalid

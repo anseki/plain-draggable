@@ -506,7 +506,7 @@ function initBBox(props) {
         let bBox;
         if ((bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : null) || // Element
             parsedSnapTarget.ppBBox) {
-          if (parsedSnapTarget.ppBBox) { bBox = resolvePPBBox(parsedSnapTarget.ppBBox, baseRect); }
+          if (parsedSnapTarget.ppBBox) { bBox = resolvePPBBox(parsedSnapTarget.ppBBox, baseRect); } // BBox
           if (bBox) {
             // Expand into 4 lines.
             parsedSnapTarget.edges.forEach(edge => {
@@ -557,8 +557,7 @@ function initBBox(props) {
                 end = defaultEnd[axis];
               }
 
-              if (step != null && step >= 2) { // step >= 2px
-                // Expand by step
+              if (step != null && step >= 2) { // step >= 2px -> Expand by step
                 let gravity = step / 2; // max
                 gravity = parsedSnapTarget.gravity > gravity ? gravity : null;
                 for (let curValue = start; curValue <= end; curValue += step) {
@@ -572,6 +571,7 @@ function initBBox(props) {
                   expandedXY[gravityProp] = gravity;
                   expanded.push(expandedXY);
                 }
+
               } else {
                 expanded.push(targetXY);
               }
@@ -682,12 +682,17 @@ function setOptions(props, newOptions) {
    * @property {string} base
    */
 
-  // Initialize `gravity`, `corner`, `side`, `center`, `edge`, `base`
+  // Normalize `gravity`, `corner`, `side`, `center`, `edge`, `base`
   function commonSnapOptions(options, newOptions) {
+    function cleanString(inString) {
+      return typeof inString === 'string' ?
+        inString.replace(/[, ]+/g, ' ').trim().toLowerCase() : null;
+    }
+
     // gravity
     if (isFinite(newOptions.gravity) && newOptions.gravity > 0) { options.gravity = newOptions.gravity; }
     // corner
-    let corner = typeof newOptions.corner === 'string' ? newOptions.corner.trim().toLowerCase() : null;
+    let corner = cleanString(newOptions.corner);
     if (corner) {
       if (corner !== 'all') {
         const added = {},
@@ -710,13 +715,25 @@ function setOptions(props, newOptions) {
       if (corner) { options.corner = corner; }
     }
     // side
-    const side = typeof newOptions.side === 'string' ? newOptions.side.trim().toLowerCase() : null;
-    if (side && (side === 'start' || side === 'end' || side === 'both')) { options.side = side; }
+    const side = cleanString(newOptions.side);
+    if (side) {
+      if (side === 'start' || side === 'end' || side === 'both') {
+        options.side = side;
+      } else if (side === 'start end' || side === 'end start') {
+        options.side = 'both';
+      }
+    }
     // center
     if (typeof newOptions.center === 'boolean') { options.center = newOptions.center; }
     // edge
-    const edge = typeof newOptions.edge === 'string' ? newOptions.edge.trim().toLowerCase() : null;
-    if (edge && (edge === 'inside' || edge === 'outside' || edge === 'both')) { options.edge = edge; }
+    const edge = cleanString(newOptions.edge);
+    if (edge) {
+      if (edge === 'inside' || edge === 'outside' || edge === 'both') {
+        options.edge = edge;
+      } else if (edge === 'inside outside' || edge === 'outside inside') {
+        options.edge = 'both';
+      }
+    }
     // base
     const base = typeof newOptions.base === 'string' ? newOptions.base.trim().toLowerCase() : null;
     if (base && (base === 'containment' || base === 'document')) { options.base = base; }
