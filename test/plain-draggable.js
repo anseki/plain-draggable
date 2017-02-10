@@ -855,11 +855,12 @@ function initBBox(props) {
               targetXY[specAxis] = resolvePPValue(targetXY[specAxis], baseOriginXY[specAxis], baseSizeXY[specAxis]);
               targetXY[startProp] = resolvePPValue(targetXY[startProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]);
               targetXY[endProp] = resolvePPValue(targetXY[endProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]) - elementSizeXY[rangeAxis]; // Reduce the end of the line.
-              if (targetXY[startProp] > targetXY[endProp]) {
+              if (targetXY[startProp] > targetXY[endProp] || // Smaller than element size.
+              targetXY[startProp] > maxXY[rangeAxis] || targetXY[endProp] < minXY[rangeAxis]) {
                 return {
                   v: void 0
                 };
-              } // Smaller than element size.
+              }
 
               if (targetXY.center) {
                 targetXY[specAxis] -= elementSizeXY[specAxis] / 2;
@@ -899,8 +900,9 @@ function initBBox(props) {
         parsedSnapTarget.ppBBox) {
           if (parsedSnapTarget.ppBBox) {
             bBox = resolvePPBBox(parsedSnapTarget.ppBBox, baseRect);
-          }
+          } // BBox
           if (bBox) {
+            // Drop invalid BBox.
             // Expand into 4 lines.
             parsedSnapTarget.edges.forEach(function (edge) {
               var lengthenX = parsedSnapTarget.gravity,
@@ -924,14 +926,6 @@ function initBBox(props) {
           }
         } else {
           (function () {
-            var defaultStart = {
-              x: resolvePPValue({ value: 0, isRatio: false }, baseOriginXY.x, baseSizeXY.x),
-              y: resolvePPValue({ value: 0, isRatio: false }, baseOriginXY.y, baseSizeXY.y)
-            },
-                defaultEnd = {
-              x: resolvePPValue({ value: 1, isRatio: true }, baseOriginXY.x, baseSizeXY.x),
-              y: resolvePPValue({ value: 1, isRatio: true }, baseOriginXY.y, baseSizeXY.y)
-            };
             var expanded = [['x', 'y', 'xStart', 'xEnd', 'xStep', 'yStart', 'yEnd', 'yStep'].reduce(function (targetXY, prop) {
               if (parsedSnapTarget[prop]) {
                 targetXY[prop] = resolvePPValue(parsedSnapTarget[prop], prop === 'xStep' || prop === 'yStep' ? 0 : baseOriginXY[prop2Axis[prop]], baseSizeXY[prop2Axis[prop]]);
@@ -948,16 +942,15 @@ function initBBox(props) {
                 var start = targetXY[startProp],
                     end = targetXY[endProp],
                     step = targetXY[stepProp];
-
                 if (start != null && end != null && start >= end) {
-                  // start >= end -> {0, 100%}
-                  start = defaultStart[axis];
-                  end = defaultEnd[axis];
-                }
+                  return expanded;
+                } // start >= end
 
-                if (step != null && step >= 2) {
-                  // step >= 2px
-                  // Expand by step
+                if (step != null) {
+                  if (step < 2) {
+                    return expanded;
+                  }
+                  // step >= 2px -> Expand by step
                   var gravity = step / 2; // max
                   gravity = parsedSnapTarget.gravity > gravity ? gravity : null;
                   for (var curValue = start; curValue <= end; curValue += step) {
@@ -1098,14 +1091,18 @@ function _setOptions(props, newOptions) {
    * @property {string} base
    */
 
-  // Initialize `gravity`, `corner`, `side`, `center`, `edge`, `base`
+  // Normalize `gravity`, `corner`, `side`, `center`, `edge`, `base`
   function commonSnapOptions(options, newOptions) {
+    function cleanString(inString) {
+      return typeof inString === 'string' ? inString.replace(/[, ]+/g, ' ').trim().toLowerCase() : null;
+    }
+
     // gravity
     if (isFinite(newOptions.gravity) && newOptions.gravity > 0) {
       options.gravity = newOptions.gravity;
     }
     // corner
-    var corner = typeof newOptions.corner === 'string' ? newOptions.corner.trim().toLowerCase() : null;
+    var corner = cleanString(newOptions.corner);
     if (corner) {
       if (corner !== 'all') {
         (function () {
@@ -1127,18 +1124,26 @@ function _setOptions(props, newOptions) {
       }
     }
     // side
-    var side = typeof newOptions.side === 'string' ? newOptions.side.trim().toLowerCase() : null;
-    if (side && (side === 'start' || side === 'end' || side === 'both')) {
-      options.side = side;
+    var side = cleanString(newOptions.side);
+    if (side) {
+      if (side === 'start' || side === 'end' || side === 'both') {
+        options.side = side;
+      } else if (side === 'start end' || side === 'end start') {
+        options.side = 'both';
+      }
     }
     // center
     if (typeof newOptions.center === 'boolean') {
       options.center = newOptions.center;
     }
     // edge
-    var edge = typeof newOptions.edge === 'string' ? newOptions.edge.trim().toLowerCase() : null;
-    if (edge && (edge === 'inside' || edge === 'outside' || edge === 'both')) {
-      options.edge = edge;
+    var edge = cleanString(newOptions.edge);
+    if (edge) {
+      if (edge === 'inside' || edge === 'outside' || edge === 'both') {
+        options.edge = edge;
+      } else if (edge === 'inside outside' || edge === 'outside inside') {
+        options.edge = 'both';
+      }
     }
     // base
     var base = typeof newOptions.base === 'string' ? newOptions.base.trim().toLowerCase() : null;
@@ -1203,6 +1208,7 @@ function _setOptions(props, newOptions) {
           expandedParsedSnapTargets.push({ ppBBox: ppBBox });
           snapTargetOptions.target = ppBBox2OptionObject(ppBBox);
         } else {
+          var invalid = void 0; // `true` if valid PPValue was given but the contained value is invalid.
           var parsedXY = ['x', 'y'].reduce(function (parsedXY, axis) {
             var newOptionsXY = newSnapTargetOptions[axis];
             var ppValue = void 0;
@@ -1222,20 +1228,27 @@ function _setOptions(props, newOptions) {
                 step = validPPValue(newOptionsXY.step);
                 if (start && end && start.isRatio === end.isRatio && start.value >= end.value) {
                   // start >= end
-                  start = end = null; // {0, 100%}
+                  invalid = true;
                 }
               }
               start = parsedXY[axis + 'Start'] = start || { value: 0, isRatio: false };
               end = parsedXY[axis + 'End'] = end || { value: 1, isRatio: true };
               snapTargetOptions[axis] = { start: ppValue2OptionValue(start), end: ppValue2OptionValue(end) };
-              if (step && (step.isRatio ? step.value > 0 : step.value >= 2)) {
-                // step > 0% || step >= 2px
-                parsedXY[axis + 'Step'] = step;
-                snapTargetOptions[axis].step = ppValue2OptionValue(step);
+              if (step) {
+                if (step.isRatio ? step.value > 0 : step.value >= 2) {
+                  // step > 0% || step >= 2px
+                  parsedXY[axis + 'Step'] = step;
+                  snapTargetOptions[axis].step = ppValue2OptionValue(step);
+                } else {
+                  invalid = true;
+                }
               }
             }
             return parsedXY;
           }, {});
+          if (invalid) {
+            return parsedSnapTargets;
+          }
 
           if (parsedXY.xStart && !parsedXY.xStep && parsedXY.yStart && !parsedXY.yStep) {
             // Expand into 4 lines. This is not BBox, and `edge` is ignored.
