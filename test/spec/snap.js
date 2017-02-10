@@ -14,7 +14,13 @@ describe('snapTargets', function() {
   function merge() {
     var obj = {};
     Array.prototype.forEach.call(arguments, function(addObj) {
-      Object.keys(addObj).forEach(function(key) { obj[key] = addObj[key]; });
+      Object.keys(addObj).forEach(function(key) {
+        if (addObj[key] != null) {
+          obj[key] = addObj[key];
+        } else {
+          delete obj[key];
+        }
+      });
     });
     return obj;
   }
@@ -441,6 +447,120 @@ describe('snapTargets', function() {
     draggable.snap = {x: {start: minLeft - 400, end: minLeft - 100}, y: 300};
     expect(props.snapTargets == null).toBe(true);
     expect(draggable.snap == null).toBe(false); // setOptions didn't remove it.
+
+    done();
+  });
+
+  it('Step', function(done) {
+    var parentBBox = window.getBBox(parent), share;
+
+    // Parse pixels
+    draggable.snap = {y: {step: 200}}; // x: [0, 100%] -> removed
+    expect(props.snapTargets).toEqual([
+      merge(getLineTarget(null, parentBBox.top, SNAP_GRAVITY, elmRect), {gravityYStart: null}),
+      // 0 - elmHeight: removed
+      getLineTarget(null, parentBBox.top + 200, SNAP_GRAVITY, elmRect),
+      getLineTarget(null, parentBBox.top + 200 - elmHeight, SNAP_GRAVITY, elmRect),
+      getLineTarget(null, parentBBox.top + 400, SNAP_GRAVITY, elmRect),
+      getLineTarget(null, parentBBox.top + 400 - elmHeight, SNAP_GRAVITY, elmRect),
+      // 600: removed
+      merge(getLineTarget(null, parentBBox.top + 600 - elmHeight, SNAP_GRAVITY, elmRect), {gravityYEnd: null})
+    ]);
+
+    // Parse pixels, range
+    draggable.snap = {y: {step: 150, start: 50, end: 450}};
+    expect(props.snapTargets).toEqual([
+      getLineTarget(null, parentBBox.top + 50, SNAP_GRAVITY, elmRect),
+      // 50 - elmHeight: removed
+      getLineTarget(null, parentBBox.top + 200, SNAP_GRAVITY, elmRect),
+      getLineTarget(null, parentBBox.top + 200 - elmHeight, SNAP_GRAVITY, elmRect),
+      getLineTarget(null, parentBBox.top + 350, SNAP_GRAVITY, elmRect),
+      getLineTarget(null, parentBBox.top + 350 - elmHeight, SNAP_GRAVITY, elmRect)
+    ]);
+
+    // Vertical
+    draggable.snap = {x: {step: 150, start: 150, end: 550}};
+    expect(props.snapTargets).toEqual([
+      getLineTarget(parentBBox.top + 150, null, SNAP_GRAVITY, elmRect),
+      getLineTarget(parentBBox.top + 150 - elmWidth, null, SNAP_GRAVITY, elmRect),
+      getLineTarget(parentBBox.top + 300, null, SNAP_GRAVITY, elmRect),
+      getLineTarget(parentBBox.top + 300 - elmWidth, null, SNAP_GRAVITY, elmRect),
+      getLineTarget(parentBBox.top + 450, null, SNAP_GRAVITY, elmRect),
+      getLineTarget(parentBBox.top + 450 - elmWidth, null, SNAP_GRAVITY, elmRect)
+    ]);
+
+    // Reduce gravity
+    draggable.snap = {y: {step: 30, start: 300, end: 380}, side: 'start'};
+    expect(props.snapTargets).toEqual([
+      getLineTarget(null, parentBBox.top + 300, 15, elmRect),
+      getLineTarget(null, parentBBox.top + 330, 15, elmRect),
+      getLineTarget(null, parentBBox.top + 360, 15, elmRect)
+    ]);
+
+    // Parse pixels, with Line range
+    draggable.snap = {x: {start: 10, end: 300}, y: {step: 150, start: 50, end: 450}, side: 'start'};
+    share = [parentBBox.left + 10, parentBBox.left + 300];
+    expect(props.snapTargets).toEqual([
+      getLineTarget(share, parentBBox.top + 50, SNAP_GRAVITY, elmRect),
+      getLineTarget(share, parentBBox.top + 200, SNAP_GRAVITY, elmRect),
+      getLineTarget(share, parentBBox.top + 350, SNAP_GRAVITY, elmRect)
+    ]);
+
+    // Parse pixels, with Line range -> gravityXEnd is removed
+    draggable.snap = {x: {start: 10, end: 800}, y: {step: 150, start: 50, end: 450}, side: 'start'};
+    share = [parentBBox.left + 10, parentBBox.left + 800];
+    expect(props.snapTargets).toEqual([
+      merge(getLineTarget(share, parentBBox.top + 50, SNAP_GRAVITY, elmRect), {gravityXEnd: null}),
+      merge(getLineTarget(share, parentBBox.top + 200, SNAP_GRAVITY, elmRect), {gravityXEnd: null}),
+      merge(getLineTarget(share, parentBBox.top + 350, SNAP_GRAVITY, elmRect), {gravityXEnd: null})
+    ]);
+
+    // Step < 2px -> remove
+    // Step === 2px
+    draggable.snap = {x: {step: '0.25%', start: 300, end: 305}, side: 'start'}; // width: 800 -> 2px
+    expect(props.snapTargets).toEqual([
+      getLineTarget(parentBBox.left + 300, null, 1, elmRect),
+      getLineTarget(parentBBox.left + 302, null, 1, elmRect),
+      getLineTarget(parentBBox.left + 304, null, 1, elmRect),
+    ]);
+    // Step < 2px -> remove
+    draggable.snap = {x: {step: '0.24%', start: 300, end: 305}, side: 'start'}; // width: 800 -> 2px
+    expect(props.snapTargets == null).toBe(true);
+    expect(draggable.snap == null).toBe(false); // setOptions didn't remove it.
+
+    // xStep, yStep
+    draggable.snap = {
+      x: {step: 100, start: 50, end: 300},
+      y: {step: 150, start: 50, end: 450}
+    };
+    expect(props.snapTargets).toEqual([
+      getPointTarget(parentBBox.left + 50, parentBBox.top + 50, SNAP_GRAVITY, SNAP_GRAVITY),
+      getPointTarget(parentBBox.left + 50, parentBBox.top + 200, SNAP_GRAVITY, SNAP_GRAVITY),
+      getPointTarget(parentBBox.left + 50, parentBBox.top + 350, SNAP_GRAVITY, SNAP_GRAVITY),
+      getPointTarget(parentBBox.left + 150, parentBBox.top + 50, SNAP_GRAVITY, SNAP_GRAVITY),
+      getPointTarget(parentBBox.left + 150, parentBBox.top + 200, SNAP_GRAVITY, SNAP_GRAVITY),
+      getPointTarget(parentBBox.left + 150, parentBBox.top + 350, SNAP_GRAVITY, SNAP_GRAVITY),
+      getPointTarget(parentBBox.left + 250, parentBBox.top + 50, SNAP_GRAVITY, SNAP_GRAVITY),
+      getPointTarget(parentBBox.left + 250, parentBBox.top + 200, SNAP_GRAVITY, SNAP_GRAVITY),
+      getPointTarget(parentBBox.left + 250, parentBBox.top + 350, SNAP_GRAVITY, SNAP_GRAVITY)
+    ]);
+
+    // xStep, yStep, reduce gravity
+    draggable.snap = {
+      x: {step: 100, start: 50, end: 300},
+      y: {step: 36, start: 50, end: 130}
+    };
+    expect(props.snapTargets).toEqual([
+      getPointTarget(parentBBox.left + 50, parentBBox.top + 50, SNAP_GRAVITY, 18),
+      getPointTarget(parentBBox.left + 50, parentBBox.top + 86, SNAP_GRAVITY, 18),
+      getPointTarget(parentBBox.left + 50, parentBBox.top + 122, SNAP_GRAVITY, 18),
+      getPointTarget(parentBBox.left + 150, parentBBox.top + 50, SNAP_GRAVITY, 18),
+      getPointTarget(parentBBox.left + 150, parentBBox.top + 86, SNAP_GRAVITY, 18),
+      getPointTarget(parentBBox.left + 150, parentBBox.top + 122, SNAP_GRAVITY, 18),
+      getPointTarget(parentBBox.left + 250, parentBBox.top + 50, SNAP_GRAVITY, 18),
+      getPointTarget(parentBBox.left + 250, parentBBox.top + 86, SNAP_GRAVITY, 18),
+      getPointTarget(parentBBox.left + 250, parentBBox.top + 122, SNAP_GRAVITY, 18)
+    ]);
 
     done();
   });
