@@ -471,7 +471,10 @@ function initBBox(props) {
             targetXY[endProp] =
               resolvePPValue(targetXY[endProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]) -
               elementSizeXY[rangeAxis]; // Reduce the end of the line.
-            if (targetXY[startProp] > targetXY[endProp]) { return; } // Smaller than element size.
+            if (targetXY[startProp] > targetXY[endProp] || // Smaller than element size.
+                targetXY[startProp] > maxXY[rangeAxis] || targetXY[endProp] < minXY[rangeAxis]) {
+              return;
+            }
 
             if (targetXY.center) {
               targetXY[specAxis] -= elementSizeXY[specAxis] / 2;
@@ -507,7 +510,7 @@ function initBBox(props) {
         if ((bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : null) || // Element
             parsedSnapTarget.ppBBox) {
           if (parsedSnapTarget.ppBBox) { bBox = resolvePPBBox(parsedSnapTarget.ppBBox, baseRect); } // BBox
-          if (bBox) {
+          if (bBox) { // Drop invalid BBox.
             // Expand into 4 lines.
             parsedSnapTarget.edges.forEach(edge => {
               let lengthenX = parsedSnapTarget.gravity, lengthenY = parsedSnapTarget.gravity;
