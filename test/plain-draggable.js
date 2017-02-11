@@ -390,15 +390,15 @@ var insId = 0,
     body = void 0,
 
 // CSS property/value
-cssValueCursorDraggable = void 0,
-    cssValueCursorDragging = void 0,
+cssValueDraggableCursor = void 0,
+    cssValueDraggingCursor = void 0,
     cssOrgValueCursor = void 0,
     cssPropUserSelect = void 0,
     cssOrgValueUserSelect = void 0,
 
 // Try to set `cursor` property.
-cssWantedValueCursorDraggable = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
-    cssWantedValueCursorDragging = IS_WEBKIT ? 'move' : ['grabbing', 'move'];
+cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
+    cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'];
 
 // [DEBUG]
 window.insProps = insProps;
@@ -626,19 +626,19 @@ function initAnim(element) {
   return element;
 }
 
-function setCursorDraggable(element) {
-  if (cssValueCursorDraggable == null) {
-    cssValueCursorDraggable = _cssprefix2.default.setValue(element, 'cursor', cssWantedValueCursorDraggable);
+function setDraggableCursor(element) {
+  if (cssValueDraggableCursor == null) {
+    cssValueDraggableCursor = _cssprefix2.default.setValue(element, 'cursor', cssWantedValueDraggableCursor);
   } else {
-    element.style.cursor = cssValueCursorDraggable;
+    element.style.cursor = cssValueDraggableCursor;
   }
 }
 
-function setCursorDragging(element) {
-  if (cssValueCursorDragging == null) {
-    cssValueCursorDragging = _cssprefix2.default.setValue(element, 'cursor', cssWantedValueCursorDragging);
+function setDraggingCursor(element) {
+  if (cssValueDraggingCursor == null) {
+    cssValueDraggingCursor = _cssprefix2.default.setValue(element, 'cursor', cssWantedValueDraggingCursor);
   } else {
-    element.style.cursor = cssValueCursorDragging;
+    element.style.cursor = cssValueDraggingCursor;
   }
 }
 
@@ -990,11 +990,11 @@ function mousedown(props, event) {
     return;
   }
 
-  setCursorDragging(props.options.handle);
+  setDraggingCursor(props.options.handle);
   if (props.options.zIndex !== false) {
     props.elementStyle.zIndex = props.options.zIndex;
   }
-  setCursorDragging(body);
+  setDraggingCursor(body);
   if (cssPropUserSelect) {
     body.style[cssPropUserSelect] = 'none';
   }
@@ -1005,7 +1005,7 @@ function mousedown(props, event) {
 }
 
 function dragEnd(props) {
-  setCursorDraggable(props.options.handle);
+  setDraggableCursor(props.options.handle);
   if (props.options.zIndex !== false) {
     props.elementStyle.zIndex = props.orgZIndex;
   }
@@ -1320,7 +1320,7 @@ function _setOptions(props, newOptions) {
     }
     var handle = options.handle = newOptions.handle;
     props.orgCursor = handle.style.cursor;
-    setCursorDraggable(handle);
+    setDraggableCursor(handle);
     handle.addEventListener('dragstart', dragstart, false);
     handle.addEventListener('mousedown', props.handleMousedown, false);
   }
@@ -1454,7 +1454,7 @@ var PlainDraggable = function () {
           }
           props.options.handle.style.cursor = props.orgCursor;
         } else {
-          setCursorDraggable(props.options.handle);
+          setDraggableCursor(props.options.handle);
         }
       }
     }
@@ -1550,32 +1550,32 @@ var PlainDraggable = function () {
       _setOptions(insProps[this._id], { onDragEnd: value });
     }
   }], [{
-    key: 'cursorDraggable',
+    key: 'draggableCursor',
     get: function get() {
-      return cssWantedValueCursorDraggable;
+      return cssWantedValueDraggableCursor;
     },
     set: function set(value) {
-      cssWantedValueCursorDraggable = value;
+      cssWantedValueDraggableCursor = value;
       // Reset
-      cssValueCursorDraggable = null;
+      cssValueDraggableCursor = null;
       Object.keys(insProps).forEach(function (id) {
         var props = insProps[id];
         if (!props.disabled && props !== activeItem) {
-          setCursorDraggable(props.options.handle);
+          setDraggableCursor(props.options.handle);
         }
       });
     }
   }, {
-    key: 'cursorDragging',
+    key: 'draggingCursor',
     get: function get() {
-      return cssWantedValueCursorDragging;
+      return cssWantedValueDraggingCursor;
     },
     set: function set(value) {
-      cssWantedValueCursorDragging = value;
+      cssWantedValueDraggingCursor = value;
       // Reset
-      cssValueCursorDragging = null;
+      cssValueDraggingCursor = null;
       if (activeItem) {
-        setCursorDragging(activeItem.options.handle);
+        setDraggingCursor(activeItem.options.handle);
       }
     }
   }]);

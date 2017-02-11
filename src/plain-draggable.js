@@ -37,11 +37,11 @@ const
 let insId = 0,
   activeItem, hasMoved, pointerOffset, body,
   // CSS property/value
-  cssValueCursorDraggable, cssValueCursorDragging,
+  cssValueDraggableCursor, cssValueDraggingCursor,
   cssOrgValueCursor, cssPropUserSelect, cssOrgValueUserSelect,
   // Try to set `cursor` property.
-  cssWantedValueCursorDraggable = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
-  cssWantedValueCursorDragging = IS_WEBKIT ? 'move' : ['grabbing', 'move'];
+  cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
+  cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'];
 
 // [DEBUG]
 window.insProps = insProps;
@@ -262,19 +262,19 @@ function initAnim(element) {
   return element;
 }
 
-function setCursorDraggable(element) {
-  if (cssValueCursorDraggable == null) {
-    cssValueCursorDraggable = CSSPrefix.setValue(element, 'cursor', cssWantedValueCursorDraggable);
+function setDraggableCursor(element) {
+  if (cssValueDraggableCursor == null) {
+    cssValueDraggableCursor = CSSPrefix.setValue(element, 'cursor', cssWantedValueDraggableCursor);
   } else {
-    element.style.cursor = cssValueCursorDraggable;
+    element.style.cursor = cssValueDraggableCursor;
   }
 }
 
-function setCursorDragging(element) {
-  if (cssValueCursorDragging == null) {
-    cssValueCursorDragging = CSSPrefix.setValue(element, 'cursor', cssWantedValueCursorDragging);
+function setDraggingCursor(element) {
+  if (cssValueDraggingCursor == null) {
+    cssValueDraggingCursor = CSSPrefix.setValue(element, 'cursor', cssWantedValueDraggingCursor);
   } else {
-    element.style.cursor = cssValueCursorDragging;
+    element.style.cursor = cssValueDraggingCursor;
   }
 }
 
@@ -585,9 +585,9 @@ function initBBox(props) {
 function mousedown(props, event) {
   if (props.disabled) { return; }
 
-  setCursorDragging(props.options.handle);
+  setDraggingCursor(props.options.handle);
   if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.options.zIndex; }
-  setCursorDragging(body);
+  setDraggingCursor(body);
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = 'none'; }
 
   activeItem = props;
@@ -596,7 +596,7 @@ function mousedown(props, event) {
 }
 
 function dragEnd(props) {
-  setCursorDraggable(props.options.handle);
+  setDraggableCursor(props.options.handle);
   if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.orgZIndex; }
   body.style.cursor = cssOrgValueCursor;
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = cssOrgValueUserSelect; }
@@ -873,7 +873,7 @@ function setOptions(props, newOptions) {
     }
     const handle = options.handle = newOptions.handle;
     props.orgCursor = handle.style.cursor;
-    setCursorDraggable(handle);
+    setDraggableCursor(handle);
     handle.addEventListener('dragstart', dragstart, false);
     handle.addEventListener('mousedown', props.handleMousedown, false);
   }
@@ -989,7 +989,7 @@ class PlainDraggable {
         if (props === activeItem) { dragEnd(props); }
         props.options.handle.style.cursor = props.orgCursor;
       } else {
-        setCursorDraggable(props.options.handle);
+        setDraggableCursor(props.options.handle);
       }
     }
   }
@@ -1036,30 +1036,30 @@ class PlainDraggable {
   get onDragEnd() { return insProps[this._id].options.onDragEnd; }
   set onDragEnd(value) { setOptions(insProps[this._id], {onDragEnd: value}); }
 
-  static get cursorDraggable() {
-    return cssWantedValueCursorDraggable;
+  static get draggableCursor() {
+    return cssWantedValueDraggableCursor;
   }
-  static set cursorDraggable(value) {
-    cssWantedValueCursorDraggable = value;
+  static set draggableCursor(value) {
+    cssWantedValueDraggableCursor = value;
     // Reset
-    cssValueCursorDraggable = null;
+    cssValueDraggableCursor = null;
     Object.keys(insProps).forEach(id =>{
       const props = insProps[id];
       if (!props.disabled && props !== activeItem) {
-        setCursorDraggable(props.options.handle);
+        setDraggableCursor(props.options.handle);
       }
     });
   }
 
-  static get cursorDragging() {
-    return cssWantedValueCursorDragging;
+  static get draggingCursor() {
+    return cssWantedValueDraggingCursor;
   }
-  static set cursorDragging(value) {
-    cssWantedValueCursorDragging = value;
+  static set draggingCursor(value) {
+    cssWantedValueDraggingCursor = value;
     // Reset
-    cssValueCursorDragging = null;
+    cssValueDraggingCursor = null;
     if (activeItem) {
-      setCursorDragging(activeItem.options.handle);
+      setDraggingCursor(activeItem.options.handle);
     }
   }
 }
