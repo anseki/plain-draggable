@@ -398,7 +398,11 @@ cssValueDraggableCursor = void 0,
 
 // Try to set `cursor` property.
 cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
-    cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'];
+    cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'],
+
+// class
+draggableClass = 'plain-draggable',
+    movingClass = 'plain-draggable-moving';
 
 // [DEBUG]
 window.insProps = insProps;
@@ -1013,6 +1017,9 @@ function dragEnd(props) {
   if (cssPropUserSelect) {
     body.style[cssPropUserSelect] = cssOrgValueUserSelect;
   }
+  if (movingClass) {
+    props.element.classList.remove(movingClass);
+  }
 
   activeItem = null;
   if (props.onDragEnd) {
@@ -1389,6 +1396,9 @@ var PlainDraggable = function () {
     props.element = initAnim(element);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
+    if (draggableClass) {
+      props.element.classList.add(draggableClass);
+    }
     // Event listeners for handle element, to be removed.
     props.handleMousedown = function (event) {
       mousedown(props, event);
@@ -1453,8 +1463,14 @@ var PlainDraggable = function () {
             dragEnd(props);
           }
           props.options.handle.style.cursor = props.orgCursor;
+          if (draggableClass) {
+            props.element.classList.remove(draggableClass);
+          }
         } else {
           setDraggableCursor(props.options.handle);
+          if (draggableClass) {
+            props.element.classList.add(draggableClass);
+          }
         }
       }
     }
@@ -1578,6 +1594,47 @@ var PlainDraggable = function () {
         setDraggingCursor(activeItem.options.handle);
       }
     }
+  }, {
+    key: 'draggableClass',
+    get: function get() {
+      return draggableClass;
+    },
+    set: function set(value) {
+      value = value ? value + '' : void 0;
+      if (value !== draggableClass) {
+        Object.keys(insProps).forEach(function (id) {
+          var props = insProps[id];
+          if (!props.disabled) {
+            if (draggableClass) {
+              props.element.classList.remove(draggableClass);
+            }
+            if (value) {
+              props.element.classList.add(value);
+            }
+          }
+        });
+        draggableClass = value;
+      }
+    }
+  }, {
+    key: 'movingClass',
+    get: function get() {
+      return movingClass;
+    },
+    set: function set(value) {
+      value = value ? value + '' : void 0;
+      if (value !== movingClass) {
+        if (activeItem && hasMoved) {
+          if (movingClass) {
+            activeItem.element.classList.remove(movingClass);
+          }
+          if (value) {
+            activeItem.element.classList.add(value);
+          }
+        }
+        movingClass = value;
+      }
+    }
   }]);
 
   return PlainDraggable;
@@ -1614,6 +1671,9 @@ document.addEventListener('mousemove', _animEvent2.default.add(function (event) 
 
     if (!hasMoved) {
       hasMoved = true;
+      if (movingClass) {
+        activeItem.element.classList.add(movingClass);
+      }
       if (activeItem.onMoveStart) {
         activeItem.onMoveStart();
       }

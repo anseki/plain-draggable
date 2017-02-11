@@ -41,7 +41,9 @@ let insId = 0,
   cssOrgValueCursor, cssPropUserSelect, cssOrgValueUserSelect,
   // Try to set `cursor` property.
   cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
-  cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'];
+  cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'],
+  // class
+  draggableClass = 'plain-draggable', movingClass = 'plain-draggable-moving';
 
 // [DEBUG]
 window.insProps = insProps;
@@ -600,6 +602,7 @@ function dragEnd(props) {
   if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.orgZIndex; }
   body.style.cursor = cssOrgValueCursor;
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = cssOrgValueUserSelect; }
+  if (movingClass) { props.element.classList.remove(movingClass); }
 
   activeItem = null;
   if (props.onDragEnd) { props.onDragEnd(); }
@@ -936,6 +939,7 @@ class PlainDraggable {
     props.element = initAnim(element);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
+    if (draggableClass) { props.element.classList.add(draggableClass); }
     // Event listeners for handle element, to be removed.
     props.handleMousedown = event => { mousedown(props, event); };
 
@@ -988,8 +992,10 @@ class PlainDraggable {
       if (props.disabled) {
         if (props === activeItem) { dragEnd(props); }
         props.options.handle.style.cursor = props.orgCursor;
+        if (draggableClass) { props.element.classList.remove(draggableClass); }
       } else {
         setDraggableCursor(props.options.handle);
+        if (draggableClass) { props.element.classList.add(draggableClass); }
       }
     }
   }
@@ -1043,7 +1049,7 @@ class PlainDraggable {
     cssWantedValueDraggableCursor = value;
     // Reset
     cssValueDraggableCursor = null;
-    Object.keys(insProps).forEach(id =>{
+    Object.keys(insProps).forEach(id => {
       const props = insProps[id];
       if (!props.disabled && props !== activeItem) {
         setDraggableCursor(props.options.handle);
@@ -1060,6 +1066,37 @@ class PlainDraggable {
     cssValueDraggingCursor = null;
     if (activeItem) {
       setDraggingCursor(activeItem.options.handle);
+    }
+  }
+
+  static get draggableClass() {
+    return draggableClass;
+  }
+  static set draggableClass(value) {
+    value = value ? (value + '') : void 0;
+    if (value !== draggableClass) {
+      Object.keys(insProps).forEach(id => {
+        const props = insProps[id];
+        if (!props.disabled) {
+          if (draggableClass) { props.element.classList.remove(draggableClass); }
+          if (value) { props.element.classList.add(value); }
+        }
+      });
+      draggableClass = value;
+    }
+  }
+
+  static get movingClass() {
+    return movingClass;
+  }
+  static set movingClass(value) {
+    value = value ? (value + '') : void 0;
+    if (value !== movingClass) {
+      if (activeItem && hasMoved) {
+        if (movingClass) { activeItem.element.classList.remove(movingClass); }
+        if (value) { activeItem.element.classList.add(value); }
+      }
+      movingClass = value;
     }
   }
 }
@@ -1096,6 +1133,7 @@ document.addEventListener('mousemove', AnimEvent.add(event => {
 
     if (!hasMoved) {
       hasMoved = true;
+      if (movingClass) { activeItem.element.classList.add(movingClass); }
       if (activeItem.onMoveStart) { activeItem.onMoveStart(); }
     }
     if (activeItem.onMove) { activeItem.onMove(); }
