@@ -1046,18 +1046,6 @@ class PlainDraggable {
       props.moveElm = moveHtml;
     }
 
-    // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
-    props.resizing = false;
-    window.addEventListener('resize', AnimEvent.add(() => {
-      if (props.resizing) {
-        console.log('`resize` event listener is already running.'); // [DEBUG/]
-        return;
-      }
-      props.resizing = true;
-      initBBox(props);
-      props.resizing = false;
-    }), true);
-
     // Default options
     if (!options.containment) {
       let parent;
@@ -1248,19 +1236,31 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
 }, false);
 
 {
-  function initBody() {
+  let resizing = false;
+  function initDoc() {
     cssOrgValueCursor = body.style.cursor;
     if ((cssPropUserSelect = CSSPrefix.getProp('userSelect', body))) {
       cssOrgValueUserSelect = body.style[cssPropUserSelect];
     }
+
+    // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
+    window.addEventListener('resize', AnimEvent.add(() => {
+      if (resizing) {
+        console.log('`resize` event listener is already running.'); // [DEBUG/]
+        return;
+      }
+      resizing = true;
+      Object.keys(insProps).forEach(id => { initBBox(insProps[id]); });
+      resizing = false;
+    }), true);
   }
 
   if ((body = document.body)) {
-    initBody();
+    initDoc();
   } else {
     document.addEventListener('DOMContentLoaded', () => {
       body = document.body;
-      initBody();
+      initDoc();
     }, false);
   }
 }

@@ -365,6 +365,7 @@ var ZINDEX = 99999,
     SNAP_ALL_SIDES = ['start', 'end'],
     SNAP_ALL_EDGES = ['inside', 'outside'],
     IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
+    IS_GECKO = 'MozAppearance' in document.documentElement.style,
     isObject = function () {
   var toString = {}.toString,
       fnToString = {}.hasOwnProperty.toString,
@@ -407,6 +408,7 @@ draggableClass = 'plain-draggable',
 // [DEBUG]
 window.insProps = insProps;
 window.IS_WEBKIT = IS_WEBKIT;
+window.IS_GECKO = IS_GECKO;
 window.SNAP_GRAVITY = SNAP_GRAVITY;
 window.SNAP_CORNER = SNAP_CORNER;
 window.SNAP_SIDE = SNAP_SIDE;
@@ -650,6 +652,20 @@ function setDraggingCursor(element) {
 }
 
 /**
+ * Get SVG coordinates from viewport coordinates.
+ * @param {props} props - `props` of instance.
+ * @param {number} clientX - viewport X.
+ * @param {number} clientY - viewport Y.
+ * @returns {SVGPoint} - SVG coordinates.
+ */
+function viewPoint2SvgPoint(props, clientX, clientY) {
+  var svgPoint = props.svgPoint;
+  svgPoint.x = clientX;
+  svgPoint.y = clientY;
+  return svgPoint.matrixTransform(props.svgCtmElement.getScreenCTM().inverse());
+}
+
+/**
  * Move HTMLElement.
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
@@ -678,17 +694,15 @@ function moveHtml(props, position) {
  * @returns {boolean} - `true` if it was moved.
  */
 function moveSvg(props, position) {
-  var elementBBox = props.elementBBox,
-      transform = props.transform,
-      offset = { left: 18, top: 8 };
-  // offset = props.htmlOffset;
-  var moved = false;
-
+  var elementBBox = props.elementBBox;
   if (position.left !== elementBBox.left || position.top !== elementBBox.top) {
-    transform.setTranslate(position.left + offset.left, position.top + offset.top);
-    moved = true;
+    var offset = props.svgOffset,
+        originBBox = props.svgOriginBBox,
+        point = viewPoint2SvgPoint(props, position.left - window.pageXOffset, position.top - window.pageYOffset);
+    props.svgTransform.setTranslate(point.x + offset.x - originBBox.x, point.y + offset.y - originBBox.y);
+    return true;
   }
-  return moved;
+  return false;
 }
 
 /**
@@ -738,7 +752,7 @@ function move(props, position, cbCheck) {
 }
 
 /**
- * Initialize HTMLElement, and get `{left: number, top: number} offset` that is used by `moveHtml`.
+ * Initialize HTMLElement, and get `offset` that is used by `moveHtml`.
  * @param {props} props - `props` of instance.
  * @returns {void}
  */
@@ -770,6 +784,7 @@ function initHtml(props) {
   // Get document offset.
   var newBBox = getBBox(element);
   var offset = props.htmlOffset = { left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0 }; // avoid `-0`
+
   // Restore position
   elementStyle.left = curPosition.left + offset.left + 'px';
   elementStyle.top = curPosition.top + offset.top + 'px';
@@ -789,19 +804,29 @@ function initHtml(props) {
 }
 
 /**
- * Initialize SVGElement, and get `{SVGPoint} point` that is used by `moveSvg`.
+ * Initialize SVGElement, and get `offset` that is used by `moveSvg`.
  * @param {props} props - `props` of instance.
  * @returns {void}
  */
 function initSvg(props) {
-  var element = props.element;
+  var element = props.element,
+      svgTransform = props.svgTransform,
+      curRect = element.getBoundingClientRect(); // Get Rect before change position.
 
-  // Init unit
-  // element.x.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
-  // element.y.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
-  var transform = props.transform = props.svgView.createSVGTransform();
-  transform.setTranslate(0, 0);
-  element.transform.baseVal.appendItem(transform);
+  svgTransform.setTranslate(0, 0);
+  var originBBox = props.svgOriginBBox = element.getBBox(),
+
+  // Try to get SVG coordinates of current position.
+  newRect = element.getBoundingClientRect(),
+      originPoint = viewPoint2SvgPoint(props, newRect.left, newRect.top),
+
+  // Gecko bug, getScreenCTM returns incorrect CTM, and originPoint might not be current position.
+  offset = props.svgOffset = { x: originBBox.x - originPoint.x, y: originBBox.y - originPoint.y },
+
+
+  // Restore position
+  curPoint = viewPoint2SvgPoint(props, curRect.left, curRect.top);
+  svgTransform.setTranslate(curPoint.x + offset.x - originBBox.x, curPoint.y + offset.y - originBBox.y);
 }
 
 /**
@@ -812,9 +837,8 @@ function initSvg(props) {
 function initBBox(props) {
   props.initElm(props);
 
-  var element = props.element,
-      docBBox = getBBox(document.documentElement),
-      elementBBox = props.elementBBox = getBBox(element),
+  var docBBox = getBBox(document.documentElement),
+      elementBBox = props.elementBBox = getBBox(props.element),
       containmentBBox = props.containmentBBox = props.containmentIsBBox ? resolvePPBBox(props.options.containment, docBBox) || docBBox : getBBox(props.options.containment, true),
       minLeft = props.minLeft = containmentBBox.left,
       maxLeft = props.maxLeft = containmentBBox.right - elementBBox.width,
@@ -1455,8 +1479,23 @@ var PlainDraggable = function () {
       throw new Error('Invalid options.');
     }
 
-    props.isSvg = element instanceof SVGElement && element.viewportElement; // SVGElement or SVG as view
-    props.element = initAnim(element, props.isSvg);
+    var isSvg = void 0,
+        ownerSvg = void 0;
+    // SVGElement which is not root view
+    if (isSvg = element instanceof SVGElement && (ownerSvg = element.ownerSVGElement)) {
+      // It means `instanceof SVGLocatable`
+      if (!element.getBBox) {
+        throw new Error('This element is not accepted.');
+      }
+      // Trident bug, returned value must be used (That is not given value).
+      props.svgTransform = element.transform.baseVal.appendItem(ownerSvg.createSVGTransform());
+      props.svgPoint = ownerSvg.createSVGPoint();
+      // Gecko bug, view.getScreenCTM returns CTM with root view.
+      var svgView = element.nearestViewportElement;
+      props.svgCtmElement = !IS_GECKO ? svgView : svgView.appendChild(document.createElementNS(ownerSvg.namespaceURI, 'rect'));
+    }
+
+    props.element = initAnim(element, isSvg);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) {
@@ -1467,9 +1506,8 @@ var PlainDraggable = function () {
       mousedown(props, event);
     };
 
-    if (props.isSvg) {
+    if (isSvg) {
       // SVGElement
-      props.svgView = element.viewportElement;
       props.initElm = initSvg;
       props.moveElm = moveSvg;
     } else {
@@ -1477,18 +1515,6 @@ var PlainDraggable = function () {
       props.initElm = initHtml;
       props.moveElm = moveHtml;
     }
-
-    // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
-    props.resizing = false;
-    window.addEventListener('resize', _animEvent2.default.add(function () {
-      if (props.resizing) {
-        console.log('`resize` event listener is already running.'); // [DEBUG/]
-        return;
-      }
-      props.resizing = true;
-      initBBox(props);
-      props.resizing = false;
-    }), true);
 
     // Default options
     if (!options.containment) {
@@ -1767,19 +1793,35 @@ document.addEventListener('mouseup', function () {
 
 {
   (function () {
-    var initBody = function initBody() {
+    var initDoc = function initDoc() {
       cssOrgValueCursor = body.style.cursor;
       if (cssPropUserSelect = _cssprefix2.default.getProp('userSelect', body)) {
         cssOrgValueUserSelect = body.style[cssPropUserSelect];
       }
+
+      // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
+      window.addEventListener('resize', _animEvent2.default.add(function () {
+        if (resizing) {
+          console.log('`resize` event listener is already running.'); // [DEBUG/]
+          return;
+        }
+        resizing = true;
+        Object.keys(insProps).forEach(function (id) {
+          initBBox(insProps[id]);
+        });
+        resizing = false;
+      }), true);
     };
 
+    var resizing = false;
+
+
     if (body = document.body) {
-      initBody();
+      initDoc();
     } else {
       document.addEventListener('DOMContentLoaded', function () {
         body = document.body;
-        initBody();
+        initDoc();
       }, false);
     }
   })();
