@@ -17,6 +17,7 @@ const
   SNAP_ALL_EDGES = ['inside', 'outside'],
 
   IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
+  IS_GECKO = 'MozAppearance' in document.documentElement.style,
 
   isObject = (() => {
     const toString = {}.toString, fnToString = {}.hasOwnProperty.toString,
@@ -48,6 +49,7 @@ let insId = 0,
 // [DEBUG]
 window.insProps = insProps;
 window.IS_WEBKIT = IS_WEBKIT;
+window.IS_GECKO = IS_GECKO;
 window.SNAP_GRAVITY = SNAP_GRAVITY;
 window.SNAP_CORNER = SNAP_CORNER;
 window.SNAP_SIDE = SNAP_SIDE;
@@ -254,12 +256,13 @@ window.getBBox = getBBox; // [DEBUG/]
 /**
  * Optimize an element for animation.
  * @param {Element} element - A target element.
+ * @param {boolean} [isSvg] - Initialize for SVGElement if `true`.
  * @returns {Element} - A target element.
  */
-function initAnim(element) {
+function initAnim(element, isSvg) {
   const style = element.style;
   style.webkitTapHighlightColor = 'transparent';
-  style[CSSPrefix.getProp('transform', element)] = 'translateZ(0)';
+  if (!isSvg) { style[CSSPrefix.getProp('transform', element)] = 'translateZ(0)'; }
   style[CSSPrefix.getProp('boxShadow', element)] = '0 0 1px transparent';
   return element;
 }
@@ -281,11 +284,65 @@ function setDraggingCursor(element) {
 }
 
 /**
+ * Get SVG coordinates from viewport coordinates.
+ * @param {props} props - `props` of instance.
+ * @param {number} clientX - viewport X.
+ * @param {number} clientY - viewport Y.
+ * @returns {SVGPoint} - SVG coordinates.
+ */
+function viewPoint2SvgPoint(props, clientX, clientY) {
+  const svgPoint = props.svgPoint;
+  svgPoint.x = clientX;
+  svgPoint.y = clientY;
+  return svgPoint.matrixTransform(props.svgCtmElement.getScreenCTM().inverse());
+}
+
+/**
+ * Move HTMLElement.
+ * @param {props} props - `props` of instance.
+ * @param {{left: number, top: number}} position - New position.
+ * @returns {boolean} - `true` if it was moved.
+ */
+function moveHtml(props, position) {
+  const elementBBox = props.elementBBox,
+    elementStyle = props.elementStyle,
+    offset = props.htmlOffset;
+  let moved = false;
+  if (position.left !== elementBBox.left) {
+    elementStyle.left = position.left + offset.left + 'px';
+    moved = true;
+  }
+  if (position.top !== elementBBox.top) {
+    elementStyle.top = position.top + offset.top + 'px';
+    moved = true;
+  }
+  return moved;
+}
+
+/**
+ * Move SVGElement.
+ * @param {props} props - `props` of instance.
+ * @param {{left: number, top: number}} position - New position.
+ * @returns {boolean} - `true` if it was moved.
+ */
+function moveSvg(props, position) {
+  const elementBBox = props.elementBBox;
+  if (position.left !== elementBBox.left || position.top !== elementBBox.top) {
+    const offset = props.svgOffset, originBBox = props.svgOriginBBox,
+      point = viewPoint2SvgPoint(props,
+        position.left - window.pageXOffset, position.top - window.pageYOffset);
+    props.svgTransform.setTranslate(point.x + offset.x - originBBox.x, point.y + offset.y - originBBox.y);
+    return true;
+  }
+  return false;
+}
+
+/**
  * Set `props.element` position.
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
  * @param {function} [cbCheck] - Callback that is called with valid position, cancel moving if it returns `false`.
- * @returns {boolean} `true` if it was moved.
+ * @returns {boolean} - `true` if it was moved.
  */
 function move(props, position, cbCheck) {
   const elementBBox = props.elementBBox;
@@ -313,36 +370,25 @@ function move(props, position, cbCheck) {
     fix(); // Again
   }
 
-  const elementStyle = props.elementStyle, offset = props.offset;
-  let moved = false;
-  if (position.left !== elementBBox.left) {
-    elementStyle.left = position.left + offset.left + 'px';
-    moved = true;
-  }
-  if (position.top !== elementBBox.top) {
-    elementStyle.top = position.top + offset.top + 'px';
-    moved = true;
-  }
-  // Update elementBBox
-  if (moved) {
+  const moved = props.moveElm(props, position);
+  if (moved) { // Update elementBBox
     props.elementBBox = validBBox({left: position.left, top: position.top,
       width: elementBBox.width, height: elementBBox.height});
   }
-
   return moved;
 }
 
 /**
- * Set `elementBBox`, `containmentBBox`, `min/max``Left/Top` and `snapTargets`.
+ * Initialize HTMLElement, and get `offset` that is used by `moveHtml`.
  * @param {props} props - `props` of instance.
  * @returns {void}
  */
-function initBBox(props) {
-  const element = props.element, elementStyle = props.elementStyle;
-
-  // Get document offset.
-  const curPosition = getBBox(element),
+function initHtml(props) {
+  const element = props.element,
+    elementStyle = props.elementStyle,
+    curPosition = getBBox(element), // Get BBox before change style.
     RESTORE_PROPS = ['position', 'margin', 'width', 'height'];
+
   if (!props.orgStyle) {
     props.orgStyle = RESTORE_PROPS.reduce((orgStyle, prop) => {
       orgStyle[prop] = elementStyle[prop] || '';
@@ -357,12 +403,15 @@ function initBBox(props) {
       }
     });
   }
+
   const orgSize = getBBox(element);
   elementStyle.position = 'absolute';
   elementStyle.left = elementStyle.top = elementStyle.margin = '0';
+  // Get document offset.
   let newBBox = getBBox(element);
-  const offset = props.offset =
+  const offset = props.htmlOffset =
     {left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0}; // avoid `-0`
+
   // Restore position
   elementStyle.left = curPosition.left + offset.left + 'px';
   elementStyle.top = curPosition.top + offset.top + 'px';
@@ -378,9 +427,41 @@ function initBBox(props) {
     }
     props.lastStyle[prop] = elementStyle[prop];
   });
+}
+
+/**
+ * Initialize SVGElement, and get `offset` that is used by `moveSvg`.
+ * @param {props} props - `props` of instance.
+ * @returns {void}
+ */
+function initSvg(props) {
+  const element = props.element,
+    svgTransform = props.svgTransform,
+    curRect = element.getBoundingClientRect(); // Get Rect before change position.
+
+  svgTransform.setTranslate(0, 0);
+  const originBBox = props.svgOriginBBox = element.getBBox(),
+    // Try to get SVG coordinates of current position.
+    newRect = element.getBoundingClientRect(),
+    originPoint = viewPoint2SvgPoint(props, newRect.left, newRect.top),
+    // Gecko bug, getScreenCTM returns incorrect CTM, and originPoint might not be current position.
+    offset = props.svgOffset = {x: originBBox.x - originPoint.x, y: originBBox.y - originPoint.y},
+
+    // Restore position
+    curPoint = viewPoint2SvgPoint(props, curRect.left, curRect.top);
+  svgTransform.setTranslate(curPoint.x + offset.x - originBBox.x, curPoint.y + offset.y - originBBox.y);
+}
+
+/**
+ * Set `elementBBox`, `containmentBBox`, `min/max``Left/Top` and `snapTargets`.
+ * @param {props} props - `props` of instance.
+ * @returns {void}
+ */
+function initBBox(props) {
+  props.initElm(props);
 
   const docBBox = getBBox(document.documentElement),
-    elementBBox = props.elementBBox = getBBox(element),
+    elementBBox = props.elementBBox = getBBox(props.element),
     containmentBBox = props.containmentBBox =
       props.containmentIsBBox ? (resolvePPBBox(props.options.containment, docBBox) || docBBox) :
         getBBox(props.options.containment, true),
@@ -936,12 +1017,34 @@ class PlainDraggable {
       throw new Error('Invalid options.');
     }
 
-    props.element = initAnim(element);
+    let isSvg, ownerSvg;
+    // SVGElement which is not root view
+    if ((isSvg = element instanceof SVGElement && (ownerSvg = element.ownerSVGElement))) {
+      // It means `instanceof SVGLocatable`
+      if (!element.getBBox) { throw new Error('This element is not accepted.'); }
+      // Trident bug, returned value must be used (That is not given value).
+      props.svgTransform = element.transform.baseVal.appendItem(ownerSvg.createSVGTransform());
+      props.svgPoint = ownerSvg.createSVGPoint();
+      // Gecko bug, view.getScreenCTM returns CTM with root view.
+      const svgView = element.nearestViewportElement;
+      props.svgCtmElement = !IS_GECKO ? svgView :
+        svgView.appendChild(document.createElementNS(ownerSvg.namespaceURI, 'rect'));
+    }
+
+    props.element = initAnim(element, isSvg);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
-    if (draggableClass) { props.element.classList.add(draggableClass); }
+    if (draggableClass) { element.classList.add(draggableClass); }
     // Event listeners for handle element, to be removed.
     props.handleMousedown = event => { mousedown(props, event); };
+
+    if (isSvg) { // SVGElement
+      props.initElm = initSvg;
+      props.moveElm = moveSvg;
+    } else { // HTMLElement
+      props.initElm = initHtml;
+      props.moveElm = moveHtml;
+    }
 
     // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
     props.resizing = false;
@@ -967,7 +1070,7 @@ class PlainDraggable {
 
   /**
    * @param {Object} options - New options.
-   * @returns {PlainDraggable} Current instance itself.
+   * @returns {PlainDraggable} - Current instance itself.
    */
   setOptions(options) {
     if (isObject(options)) {

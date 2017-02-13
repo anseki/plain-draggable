@@ -620,12 +620,15 @@ window.getBBox = getBBox; // [DEBUG/]
 /**
  * Optimize an element for animation.
  * @param {Element} element - A target element.
+ * @param {boolean} [isSvg] - Initialize for SVGElement if `true`.
  * @returns {Element} - A target element.
  */
-function initAnim(element) {
+function initAnim(element, isSvg) {
   var style = element.style;
   style.webkitTapHighlightColor = 'transparent';
-  style[_cssprefix2.default.getProp('transform', element)] = 'translateZ(0)';
+  if (!isSvg) {
+    style[_cssprefix2.default.getProp('transform', element)] = 'translateZ(0)';
+  }
   style[_cssprefix2.default.getProp('boxShadow', element)] = '0 0 1px transparent';
   return element;
 }
@@ -647,11 +650,53 @@ function setDraggingCursor(element) {
 }
 
 /**
+ * Move HTMLElement.
+ * @param {props} props - `props` of instance.
+ * @param {{left: number, top: number}} position - New position.
+ * @returns {boolean} - `true` if it was moved.
+ */
+function moveHtml(props, position) {
+  var elementBBox = props.elementBBox,
+      elementStyle = props.elementStyle,
+      offset = props.htmlOffset;
+  var moved = false;
+  if (position.left !== elementBBox.left) {
+    elementStyle.left = position.left + offset.left + 'px';
+    moved = true;
+  }
+  if (position.top !== elementBBox.top) {
+    elementStyle.top = position.top + offset.top + 'px';
+    moved = true;
+  }
+  return moved;
+}
+
+/**
+ * Move SVGElement.
+ * @param {props} props - `props` of instance.
+ * @param {{left: number, top: number}} position - New position.
+ * @returns {boolean} - `true` if it was moved.
+ */
+function moveSvg(props, position) {
+  var elementBBox = props.elementBBox,
+      transform = props.transform,
+      offset = { left: 18, top: 8 };
+  // offset = props.htmlOffset;
+  var moved = false;
+
+  if (position.left !== elementBBox.left || position.top !== elementBBox.top) {
+    transform.setTranslate(position.left + offset.left, position.top + offset.top);
+    moved = true;
+  }
+  return moved;
+}
+
+/**
  * Set `props.element` position.
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
  * @param {function} [cbCheck] - Callback that is called with valid position, cancel moving if it returns `false`.
- * @returns {boolean} `true` if it was moved.
+ * @returns {boolean} - `true` if it was moved.
  */
 function move(props, position, cbCheck) {
   var elementBBox = props.elementBBox;
@@ -683,38 +728,27 @@ function move(props, position, cbCheck) {
     fix(); // Again
   }
 
-  var elementStyle = props.elementStyle,
-      offset = props.offset;
-  var moved = false;
-  if (position.left !== elementBBox.left) {
-    elementStyle.left = position.left + offset.left + 'px';
-    moved = true;
-  }
-  if (position.top !== elementBBox.top) {
-    elementStyle.top = position.top + offset.top + 'px';
-    moved = true;
-  }
-  // Update elementBBox
+  var moved = props.moveElm(props, position);
   if (moved) {
+    // Update elementBBox
     props.elementBBox = validBBox({ left: position.left, top: position.top,
       width: elementBBox.width, height: elementBBox.height });
   }
-
   return moved;
 }
 
 /**
- * Set `elementBBox`, `containmentBBox`, `min/max``Left/Top` and `snapTargets`.
+ * Initialize HTMLElement, and get `{left: number, top: number} offset` that is used by `moveHtml`.
  * @param {props} props - `props` of instance.
  * @returns {void}
  */
-function initBBox(props) {
+function initHtml(props) {
   var element = props.element,
-      elementStyle = props.elementStyle;
+      elementStyle = props.elementStyle,
+      curPosition = getBBox(element),
+      // Get BBox before change style.
+  RESTORE_PROPS = ['position', 'margin', 'width', 'height'];
 
-  // Get document offset.
-  var curPosition = getBBox(element),
-      RESTORE_PROPS = ['position', 'margin', 'width', 'height'];
   if (!props.orgStyle) {
     props.orgStyle = RESTORE_PROPS.reduce(function (orgStyle, prop) {
       orgStyle[prop] = elementStyle[prop] || '';
@@ -729,11 +763,13 @@ function initBBox(props) {
       }
     });
   }
+
   var orgSize = getBBox(element);
   elementStyle.position = 'absolute';
   elementStyle.left = elementStyle.top = elementStyle.margin = '0';
+  // Get document offset.
   var newBBox = getBBox(element);
-  var offset = props.offset = { left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0 }; // avoid `-0`
+  var offset = props.htmlOffset = { left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0 }; // avoid `-0`
   // Restore position
   elementStyle.left = curPosition.left + offset.left + 'px';
   elementStyle.top = curPosition.top + offset.top + 'px';
@@ -750,8 +786,34 @@ function initBBox(props) {
     }
     props.lastStyle[prop] = elementStyle[prop];
   });
+}
 
-  var docBBox = getBBox(document.documentElement),
+/**
+ * Initialize SVGElement, and get `{SVGPoint} point` that is used by `moveSvg`.
+ * @param {props} props - `props` of instance.
+ * @returns {void}
+ */
+function initSvg(props) {
+  var element = props.element;
+
+  // Init unit
+  // element.x.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+  // element.y.baseVal.newValueSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_PX, 0);
+  var transform = props.transform = props.svgView.createSVGTransform();
+  transform.setTranslate(0, 0);
+  element.transform.baseVal.appendItem(transform);
+}
+
+/**
+ * Set `elementBBox`, `containmentBBox`, `min/max``Left/Top` and `snapTargets`.
+ * @param {props} props - `props` of instance.
+ * @returns {void}
+ */
+function initBBox(props) {
+  props.initElm(props);
+
+  var element = props.element,
+      docBBox = getBBox(document.documentElement),
       elementBBox = props.elementBBox = getBBox(element),
       containmentBBox = props.containmentBBox = props.containmentIsBBox ? resolvePPBBox(props.options.containment, docBBox) || docBBox : getBBox(props.options.containment, true),
       minLeft = props.minLeft = containmentBBox.left,
@@ -1393,16 +1455,28 @@ var PlainDraggable = function () {
       throw new Error('Invalid options.');
     }
 
-    props.element = initAnim(element);
+    props.isSvg = element instanceof SVGElement && element.viewportElement; // SVGElement or SVG as view
+    props.element = initAnim(element, props.isSvg);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) {
-      props.element.classList.add(draggableClass);
+      element.classList.add(draggableClass);
     }
     // Event listeners for handle element, to be removed.
     props.handleMousedown = function (event) {
       mousedown(props, event);
     };
+
+    if (props.isSvg) {
+      // SVGElement
+      props.svgView = element.viewportElement;
+      props.initElm = initSvg;
+      props.moveElm = moveSvg;
+    } else {
+      // HTMLElement
+      props.initElm = initHtml;
+      props.moveElm = moveHtml;
+    }
 
     // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
     props.resizing = false;
@@ -1430,7 +1504,7 @@ var PlainDraggable = function () {
 
   /**
    * @param {Object} options - New options.
-   * @returns {PlainDraggable} Current instance itself.
+   * @returns {PlainDraggable} - Current instance itself.
    */
 
 
