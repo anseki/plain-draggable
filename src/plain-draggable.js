@@ -703,6 +703,34 @@ function setOptions(props, newOptions) {
     let bBox;
     if (isElement(newOptions.containment)) { // Specific element
       if (newOptions.containment !== options.containment) {
+        // Restore
+        props.scrollElements.forEach(element => {
+          element.removeEventListener('scroll', props.handleScroll, false);
+        });
+        props.scrollElements = [];
+        window.removeEventListener('scroll', props.handleScroll, false);
+        // Parse tree
+        let element = newOptions.containment, fixedElement;
+        while (element && element !== body) {
+          if (element.nodeType === Node.ELEMENT_NODE) {
+            const cmpStyle = window.getComputedStyle(element, '');
+            // Scrollable element
+            if (!(element instanceof SVGElement) && (
+                cmpStyle.overflow !== 'visible' || cmpStyle.overflowX !== 'visible' ||
+                cmpStyle.overflowY !== 'visible' // `hidden` also is scrollable.
+                )) {
+              element.addEventListener('scroll', props.handleScroll, false);
+              props.scrollElements.push(element);
+            }
+            // Element that is re-positioned (document based) when window scrolled.
+            if (cmpStyle.position === 'fixed') { fixedElement = true; }
+          }
+          element = element.parentNode;
+        }
+        if (fixedElement) {
+          window.addEventListener('scroll', props.handleScroll, false);
+        }
+
         options.containment = newOptions.containment;
         props.containmentIsBBox = false;
         needsInitBBox = true;
@@ -1035,8 +1063,10 @@ class PlainDraggable {
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) { element.classList.add(draggableClass); }
-    // Event listeners for handle element, to be removed.
+    // Prepare removable event listeners for each instance.
     props.handleMousedown = event => { mousedown(props, event); };
+    props.handleScroll = AnimEvent.add(() => { initBBox(props); });
+    props.scrollElements = [];
 
     if (isSvg) { // SVGElement
       props.initElm = initSvg;
