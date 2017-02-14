@@ -10,7 +10,7 @@ import CSSPrefix from 'cssprefix';
 import AnimEvent from 'anim-event';
 
 const
-  ZINDEX = 99999,
+  ZINDEX = 9000,
   SNAP_GRAVITY = 20, SNAP_CORNER = 'tl', SNAP_SIDE = 'both', SNAP_EDGE = 'both', SNAP_BASE = 'containment',
   SNAP_ALL_CORNERS = ['tl', 'tr', 'bl', 'br'],
   SNAP_ALL_SIDES = ['start', 'end'],
@@ -1125,7 +1125,7 @@ class PlainDraggable {
     return insProps[this._id].element;
   }
 
-  get bBox() {
+  get rect() {
     return copyTree(insProps[this._id].elementBBox);
   }
 
