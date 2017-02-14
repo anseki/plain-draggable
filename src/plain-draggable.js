@@ -1107,8 +1107,7 @@ class PlainDraggable {
   }
   set disabled(value) {
     const props = insProps[this._id];
-    value = !!value;
-    if (value !== props.disabled) {
+    if ((value = !!value) !== props.disabled) {
       props.disabled = value;
       if (props.disabled) {
         if (props === activeItem) { dragEnd(props); }
