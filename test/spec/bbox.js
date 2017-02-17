@@ -26,7 +26,7 @@ describe('BBox', function() {
     draggable = new window.PlainDraggable(element);
     curBBox = window.getBBox(element);
     expect(curBBox).toEqual(orgBBox);
-    expect(window.insProps[draggable._id].offset).toEqual({left: 0, top: 0});
+    expect(window.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: 0});
     expect(element.style.width).toBe('300px');
     expect(element.style.height).toBe('');
     expect(element.style.left).toBe('0px');
@@ -39,7 +39,7 @@ describe('BBox', function() {
     draggable = new window.PlainDraggable(element);
     curBBox = window.getBBox(element);
     expect(curBBox).toEqual(orgBBox);
-    expect(window.insProps[draggable._id].offset).toEqual({left: 0, top: 0});
+    expect(window.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: 0});
     expect(element.style.width).toBe('294px');
     expect(element.style.height).toBe('');
     expect(element.style.left).toBe('0px');
@@ -61,7 +61,7 @@ describe('BBox', function() {
     draggable = new window.PlainDraggable(element);
     curBBox = window.getBBox(element);
     expect(curBBox).toEqual(orgBBox);
-    expect(window.insProps[draggable._id].offset).toEqual({left: 0, top: 0});
+    expect(window.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: 0});
     expect(element.style.width).toBe('300px');
     expect(element.style.height).toBe('');
     expect(element.style.left).toBe('0px');
@@ -74,7 +74,7 @@ describe('BBox', function() {
     draggable = new window.PlainDraggable(element);
     curBBox = window.getBBox(element);
     expect(curBBox).toEqual(orgBBox);
-    expect(window.insProps[draggable._id].offset).toEqual({left: 0, top: 0});
+    expect(window.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: 0});
     expect(element.style.width).toBe('300px');
     expect(element.style.height).toBe('30px');
     expect(element.style.left).toBe('0px');
@@ -96,7 +96,7 @@ describe('BBox', function() {
     draggable = new window.PlainDraggable(element);
     curBBox = window.getBBox(element);
     expect(curBBox).toEqual(orgBBox);
-    expect(window.insProps[draggable._id].offset).toEqual({left: 0, top: 0});
+    expect(window.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: 0});
     expect(element.style.width).toBe('300px');
     expect(element.style.height).toBe('30px');
     expect(element.style.left).toBe('0px');
@@ -108,7 +108,7 @@ describe('BBox', function() {
     draggable = new window.PlainDraggable(element);
     curBBox = window.getBBox(element);
     expect(curBBox).toEqual(orgBBox);
-    expect(window.insProps[draggable._id].offset).toEqual({left: 0, top: 0});
+    expect(window.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: 0});
     expect(element.style.width).toBe('300px');
     expect(element.style.height).toBe('30px');
     expect(element.style.left).toBe('0px');
@@ -120,7 +120,7 @@ describe('BBox', function() {
     draggable = new window.PlainDraggable(element);
     curBBox = window.getBBox(element);
     expect(curBBox).toEqual(orgBBox);
-    expect(window.insProps[draggable._id].offset).toEqual({left: 0, top: 0});
+    expect(window.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: 0});
     expect(element.style.width).toBe('300px');
     expect(element.style.height).toBe('');
     expect(element.style.left).toBe('0px');
@@ -132,7 +132,7 @@ describe('BBox', function() {
     draggable = new window.PlainDraggable(element);
     curBBox = window.getBBox(element);
     expect(curBBox).toEqual(orgBBox);
-    expect(window.insProps[draggable._id].offset).toEqual({left: 0, top: -270});
+    expect(window.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: -270});
     expect(element.style.width).toBe('300px');
     expect(element.style.height).toBe('30px');
     expect(element.style.left).toBe('0px');
@@ -145,7 +145,7 @@ describe('BBox', function() {
     curBBox = window.getBBox(element);
     // containment height: 50px -> maxTop: 20
     expect(curBBox).toEqual({left: 21, top: 340, x: 21, y: 340, width: 300, height: 30, right: 321, bottom: 370});
-    expect(window.insProps[draggable._id].offset).toEqual({left: 0, top: -320});
+    expect(window.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: -320});
     expect(element.style.width).toBe('300px');
     expect(element.style.height).toBe('30px');
     expect(element.style.left).toBe('21px');
@@ -157,7 +157,7 @@ describe('BBox', function() {
     draggable = new window.PlainDraggable(element);
     curBBox = window.getBBox(element);
     expect(curBBox).toEqual(orgBBox);
-    expect(window.insProps[draggable._id].offset).toEqual({left: 0, top: -370});
+    expect(window.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: -370});
     expect(element.style.width).toBe('300px');
     expect(element.style.height).toBe('30px');
     expect(element.style.left).toBe('22px');
@@ -174,7 +174,7 @@ describe('BBox', function() {
 
     iBody.style.margin = iBody.style.borderWidth = iBody.style.padding = '0';
     draggable = new iWindow.PlainDraggable(element);
-    expect(iWindow.insProps[draggable._id].offset).toEqual({left: 0, top: 0});
+    expect(iWindow.insProps[draggable._id].htmlOffset).toEqual({left: 0, top: 0});
 
     iBody.style.borderStyle = 'solid';
     iBody.style.marginLeft = '1px';
@@ -184,7 +184,7 @@ describe('BBox', function() {
     iBody.style.paddingLeft = '16px';
     iBody.style.paddingTop = '32px';
     draggable = new iWindow.PlainDraggable(element);
-    expect(iWindow.insProps[draggable._id].offset).toEqual({left: -21, top: -42});
+    expect(iWindow.insProps[draggable._id].htmlOffset).toEqual({left: -21, top: -42});
   });
 
 });
