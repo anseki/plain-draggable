@@ -267,7 +267,7 @@ function initAnim(element, isSvg) {
   return element;
 }
 
-function setDraggableCursor(element) {
+function setDraggableCursor(element, orgCursor) {
   if (cssValueDraggableCursor == null) {
     if (cssWantedValueDraggableCursor !== false) {
       cssValueDraggableCursor = CSSPrefix.getValue('cursor', cssWantedValueDraggableCursor);
@@ -275,9 +275,9 @@ function setDraggableCursor(element) {
     // The wanted value was denied, or changing is not wanted.
     if (cssValueDraggableCursor == null) { cssValueDraggableCursor = false; }
   }
-  if (cssValueDraggableCursor !== false) { element.style.cursor = cssValueDraggableCursor; }
+  // Update it to change a state even if cssValueDraggableCursor is false.
+  element.style.cursor = cssValueDraggableCursor === false ? orgCursor : cssValueDraggableCursor;
 }
-window.setDraggableCursor = setDraggableCursor; // [DEBUG/]
 
 function setDraggingCursor(element) {
   if (cssValueDraggingCursor == null) {
@@ -289,7 +289,6 @@ function setDraggingCursor(element) {
   }
   if (cssValueDraggingCursor !== false) { element.style.cursor = cssValueDraggingCursor; }
 }
-window.setDraggingCursor = setDraggingCursor; // [DEBUG/]
 
 /**
  * Get SVG coordinates from viewport coordinates.
@@ -674,8 +673,9 @@ function initBBox(props) {
 }
 
 function dragEnd(props) {
-  setDraggableCursor(props.options.handle);
-  if (cssValueDraggingCursor !== false) { body.style.cursor = cssOrgValueBodyCursor; }
+  setDraggableCursor(props.options.handle, props.orgCursor);
+  body.style.cursor = cssOrgValueBodyCursor;
+
   if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.orgZIndex; }
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = cssOrgValueBodyUserSelect; }
   if (movingClass) { props.element.classList.remove(movingClass); }
@@ -689,7 +689,9 @@ function mousedown(props, event) {
   if (activeItem) { dragEnd(activeItem); } // activeItem is normally null by `mouseup`.
 
   setDraggingCursor(props.options.handle);
-  setDraggingCursor(body);
+  body.style.cursor = cssValueDraggingCursor || // If it is `false` or `''`
+    window.getComputedStyle(props.options.handle, '').cursor;
+
   if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.options.zIndex; }
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = 'none'; }
 
@@ -994,7 +996,7 @@ function setOptions(props, newOptions) {
     }
     const handle = options.handle = newOptions.handle;
     props.orgCursor = handle.style.cursor;
-    setDraggableCursor(handle);
+    setDraggableCursor(handle, props.orgCursor);
     handle.addEventListener('dragstart', dragstart, false);
     handle.addEventListener('mousedown', props.handleMousedown, false);
   }
@@ -1126,7 +1128,7 @@ class PlainDraggable {
         props.options.handle.style.cursor = props.orgCursor;
         if (draggableClass) { props.element.classList.remove(draggableClass); }
       } else {
-        setDraggableCursor(props.options.handle);
+        setDraggableCursor(props.options.handle, props.orgCursor);
         if (draggableClass) { props.element.classList.add(draggableClass); }
       }
     }
@@ -1183,12 +1185,8 @@ class PlainDraggable {
       cssValueDraggableCursor = null; // Reset
       Object.keys(insProps).forEach(id => {
         const props = insProps[id];
-        if (props.disabled) { return; }
-        if (cssWantedValueDraggableCursor === false) {
-          props.options.handle.style.cursor = props.orgCursor; // Restore
-        } else if (props !== activeItem) {
-          setDraggableCursor(props.options.handle);
-        }
+        if (props.disabled || props === activeItem) { return; }
+        setDraggableCursor(props.options.handle, props.orgCursor);
       });
     }
   }
@@ -1201,11 +1199,12 @@ class PlainDraggable {
       cssWantedValueDraggingCursor = value;
       cssValueDraggingCursor = null; // Reset
       if (activeItem) {
-        if (cssWantedValueDraggingCursor === false) {
-          activeItem.options.handle.style.cursor = activeItem.orgCursor; // Restore
-        } else {
-          setDraggingCursor(activeItem.options.handle);
+        setDraggingCursor(activeItem.options.handle);
+        if (cssValueDraggingCursor === false) {
+          setDraggableCursor(activeItem.options.handle, activeItem.orgCursor); // draggableCursor
         }
+        body.style.cursor = cssValueDraggingCursor || // If it is `false` or `''`
+          window.getComputedStyle(activeItem.options.handle, '').cursor;
       }
     }
   }
