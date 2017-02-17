@@ -10,7 +10,8 @@ const webpack = require('webpack'),
   BABEL_TARGET_PACKAGES = [
     'cssprefix',
     'anim-event'
-  ].map(packageName => path.resolve(__dirname, `node_modules/${packageName}`) + path.sep),
+  ].map(packageName => require.resolve(packageName) // Get package root path
+    .replace(new RegExp(`([\\/\\\\]node_modules[\\/\\\\]${packageName}[\\/\\\\]).*$`), '$1')),
 
   BABEL_PARAMS = {
     presets: ['es2015'],
