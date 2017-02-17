@@ -38,8 +38,8 @@ const
 let insId = 0,
   activeItem, hasMoved, pointerOffset, body,
   // CSS property/value
-  cssValueDraggableCursor, cssValueDraggingCursor,
-  cssOrgValueCursor, cssPropUserSelect, cssOrgValueUserSelect,
+  cssValueDraggableCursor, cssValueDraggingCursor, cssOrgValueBodyCursor,
+  cssPropUserSelect, cssOrgValueBodyUserSelect,
   // Try to set `cursor` property.
   cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
   cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'],
@@ -262,26 +262,34 @@ window.getBBox = getBBox; // [DEBUG/]
 function initAnim(element, isSvg) {
   const style = element.style;
   style.webkitTapHighlightColor = 'transparent';
-  if (!isSvg) { style[CSSPrefix.getProp('transform', element)] = 'translateZ(0)'; }
-  style[CSSPrefix.getProp('boxShadow', element)] = '0 0 1px transparent';
+  if (!isSvg) { style[CSSPrefix.getName('transform')] = 'translateZ(0)'; }
+  style[CSSPrefix.getName('boxShadow')] = '0 0 1px transparent';
   return element;
 }
 
 function setDraggableCursor(element) {
   if (cssValueDraggableCursor == null) {
-    cssValueDraggableCursor = CSSPrefix.setValue(element, 'cursor', cssWantedValueDraggableCursor);
-  } else {
-    element.style.cursor = cssValueDraggableCursor;
+    if (cssWantedValueDraggableCursor !== false) {
+      cssValueDraggableCursor = CSSPrefix.getValue('cursor', cssWantedValueDraggableCursor);
+    }
+    // The wanted value was denied, or changing is not wanted.
+    if (cssValueDraggableCursor == null) { cssValueDraggableCursor = false; }
   }
+  if (cssValueDraggableCursor !== false) { element.style.cursor = cssValueDraggableCursor; }
 }
+window.setDraggableCursor = setDraggableCursor; // [DEBUG/]
 
 function setDraggingCursor(element) {
   if (cssValueDraggingCursor == null) {
-    cssValueDraggingCursor = CSSPrefix.setValue(element, 'cursor', cssWantedValueDraggingCursor);
-  } else {
-    element.style.cursor = cssValueDraggingCursor;
+    if (cssWantedValueDraggingCursor !== false) {
+      cssValueDraggingCursor = CSSPrefix.getValue('cursor', cssWantedValueDraggingCursor);
+    }
+    // The wanted value was denied, or changing is not wanted.
+    if (cssValueDraggingCursor == null) { cssValueDraggingCursor = false; }
   }
+  if (cssValueDraggingCursor !== false) { element.style.cursor = cssValueDraggingCursor; }
 }
+window.setDraggingCursor = setDraggingCursor; // [DEBUG/]
 
 /**
  * Get SVG coordinates from viewport coordinates.
@@ -665,28 +673,29 @@ function initBBox(props) {
   window.initBBoxDone = true; // [DEBUG/]
 }
 
+function dragEnd(props) {
+  setDraggableCursor(props.options.handle);
+  if (cssValueDraggingCursor !== false) { body.style.cursor = cssOrgValueBodyCursor; }
+  if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.orgZIndex; }
+  if (cssPropUserSelect) { body.style[cssPropUserSelect] = cssOrgValueBodyUserSelect; }
+  if (movingClass) { props.element.classList.remove(movingClass); }
+
+  activeItem = null;
+  if (props.onDragEnd) { props.onDragEnd(); }
+}
+
 function mousedown(props, event) {
   if (props.disabled) { return; }
+  if (activeItem) { dragEnd(activeItem); } // activeItem is normally null by `mouseup`.
 
   setDraggingCursor(props.options.handle);
-  if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.options.zIndex; }
   setDraggingCursor(body);
+  if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.options.zIndex; }
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = 'none'; }
 
   activeItem = props;
   hasMoved = false;
   pointerOffset = {left: props.elementBBox.left - event.pageX, top: props.elementBBox.top - event.pageY};
-}
-
-function dragEnd(props) {
-  setDraggableCursor(props.options.handle);
-  if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.orgZIndex; }
-  body.style.cursor = cssOrgValueCursor;
-  if (cssPropUserSelect) { body.style[cssPropUserSelect] = cssOrgValueUserSelect; }
-  if (movingClass) { props.element.classList.remove(movingClass); }
-
-  activeItem = null;
-  if (props.onDragEnd) { props.onDragEnd(); }
 }
 
 /**
@@ -993,6 +1002,9 @@ function setOptions(props, newOptions) {
   // zIndex
   if (isFinite(newOptions.zIndex) || newOptions.zIndex === false) {
     options.zIndex = newOptions.zIndex;
+    if (props === activeItem) {
+      props.elementStyle.zIndex = options.zIndex === false ? props.orgZIndex : options.zIndex;
+    }
   }
 
   // left/top
@@ -1166,26 +1178,35 @@ class PlainDraggable {
     return cssWantedValueDraggableCursor;
   }
   static set draggableCursor(value) {
-    cssWantedValueDraggableCursor = value;
-    // Reset
-    cssValueDraggableCursor = null;
-    Object.keys(insProps).forEach(id => {
-      const props = insProps[id];
-      if (!props.disabled && props !== activeItem) {
-        setDraggableCursor(props.options.handle);
-      }
-    });
+    if (cssWantedValueDraggableCursor !== value) {
+      cssWantedValueDraggableCursor = value;
+      cssValueDraggableCursor = null; // Reset
+      Object.keys(insProps).forEach(id => {
+        const props = insProps[id];
+        if (props.disabled) { return; }
+        if (cssWantedValueDraggableCursor === false) {
+          props.options.handle.style.cursor = props.orgCursor; // Restore
+        } else if (props !== activeItem) {
+          setDraggableCursor(props.options.handle);
+        }
+      });
+    }
   }
 
   static get draggingCursor() {
     return cssWantedValueDraggingCursor;
   }
   static set draggingCursor(value) {
-    cssWantedValueDraggingCursor = value;
-    // Reset
-    cssValueDraggingCursor = null;
-    if (activeItem) {
-      setDraggingCursor(activeItem.options.handle);
+    if (cssWantedValueDraggingCursor !== value) {
+      cssWantedValueDraggingCursor = value;
+      cssValueDraggingCursor = null; // Reset
+      if (activeItem) {
+        if (cssWantedValueDraggingCursor === false) {
+          activeItem.options.handle.style.cursor = activeItem.orgCursor; // Restore
+        } else {
+          setDraggingCursor(activeItem.options.handle);
+        }
+      }
     }
   }
 
@@ -1267,9 +1288,9 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
 {
   let resizing = false;
   function initDoc() {
-    cssOrgValueCursor = body.style.cursor;
-    if ((cssPropUserSelect = CSSPrefix.getProp('userSelect', body))) {
-      cssOrgValueUserSelect = body.style[cssPropUserSelect];
+    cssOrgValueBodyCursor = body.style.cursor;
+    if ((cssPropUserSelect = CSSPrefix.getName('userSelect'))) {
+      cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
     }
 
     // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
