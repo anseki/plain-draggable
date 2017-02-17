@@ -13,6 +13,11 @@ const
   path = require('path'),
   fs = require('fs'),
 
+  MODULE_PACKAGES = [
+    'jasmine-core',
+    'test-page-loader'
+  ],
+
   EXT_DIR = path.resolve('../../test-ext');
 
 log4js.configure({
@@ -33,41 +38,39 @@ http.createServer((request, response) => {
   request.addListener('end', () => {
     (new staticAlias.Server(DOC_ROOT, {
       cache: false,
-      alias: [
-        // node_modules
-        {
-          match: /^\/(?:jasmine-core|test-page-loader)\/.+/,
-          serve: '../node_modules<% reqPath %>',
+      alias: MODULE_PACKAGES.map(modulePackage => (
+        { // node_modules
+          match: new RegExp(`^/${modulePackage}/.+`),
+          serve: `${require.resolve(modulePackage).replace(/([\/\\]node_modules)[\/\\].*$/, '$1')}<% reqPath %>`,
           allowOutside: true
-        },
-
-        // test-ext
-        {
-          match: /^\/ext\/.+/,
-          serve: params => params.reqPath.replace(/^\/ext/, EXT_DIR),
-          allowOutside: true
-        },
-        // test-ext index
-        {
-          match: /^\/ext\/?$/,
-          serve: () => {
-            const indexPath = path.join(EXT_DIR, '.index.html');
-            fs.writeFileSync(indexPath,
-              `<html><head><meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"></head><body><ul>${
-                filelist.getSync(EXT_DIR, {
-                  filter: stats => /^[^\.].*\.html$/.test(stats.name),
-                  listOf: 'fullPath'
-                }).sort()
-                .map(fullPath => {
-                  const htmlPath = path.relative(EXT_DIR, fullPath).replace(path.sep, '/');
-                  return `<li><a href="${htmlPath}">${htmlPath}</a></li>`;
-                }).join('')
-              }</ul></body></html>`);
-            return indexPath;
+        })).concat([
+          // test-ext
+          {
+            match: /^\/ext\/.+/,
+            serve: params => params.reqPath.replace(/^\/ext/, EXT_DIR),
+            allowOutside: true
           },
-          allowOutside: true
-        }
-      ],
+          // test-ext index
+          {
+            match: /^\/ext\/?$/,
+            serve: () => {
+              const indexPath = path.join(EXT_DIR, '.index.html');
+              fs.writeFileSync(indexPath,
+                `<html><head><meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"></head><body><ul>${
+                  filelist.getSync(EXT_DIR, {
+                    filter: stats => /^[^\.].*\.html$/.test(stats.name),
+                    listOf: 'fullPath'
+                  }).sort()
+                  .map(fullPath => {
+                    const htmlPath = path.relative(EXT_DIR, fullPath).replace(path.sep, '/');
+                    return `<li><a href="${htmlPath}">${htmlPath}</a></li>`;
+                  }).join('')
+                }</ul></body></html>`);
+              return indexPath;
+            },
+            allowOutside: true
+          }
+        ]),
       logger: logger
     }))
     .serve(request, response, e => {
