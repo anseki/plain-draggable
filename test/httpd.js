@@ -15,7 +15,8 @@ const
 
   MODULE_PACKAGES = [
     'jasmine-core',
-    'test-page-loader'
+    'test-page-loader',
+    'cssprefix'
   ],
 
   EXT_DIR = path.resolve('../../test-ext');
@@ -38,10 +39,10 @@ http.createServer((request, response) => {
   request.addListener('end', () => {
     (new staticAlias.Server(DOC_ROOT, {
       cache: false,
-      alias: MODULE_PACKAGES.map(modulePackage => (
+      alias: MODULE_PACKAGES.map(packageName => (
         { // node_modules
-          match: new RegExp(`^/${modulePackage}/.+`),
-          serve: `${require.resolve(modulePackage).replace(/([\/\\]node_modules)[\/\\].*$/, '$1')}<% reqPath %>`,
+          match: new RegExp(`^/${packageName}/.+`),
+          serve: `${require.resolve(packageName).replace(/([\/\\]node_modules)[\/\\].*$/, '$1')}<% reqPath %>`,
           allowOutside: true
         })).concat([
           // test-ext
