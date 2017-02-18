@@ -1185,8 +1185,12 @@ class PlainDraggable {
       cssValueDraggableCursor = null; // Reset
       Object.keys(insProps).forEach(id => {
         const props = insProps[id];
-        if (props.disabled || props === activeItem) { return; }
+        if (props.disabled || props === activeItem && cssValueDraggingCursor !== false) { return; }
         setDraggableCursor(props.options.handle, props.orgCursor);
+        if (props === activeItem) { // Since cssValueDraggingCursor is `false`, copy cursor again.
+          body.style.cursor = cssOrgValueBodyCursor;
+          body.style.cursor = window.getComputedStyle(props.options.handle, '').cursor;
+        }
       });
     }
   }
@@ -1202,6 +1206,7 @@ class PlainDraggable {
         setDraggingCursor(activeItem.options.handle);
         if (cssValueDraggingCursor === false) {
           setDraggableCursor(activeItem.options.handle, activeItem.orgCursor); // draggableCursor
+          body.style.cursor = cssOrgValueBodyCursor;
         }
         body.style.cursor = cssValueDraggingCursor || // If it is `false` or `''`
           window.getComputedStyle(activeItem.options.handle, '').cursor;
