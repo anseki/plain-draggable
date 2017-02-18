@@ -991,12 +991,17 @@ function setOptions(props, newOptions) {
   if (isElement(newOptions.handle) && newOptions.handle !== options.handle) {
     if (options.handle) { // Restore
       options.handle.style.cursor = props.orgCursor;
+      if (cssPropUserSelect) { options.handle.style[cssPropUserSelect] = props.orgUserSelect; }
       options.handle.removeEventListener('dragstart', dragstart, false);
       options.handle.removeEventListener('mousedown', props.handleMousedown, false);
     }
     const handle = options.handle = newOptions.handle;
     props.orgCursor = handle.style.cursor;
     setDraggableCursor(handle, props.orgCursor);
+    if (cssPropUserSelect) {
+      props.orgUserSelect = handle.style[cssPropUserSelect];
+      handle.style[cssPropUserSelect] = 'none';
+    }
     handle.addEventListener('dragstart', dragstart, false);
     handle.addEventListener('mousedown', props.handleMousedown, false);
   }
@@ -1126,9 +1131,11 @@ class PlainDraggable {
       if (props.disabled) {
         if (props === activeItem) { dragEnd(props); }
         props.options.handle.style.cursor = props.orgCursor;
+        if (cssPropUserSelect) { props.options.handle.style[cssPropUserSelect] = props.orgUserSelect; }
         if (draggableClass) { props.element.classList.remove(draggableClass); }
       } else {
         setDraggableCursor(props.options.handle, props.orgCursor);
+        if (cssPropUserSelect) { props.options.handle.style[cssPropUserSelect] = 'none'; }
         if (draggableClass) { props.element.classList.add(draggableClass); }
       }
     }
