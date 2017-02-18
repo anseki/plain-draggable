@@ -235,7 +235,6 @@ describe('cursor', function() {
 
   it('is updated in dragging state', function(done) {
     draggable.default[0].element.dispatchEvent(new MouseEvent('mousedown'));
-
     expect(draggable.default[0].element.style.cursor).toBe(normalValue.dragging);
     expect(body.style.cursor).toBe(normalValue.dragging);
     PlainDraggable.draggableCursor = 'wait';
@@ -256,7 +255,6 @@ describe('cursor', function() {
     expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
 
     draggable.default[0].element.dispatchEvent(new MouseEvent('mousedown'));
-
     expect(draggable.default[0].element.style.cursor).toBe('help');
     expect(body.style.cursor).toBe('help');
     PlainDraggable.draggableCursor = defaultDraggableCursor;
@@ -527,7 +525,7 @@ describe('cursor', function() {
     done();
   });
 
-  it('is not updated when false is specified', function(done) {
+  it('is restored original or previous cursor when false is specified', function(done) {
     draggable.default[1].disabled = draggable.byInline[1].disabled = true;
     PlainDraggable.draggingCursor = false;
 
@@ -609,6 +607,10 @@ describe('cursor', function() {
     expect(draggable.byParent.element.style.cursor).toBe(normalValue.draggable);
     expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
     expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+
+    // Reset for testing flow
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
 
     PlainDraggable.draggableCursor = false;
     PlainDraggable.draggingCursor = defaultDraggingCursor;
@@ -692,7 +694,12 @@ describe('cursor', function() {
     expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
     expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
 
-    PlainDraggable.draggableCursor = PlainDraggable.draggingCursor = false;
+    // Reset for testing flow
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    PlainDraggable.draggableCursor = false;
+    PlainDraggable.draggingCursor = false;
 
     expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
     expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
@@ -772,6 +779,321 @@ describe('cursor', function() {
     expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
     expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
     expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+
+    // Reset for testing flow
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    PlainDraggable.draggingCursor = false; // First
+    PlainDraggable.draggableCursor = false;
+
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+
+    // default
+    draggable.default[0].element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(body.style.cursor).toBe('auto'); // No style
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(body.style.cursor).toBe(orgValue.body);
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+
+    // byInline
+    draggable.byInline[0].element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(body.style.cursor).toBe(orgValue.byInline);
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(body.style.cursor).toBe(orgValue.body);
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+
+    // byParent
+    draggable.byParent.element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(body.style.cursor).toBe(parentCursor); // Inherited from parent
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(body.style.cursor).toBe(orgValue.body);
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+
+    // byClass
+    draggable.byClass.element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(body.style.cursor).toBe(classCursor); // Applied class
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(body.style.cursor).toBe(orgValue.body);
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(draggable.default[1].element.style.cursor).toBe(orgValue.default);
+    expect(draggable.byInline[1].element.style.cursor).toBe(orgValue.byInline);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    done();
+  });
+
+  it('is restored original or previous cursor when false is specified,  in dragging state', function(done) {
+
+    // draggableCursor
+
+    draggable.default[0].element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.default[0].element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggableCursor = false;
+    expect(draggable.default[0].element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byInline[0].element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byInline[0].element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggableCursor = false;
+    expect(draggable.byInline[0].element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byParent.element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byParent.element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggableCursor = false;
+    expect(draggable.byParent.element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byClass.element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byClass.element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggableCursor = false;
+    expect(draggable.byClass.element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    // draggingCursor
+
+    draggable.default[0].element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.default[0].element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggingCursor = false;
+    expect(draggable.default[0].element.style.cursor).toBe(normalValue.draggable);
+    expect(body.style.cursor).toBe(normalValue.draggable);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.default[0].element.style.cursor).toBe(normalValue.draggable);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byInline[0].element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byInline[0].element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggingCursor = false;
+    expect(draggable.byInline[0].element.style.cursor).toBe(normalValue.draggable);
+    expect(body.style.cursor).toBe(normalValue.draggable);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byInline[0].element.style.cursor).toBe(normalValue.draggable);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byParent.element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byParent.element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggingCursor = false;
+    expect(draggable.byParent.element.style.cursor).toBe(normalValue.draggable);
+    expect(body.style.cursor).toBe(normalValue.draggable);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byParent.element.style.cursor).toBe(normalValue.draggable);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byClass.element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byClass.element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggingCursor = false;
+    expect(draggable.byClass.element.style.cursor).toBe(normalValue.draggable);
+    expect(body.style.cursor).toBe(normalValue.draggable);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byClass.element.style.cursor).toBe(normalValue.draggable);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    // draggableCursor, draggingCursor
+
+    draggable.default[0].element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.default[0].element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggableCursor = false;
+    PlainDraggable.draggingCursor = false;
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(body.style.cursor).toBe('auto');
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byInline[0].element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byInline[0].element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggableCursor = false;
+    PlainDraggable.draggingCursor = false;
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(body.style.cursor).toBe(orgValue.byInline);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byParent.element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byParent.element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggableCursor = false;
+    PlainDraggable.draggingCursor = false;
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(body.style.cursor).toBe(parentCursor); // Inherited from parent
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byClass.element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byClass.element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggableCursor = false;
+    PlainDraggable.draggingCursor = false;
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(body.style.cursor).toBe(classCursor); // Applied class
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    // draggingCursor, draggableCursor
+
+    draggable.default[0].element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.default[0].element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggingCursor = false;
+    PlainDraggable.draggableCursor = false;
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(body.style.cursor).toBe('auto');
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.default[0].element.style.cursor).toBe(orgValue.default);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byInline[0].element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byInline[0].element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggingCursor = false;
+    PlainDraggable.draggableCursor = false;
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(body.style.cursor).toBe(orgValue.byInline);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byInline[0].element.style.cursor).toBe(orgValue.byInline);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byParent.element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byParent.element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggingCursor = false;
+    PlainDraggable.draggableCursor = false;
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(body.style.cursor).toBe(parentCursor); // Inherited from parent
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byParent.element.style.cursor).toBe(orgValue.byParent);
+    expect(body.style.cursor).toBe(orgValue.body);
+
+    PlainDraggable.draggableCursor = defaultDraggableCursor;
+    PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    draggable.byClass.element.dispatchEvent(new MouseEvent('mousedown'));
+    expect(draggable.byClass.element.style.cursor).toBe(normalValue.dragging);
+    expect(body.style.cursor).toBe(normalValue.dragging);
+    PlainDraggable.draggingCursor = false;
+    PlainDraggable.draggableCursor = false;
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(body.style.cursor).toBe(classCursor); // Applied class
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(draggable.byClass.element.style.cursor).toBe(orgValue.byClass);
+    expect(body.style.cursor).toBe(orgValue.body);
 
     PlainDraggable.draggableCursor = defaultDraggableCursor;
     PlainDraggable.draggingCursor = defaultDraggingCursor;
@@ -1027,6 +1349,76 @@ describe('cursor', function() {
 
     PlainDraggable.draggableCursor = defaultDraggableCursor;
     PlainDraggable.draggingCursor = defaultDraggingCursor;
+
+    done();
+  });
+
+  it('is restored when handle is changed', function(done) {
+    var propUserSelect = window.CSSPrefix.getName('userSelect'),
+      handleA = document.getElementById('handle-a'),
+      orgACursor = handleA.style.cursor,
+      orgAUserSelect = handleA.style[propUserSelect],
+      handleB = document.getElementById('handle-b'),
+      orgBCursor = handleB.style.cursor,
+      orgBUserSelect = handleB.style[propUserSelect],
+      item = new PlainDraggable(document.getElementById('handles'), {handle: handleA});
+
+    expect(handleA.style.cursor).toBe(normalValue.draggable);
+    expect(handleA.style[propUserSelect]).toBe('none');
+    expect(handleA.style.cursor).not.toBe(orgACursor);
+    expect(handleA.style[propUserSelect]).not.toBe(orgAUserSelect);
+    expect(handleA.style.cursor).not.toBe(orgBCursor);
+    expect(handleA.style[propUserSelect]).not.toBe(orgBUserSelect);
+
+    // Disable
+    item.disabled = true;
+    expect(handleA.style.cursor).toBe(orgACursor);
+    expect(handleA.style[propUserSelect]).toBe(orgAUserSelect);
+
+    // Enable
+    item.disabled = false;
+    expect(handleA.style.cursor).toBe(normalValue.draggable);
+    expect(handleA.style[propUserSelect]).toBe('none');
+
+    // Handle works
+    handleA.dispatchEvent(new MouseEvent('mousedown'));
+    expect(handleA.style.cursor).toBe(normalValue.dragging);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(handleA.style.cursor).toBe(normalValue.draggable);
+
+    // Change handle
+    item.handle = handleB;
+    expect(handleA.style.cursor).toBe(orgACursor);
+    expect(handleA.style[propUserSelect]).toBe(orgAUserSelect);
+    expect(handleB.style.cursor).toBe(normalValue.draggable);
+    expect(handleB.style[propUserSelect]).toBe('none');
+
+    // Handle works
+    handleA.dispatchEvent(new MouseEvent('mousedown'));
+    expect(handleA.style.cursor).toBe(orgACursor); // Ignored
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(handleA.style.cursor).toBe(orgACursor); // Ignored
+    handleB.dispatchEvent(new MouseEvent('mousedown'));
+    expect(handleB.style.cursor).toBe(normalValue.dragging);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(handleB.style.cursor).toBe(normalValue.draggable);
+
+    // Change handle again
+    item.handle = handleA;
+    expect(handleB.style.cursor).toBe(orgBCursor);
+    expect(handleB.style[propUserSelect]).toBe(orgBUserSelect);
+    expect(handleA.style.cursor).toBe(normalValue.draggable);
+    expect(handleA.style[propUserSelect]).toBe('none');
+
+    // Handle works
+    handleB.dispatchEvent(new MouseEvent('mousedown'));
+    expect(handleB.style.cursor).toBe(orgBCursor); // Ignored
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(handleB.style.cursor).toBe(orgBCursor); // Ignored
+    handleA.dispatchEvent(new MouseEvent('mousedown'));
+    expect(handleA.style.cursor).toBe(normalValue.dragging);
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    expect(handleA.style.cursor).toBe(normalValue.draggable);
 
     done();
   });

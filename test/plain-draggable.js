@@ -196,127 +196,179 @@ Object.defineProperty(exports, "__esModule", {
 });
 /*
  * CSSPrefix
- * https://github.com/anseki/css-prefix
+ * https://github.com/anseki/cssprefix
  *
  * Copyright (c) 2017 anseki
  * Licensed under the MIT license.
  */
 
-// *** Currently, this code except `export` is not ES2015. ***
-
-var CSSPrefix,
-    PREFIXES = ['webkit', 'ms', 'moz', 'o'],
-    PREFIXES_PROP = [],
-    PREFIXES_VALUE = [],
-    rePrefixesProp,
-    rePrefixesValue,
-    props = {},
-    values = {}; // cache
-
 function ucf(text) {
   return text.substr(0, 1).toUpperCase() + text.substr(1);
 }
 
-PREFIXES.forEach(function (prefix) {
-  PREFIXES_PROP.push(prefix);
-  PREFIXES_PROP.push(ucf(prefix));
-  PREFIXES_VALUE.push('-' + prefix + '-');
-});
+var PREFIXES = ['webkit', 'ms', 'moz', 'o'],
+    NAME_PREFIXES = PREFIXES.reduce(function (prefixes, prefix) {
+  prefixes.push(prefix);
+  prefixes.push(ucf(prefix));
+  return prefixes;
+}, []),
+    VALUE_PREFIXES = PREFIXES.map(function (prefix) {
+  return '-' + prefix + '-';
+}),
 
-rePrefixesProp = new RegExp('^(?:' + PREFIXES.join('|') + ')(.)', 'i');
-function normalizeProp(prop) {
-  var reUc = /[A-Z]/;
-  // 'ms' and 'Ms' are found by rePrefixesProp. 'i' option
-  return (prop = (prop + '').replace(/-([\da-z])/gi, function (str, p1) {
-    // camelCase
-    return p1.toUpperCase();
-  }).replace(rePrefixesProp, function (str, p1) {
-    return reUc.test(p1) ? p1.toLowerCase() : str;
-  })).toLowerCase() === 'float' ? 'cssFloat' : prop; // for old CSSOM
-}
 
-rePrefixesValue = new RegExp('^(?:' + PREFIXES_VALUE.join('|') + ')', 'i');
-function normalizeValue(value) {
-  return (value + '').replace(rePrefixesValue, '');
-}
+/**
+ * Get sample CSSStyleDeclaration.
+ * @returns {CSSStyleDeclaration}
+ */
+getDeclaration = function () {
+  var declaration = void 0;
+  return function () {
+    return declaration = declaration || document.createElement('div').style;
+  };
+}(),
 
-function getProp(prop, elm) {
-  var style, ucfProp;
-  prop = normalizeProp(prop);
-  if (props[prop] == null) {
-    style = elm.style;
 
-    if (style[prop] != null) {
-      // original
-      props[prop] = prop;
+/**
+ * Normalize name.
+ * @param {} propName - A name that is normalized.
+ * @returns {string} - A normalized name.
+ */
+normalizeName = function () {
+  var rePrefixedName = new RegExp('^(?:' + PREFIXES.join('|') + ')(.)', 'i'),
+      reUc = /[A-Z]/;
+  return function (propName) {
+    return (propName = (propName + '').replace(/\s/g, '').replace(/-([\da-z])/gi, function (str, p1) {
+      return p1.toUpperCase();
+    }) // camelCase
+    // 'ms' and 'Ms' are found by rePrefixedName 'i' option
+    .replace(rePrefixedName, function (str, p1) {
+      return reUc.test(p1) ? p1.toLowerCase() : str;
+    }) // Remove prefix
+    ).toLowerCase() === 'float' ? 'cssFloat' : propName;
+  }; // For old CSSOM
+}(),
+
+
+/**
+ * Normalize value.
+ * @param {} propValue - A value that is normalized.
+ * @returns {string} - A normalized value.
+ */
+normalizeValue = function () {
+  var rePrefixedValue = new RegExp('^(?:' + VALUE_PREFIXES.join('|') + ')', 'i');
+  return function (propValue) {
+    return (propValue + '').replace(/\s/g, '').replace(rePrefixedValue, '');
+  };
+}(),
+
+
+/**
+ * Polyfill for `CSS.supports`.
+ * @param {string} propName - A name.
+ * @param {string} propValue - A value.
+ * @returns {boolean} - `true` if given pair is accepted.
+ */
+cssSupports = function () {
+  // return window.CSS && window.CSS.supports || ((propName, propValue) => {
+  // `CSS.supports` doesn't find prefixed property.
+  return function (propName, propValue) {
+    var declaration = getDeclaration();
+    // In some browsers, `declaration[prop] = value` updates any property.
+    propName = propName.replace(/[A-Z]/g, function (str) {
+      return '-' + str.toLowerCase();
+    }); // kebab-case
+    declaration.setProperty(propName, propValue);
+    return declaration.getPropertyValue(propName) === propValue;
+  };
+}(),
+    propNames = {},
+    propValues = {}; // Cache
+
+// [DEBUG]
+window.normalizeName = normalizeName;
+window.normalizeValue = normalizeValue;
+window.cssSupports = cssSupports;
+// [/DEBUG]
+
+function getName(propName) {
+  propName = normalizeName(propName);
+  if (propName && propNames[propName] == null) {
+    window.getNameDone = 'get'; // [DEBUG/]
+    var declaration = getDeclaration();
+
+    if (declaration[propName] != null) {
+      // Original
+      propNames[propName] = propName;
     } else {
-      // try with prefixes
-      ucfProp = ucf(prop);
-      if (!PREFIXES_PROP.some(function (prefix) {
-        var prefixed = prefix + ucfProp;
-        if (style[prefixed] != null) {
-          props[prop] = prefixed;
+      // Try with prefixes
+      var ucfName = ucf(propName);
+      if (!NAME_PREFIXES.some(function (prefix) {
+        var prefixed = prefix + ucfName;
+        if (declaration[prefixed] != null) {
+          propNames[propName] = prefixed;
           return true;
         }
         return false;
       })) {
-        props[prop] = '';
+        propNames[propName] = false;
       }
     }
   }
-  return props[prop];
+  return propNames[propName] || void 0;
 }
 
-function setValue(elm, prop, value) {
-  var res,
-      style = elm.style,
-      valueArray = Array.isArray(value) ? value : [value];
+function getValue(propName, propValue) {
+  var res = void 0;
 
-  function trySet(prop, value) {
-    style[prop] = value;
-    return style[prop] === value;
-  }
+  if (!(propName = getName(propName))) {
+    return res;
+  } // Invalid property
 
-  if (!(prop = getProp(prop, elm))) {
-    return '';
-  } // Invalid Property
-  values[prop] = values[prop] || {};
-  if (!valueArray.some(function (value) {
-    value = normalizeValue(value);
-    if (values[prop][value] == null) {
+  propValues[propName] = propValues[propName] || {};
+  (Array.isArray(propValue) ? propValue : [propValue]).some(function (propValue) {
+    propValue = normalizeValue(propValue);
+    (window.getValueDone = window.getValueDone || []).push(propValue); // [DEBUG/]
 
-      if (trySet(prop, value)) {
-        // original
-        res = values[prop][value] = value;
-        return true;
-      } else if (PREFIXES_VALUE.some(function (prefix) {
-        // try with prefixes
-        var prefixed = prefix + value;
-        if (trySet(prop, prefixed)) {
-          res = values[prop][value] = prefixed;
-          return true;
-        }
-        return false;
-      })) {
+    if (propValues[propName][propValue] != null) {
+      // Cache
+      if (propValues[propName][propValue] !== false) {
+        res = propValues[propName][propValue];
         return true;
       } else {
-        values[prop][value] = '';
-        return false; // continue to next value
+        return false; // Continue to next value
       }
-    } else if (values[prop][value]) {
-      style[prop] = res = values[prop][value];
+    }
+    window.getValueDone.push('get'); // [DEBUG/]
+
+    if (cssSupports(propName, propValue)) {
+      // Original
+      res = propValues[propName][propValue] = propValue;
       return true;
     }
-    return false;
-  })) {
-    res = '';
-  }
-  return res;
+
+    if (VALUE_PREFIXES.some(function (prefix) {
+      // Try with prefixes
+      var prefixed = prefix + propValue;
+      if (cssSupports(propName, prefixed)) {
+        res = propValues[propName][propValue] = prefixed;
+        return true;
+      }
+      return false;
+    })) {
+      return true;
+    }
+
+    propValues[propName][propValue] = false;
+    return false; // Continue to next value
+  });
+
+  return typeof res === 'string' ? res : void 0; // It might be empty string.
 }
 
-CSSPrefix = {
-  getProp: getProp,
-  setValue: setValue
+var CSSPrefix = {
+  getName: getName,
+  getValue: getValue
 };
 
 exports.default = CSSPrefix;
@@ -355,7 +407,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var ZINDEX = 99999,
+var ZINDEX = 9000,
     SNAP_GRAVITY = 20,
     SNAP_CORNER = 'tl',
     SNAP_SIDE = 'both',
@@ -393,9 +445,9 @@ var insId = 0,
 // CSS property/value
 cssValueDraggableCursor = void 0,
     cssValueDraggingCursor = void 0,
-    cssOrgValueCursor = void 0,
+    cssOrgValueBodyCursor = void 0,
     cssPropUserSelect = void 0,
-    cssOrgValueUserSelect = void 0,
+    cssOrgValueBodyUserSelect = void 0,
 
 // Try to set `cursor` property.
 cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
@@ -629,24 +681,37 @@ function initAnim(element, isSvg) {
   var style = element.style;
   style.webkitTapHighlightColor = 'transparent';
   if (!isSvg) {
-    style[_cssprefix2.default.getProp('transform', element)] = 'translateZ(0)';
+    style[_cssprefix2.default.getName('transform')] = 'translateZ(0)';
   }
-  style[_cssprefix2.default.getProp('boxShadow', element)] = '0 0 1px transparent';
+  style[_cssprefix2.default.getName('boxShadow')] = '0 0 1px transparent';
   return element;
 }
 
-function setDraggableCursor(element) {
+function setDraggableCursor(element, orgCursor) {
   if (cssValueDraggableCursor == null) {
-    cssValueDraggableCursor = _cssprefix2.default.setValue(element, 'cursor', cssWantedValueDraggableCursor);
-  } else {
-    element.style.cursor = cssValueDraggableCursor;
+    if (cssWantedValueDraggableCursor !== false) {
+      cssValueDraggableCursor = _cssprefix2.default.getValue('cursor', cssWantedValueDraggableCursor);
+    }
+    // The wanted value was denied, or changing is not wanted.
+    if (cssValueDraggableCursor == null) {
+      cssValueDraggableCursor = false;
+    }
   }
+  // Update it to change a state even if cssValueDraggableCursor is false.
+  element.style.cursor = cssValueDraggableCursor === false ? orgCursor : cssValueDraggableCursor;
 }
 
 function setDraggingCursor(element) {
   if (cssValueDraggingCursor == null) {
-    cssValueDraggingCursor = _cssprefix2.default.setValue(element, 'cursor', cssWantedValueDraggingCursor);
-  } else {
+    if (cssWantedValueDraggingCursor !== false) {
+      cssValueDraggingCursor = _cssprefix2.default.getValue('cursor', cssWantedValueDraggingCursor);
+    }
+    // The wanted value was denied, or changing is not wanted.
+    if (cssValueDraggingCursor == null) {
+      cssValueDraggingCursor = false;
+    }
+  }
+  if (cssValueDraggingCursor !== false) {
     element.style.cursor = cssValueDraggingCursor;
   }
 }
@@ -860,248 +925,220 @@ function initBBox(props) {
    */
 
   if (props.parsedSnapTargets) {
-    (function () {
-      var elementSizeXY = { x: elementBBox.width, y: elementBBox.height },
-          minXY = { x: minLeft, y: minTop },
-          maxXY = { x: maxLeft, y: maxTop },
-          prop2Axis = { left: 'x', right: 'x', x: 'x', width: 'x', xStart: 'x', xEnd: 'x', xStep: 'x',
-        top: 'y', bottom: 'y', y: 'y', height: 'y', yStart: 'y', yEnd: 'y', yStep: 'y' },
-          snapTargets = props.parsedSnapTargets.reduce(function (snapTargets, parsedSnapTarget) {
-        var baseRect = parsedSnapTarget.base === 'containment' ? containmentBBox : docBBox,
-            baseOriginXY = { x: baseRect.left, y: baseRect.top },
-            baseSizeXY = { x: baseRect.width, y: baseRect.height };
+    var elementSizeXY = { x: elementBBox.width, y: elementBBox.height },
+        minXY = { x: minLeft, y: minTop },
+        maxXY = { x: maxLeft, y: maxTop },
+        prop2Axis = { left: 'x', right: 'x', x: 'x', width: 'x', xStart: 'x', xEnd: 'x', xStep: 'x',
+      top: 'y', bottom: 'y', y: 'y', height: 'y', yStart: 'y', yEnd: 'y', yStep: 'y' },
+        snapTargets = props.parsedSnapTargets.reduce(function (snapTargets, parsedSnapTarget) {
+      var baseRect = parsedSnapTarget.base === 'containment' ? containmentBBox : docBBox,
+          baseOriginXY = { x: baseRect.left, y: baseRect.top },
+          baseSizeXY = { x: baseRect.width, y: baseRect.height };
 
-        /**
-         * Basically, shallow copy from parsedSnapTarget, and it can have resolved values.
-         * @typedef {{x: (number|PPValue), y, xStart, xEnd, xStep, yStart, yEnd, yStep}} TargetXY
-         * @property {string[]} [corners] - Applied value.
-         * @property {string[]} [sides]
-         * @property {boolean} center
-         * @property {number} [xGravity] - Override parsedSnapTarget.gravity.
-         * @property {number} [yGravity]
-         */
+      /**
+       * Basically, shallow copy from parsedSnapTarget, and it can have resolved values.
+       * @typedef {{x: (number|PPValue), y, xStart, xEnd, xStep, yStart, yEnd, yStep}} TargetXY
+       * @property {string[]} [corners] - Applied value.
+       * @property {string[]} [sides]
+       * @property {boolean} center
+       * @property {number} [xGravity] - Override parsedSnapTarget.gravity.
+       * @property {number} [yGravity]
+       */
 
-        // Add single Point or Line (i.e. targetXY has no *Step)
-        function addSnapTarget(targetXY) {
-          if (targetXY.center == null) {
-            targetXY.center = parsedSnapTarget.center;
+      // Add single Point or Line (i.e. targetXY has no *Step)
+      function addSnapTarget(targetXY) {
+        if (targetXY.center == null) {
+          targetXY.center = parsedSnapTarget.center;
+        }
+        if (targetXY.xGravity == null) {
+          targetXY.xGravity = parsedSnapTarget.gravity;
+        }
+        if (targetXY.yGravity == null) {
+          targetXY.yGravity = parsedSnapTarget.gravity;
+        }
+
+        if (targetXY.x != null && targetXY.y != null) {
+          // Point
+          targetXY.x = resolvePPValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
+          targetXY.y = resolvePPValue(targetXY.y, baseOriginXY.y, baseSizeXY.y);
+
+          if (targetXY.center) {
+            targetXY.x -= elementSizeXY.x / 2;
+            targetXY.y -= elementSizeXY.y / 2;
+            targetXY.corners = ['tl'];
           }
-          if (targetXY.xGravity == null) {
-            targetXY.xGravity = parsedSnapTarget.gravity;
-          }
-          if (targetXY.yGravity == null) {
-            targetXY.yGravity = parsedSnapTarget.gravity;
-          }
 
-          if (targetXY.x != null && targetXY.y != null) {
-            // Point
-            targetXY.x = resolvePPValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
-            targetXY.y = resolvePPValue(targetXY.y, baseOriginXY.y, baseSizeXY.y);
-
-            if (targetXY.center) {
-              targetXY.x -= elementSizeXY.x / 2;
-              targetXY.y -= elementSizeXY.y / 2;
-              targetXY.corners = ['tl'];
+          (targetXY.corners || parsedSnapTarget.corners).forEach(function (corner) {
+            var x = targetXY.x - (corner === 'tr' || corner === 'br' ? elementSizeXY.x : 0),
+                y = targetXY.y - (corner === 'bl' || corner === 'br' ? elementSizeXY.y : 0);
+            if (x >= minXY.x && x <= maxXY.x && y >= minXY.y && y <= maxXY.y) {
+              var snapTarget = { x: x, y: y },
+                  gravityXStart = x - targetXY.xGravity,
+                  gravityXEnd = x + targetXY.xGravity,
+                  gravityYStart = y - targetXY.yGravity,
+                  gravityYEnd = y + targetXY.yGravity;
+              if (gravityXStart > minXY.x) {
+                snapTarget.gravityXStart = gravityXStart;
+              }
+              if (gravityXEnd < maxXY.x) {
+                snapTarget.gravityXEnd = gravityXEnd;
+              }
+              if (gravityYStart > minXY.y) {
+                snapTarget.gravityYStart = gravityYStart;
+              }
+              if (gravityYEnd < maxXY.y) {
+                snapTarget.gravityYEnd = gravityYEnd;
+              }
+              snapTargets.push(snapTarget);
             }
-
-            (targetXY.corners || parsedSnapTarget.corners).forEach(function (corner) {
-              var x = targetXY.x - (corner === 'tr' || corner === 'br' ? elementSizeXY.x : 0),
-                  y = targetXY.y - (corner === 'bl' || corner === 'br' ? elementSizeXY.y : 0);
-              if (x >= minXY.x && x <= maxXY.x && y >= minXY.y && y <= maxXY.y) {
-                var snapTarget = { x: x, y: y },
-                    gravityXStart = x - targetXY.xGravity,
-                    gravityXEnd = x + targetXY.xGravity,
-                    gravityYStart = y - targetXY.yGravity,
-                    gravityYEnd = y + targetXY.yGravity;
-                if (gravityXStart > minXY.x) {
-                  snapTarget.gravityXStart = gravityXStart;
-                }
-                if (gravityXEnd < maxXY.x) {
-                  snapTarget.gravityXEnd = gravityXEnd;
-                }
-                if (gravityYStart > minXY.y) {
-                  snapTarget.gravityYStart = gravityYStart;
-                }
-                if (gravityYEnd < maxXY.y) {
-                  snapTarget.gravityYEnd = gravityYEnd;
-                }
-                snapTargets.push(snapTarget);
-              }
-            });
-          } else {
-            var _ret2 = function () {
-              // Line
-              var specAxis = targetXY.x != null ? 'x' : 'y',
-                  rangeAxis = specAxis === 'x' ? 'y' : 'x',
-                  startProp = rangeAxis + 'Start',
-                  endProp = rangeAxis + 'End',
-                  gravityProp = specAxis + 'Gravity',
-                  specAxisL = specAxis.toUpperCase(),
-                  rangeAxisL = rangeAxis.toUpperCase(),
-                  gravitySpecStartProp = 'gravity' + specAxisL + 'Start',
-                  gravitySpecEndProp = 'gravity' + specAxisL + 'End',
-                  gravityRangeStartProp = 'gravity' + rangeAxisL + 'Start',
-                  gravityRangeEndProp = 'gravity' + rangeAxisL + 'End';
-              targetXY[specAxis] = resolvePPValue(targetXY[specAxis], baseOriginXY[specAxis], baseSizeXY[specAxis]);
-              targetXY[startProp] = resolvePPValue(targetXY[startProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]);
-              targetXY[endProp] = resolvePPValue(targetXY[endProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]) - elementSizeXY[rangeAxis]; // Reduce the end of the line.
-              if (targetXY[startProp] > targetXY[endProp] || // Smaller than element size.
-              targetXY[startProp] > maxXY[rangeAxis] || targetXY[endProp] < minXY[rangeAxis]) {
-                return {
-                  v: void 0
-                };
-              }
-
-              if (targetXY.center) {
-                targetXY[specAxis] -= elementSizeXY[specAxis] / 2;
-                targetXY.sides = ['start'];
-              }
-
-              (targetXY.sides || parsedSnapTarget.sides).forEach(function (side) {
-                var xy = targetXY[specAxis] - (side === 'end' ? elementSizeXY[specAxis] : 0);
-                if (xy >= minXY[specAxis] && xy <= maxXY[specAxis]) {
-                  var snapTarget = {},
-                      gravitySpecStart = xy - targetXY[gravityProp],
-                      gravitySpecEnd = xy + targetXY[gravityProp];
-                  snapTarget[specAxis] = xy;
-                  if (gravitySpecStart > minXY[specAxis]) {
-                    snapTarget[gravitySpecStartProp] = gravitySpecStart;
-                  }
-                  if (gravitySpecEnd < maxXY[specAxis]) {
-                    snapTarget[gravitySpecEndProp] = gravitySpecEnd;
-                  }
-                  if (targetXY[startProp] > minXY[rangeAxis]) {
-                    snapTarget[gravityRangeStartProp] = targetXY[startProp];
-                  }
-                  if (targetXY[endProp] < maxXY[rangeAxis]) {
-                    snapTarget[gravityRangeEndProp] = targetXY[endProp];
-                  }
-                  snapTargets.push(snapTarget);
-                }
-              });
-            }();
-
-            if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
-          }
-        }
-
-        var bBox = void 0;
-        if ((bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : null) || // Element
-        parsedSnapTarget.ppBBox) {
-          if (parsedSnapTarget.ppBBox) {
-            bBox = resolvePPBBox(parsedSnapTarget.ppBBox, baseRect);
-          } // BBox
-          if (bBox) {
-            // Drop invalid BBox.
-            // Expand into 4 lines.
-            parsedSnapTarget.edges.forEach(function (edge) {
-              var lengthenX = parsedSnapTarget.gravity,
-                  lengthenY = parsedSnapTarget.gravity;
-              if (edge === 'outside') {
-                // Snap it when a part of the element is part of the range.
-                lengthenX += elementBBox.width;
-                lengthenY += elementBBox.height;
-              }
-              var xStart = bBox.left - lengthenX,
-                  xEnd = bBox.right + lengthenX,
-                  yStart = bBox.top - lengthenY,
-                  yEnd = bBox.bottom + lengthenY;
-              var side = edge === 'inside' ? 'start' : 'end';
-              addSnapTarget({ xStart: xStart, xEnd: xEnd, y: bBox.top, sides: [side], center: false }); // Top
-              addSnapTarget({ x: bBox.left, yStart: yStart, yEnd: yEnd, sides: [side], center: false }); // Left
-              side = edge === 'inside' ? 'end' : 'start';
-              addSnapTarget({ xStart: xStart, xEnd: xEnd, y: bBox.bottom, sides: [side], center: false }); // Bottom
-              addSnapTarget({ x: bBox.right, yStart: yStart, yEnd: yEnd, sides: [side], center: false }); // Right
-            });
-          }
+          });
         } else {
-          (function () {
-            var expanded = [['x', 'y', 'xStart', 'xEnd', 'xStep', 'yStart', 'yEnd', 'yStep'].reduce(function (targetXY, prop) {
-              if (parsedSnapTarget[prop]) {
-                targetXY[prop] = resolvePPValue(parsedSnapTarget[prop], prop === 'xStep' || prop === 'yStep' ? 0 : baseOriginXY[prop2Axis[prop]], baseSizeXY[prop2Axis[prop]]);
+          // Line
+          var specAxis = targetXY.x != null ? 'x' : 'y',
+              rangeAxis = specAxis === 'x' ? 'y' : 'x',
+              startProp = rangeAxis + 'Start',
+              endProp = rangeAxis + 'End',
+              gravityProp = specAxis + 'Gravity',
+              specAxisL = specAxis.toUpperCase(),
+              rangeAxisL = rangeAxis.toUpperCase(),
+              gravitySpecStartProp = 'gravity' + specAxisL + 'Start',
+              gravitySpecEndProp = 'gravity' + specAxisL + 'End',
+              gravityRangeStartProp = 'gravity' + rangeAxisL + 'Start',
+              gravityRangeEndProp = 'gravity' + rangeAxisL + 'End';
+          targetXY[specAxis] = resolvePPValue(targetXY[specAxis], baseOriginXY[specAxis], baseSizeXY[specAxis]);
+          targetXY[startProp] = resolvePPValue(targetXY[startProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]);
+          targetXY[endProp] = resolvePPValue(targetXY[endProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]) - elementSizeXY[rangeAxis]; // Reduce the end of the line.
+          if (targetXY[startProp] > targetXY[endProp] || // Smaller than element size.
+          targetXY[startProp] > maxXY[rangeAxis] || targetXY[endProp] < minXY[rangeAxis]) {
+            return;
+          }
+
+          if (targetXY.center) {
+            targetXY[specAxis] -= elementSizeXY[specAxis] / 2;
+            targetXY.sides = ['start'];
+          }
+
+          (targetXY.sides || parsedSnapTarget.sides).forEach(function (side) {
+            var xy = targetXY[specAxis] - (side === 'end' ? elementSizeXY[specAxis] : 0);
+            if (xy >= minXY[specAxis] && xy <= maxXY[specAxis]) {
+              var snapTarget = {},
+                  gravitySpecStart = xy - targetXY[gravityProp],
+                  gravitySpecEnd = xy + targetXY[gravityProp];
+              snapTarget[specAxis] = xy;
+              if (gravitySpecStart > minXY[specAxis]) {
+                snapTarget[gravitySpecStartProp] = gravitySpecStart;
               }
-              return targetXY;
-            }, {})];
-
-            ['x', 'y'].forEach(function (axis) {
-              var startProp = axis + 'Start',
-                  endProp = axis + 'End',
-                  stepProp = axis + 'Step',
-                  gravityProp = axis + 'Gravity';
-              expanded = expanded.reduce(function (expanded, targetXY) {
-                var start = targetXY[startProp],
-                    end = targetXY[endProp],
-                    step = targetXY[stepProp];
-                if (start != null && end != null && start >= end) {
-                  return expanded;
-                } // start >= end
-
-                if (step != null) {
-                  if (step < 2) {
-                    return expanded;
-                  }
-                  // step >= 2px -> Expand by step
-                  var gravity = step / 2; // max
-                  gravity = parsedSnapTarget.gravity > gravity ? gravity : null;
-                  for (var curValue = start; curValue <= end; curValue += step) {
-                    var expandedXY = Object.keys(targetXY).reduce(function (expandedXY, prop) {
-                      if (prop !== startProp && prop !== endProp && prop !== stepProp) {
-                        expandedXY[prop] = targetXY[prop];
-                      }
-                      return expandedXY;
-                    }, {});
-                    expandedXY[axis] = curValue;
-                    expandedXY[gravityProp] = gravity;
-                    expanded.push(expandedXY);
-                  }
-                } else {
-                  expanded.push(targetXY);
-                }
-                return expanded;
-              }, []);
-            });
-            expanded.forEach(function (targetXY) {
-              addSnapTarget(targetXY);
-            });
-          })();
+              if (gravitySpecEnd < maxXY[specAxis]) {
+                snapTarget[gravitySpecEndProp] = gravitySpecEnd;
+              }
+              if (targetXY[startProp] > minXY[rangeAxis]) {
+                snapTarget[gravityRangeStartProp] = targetXY[startProp];
+              }
+              if (targetXY[endProp] < maxXY[rangeAxis]) {
+                snapTarget[gravityRangeEndProp] = targetXY[endProp];
+              }
+              snapTargets.push(snapTarget);
+            }
+          });
         }
+      }
 
-        return snapTargets;
-      }, []);
+      var bBox = void 0;
+      if ((bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : null) || // Element
+      parsedSnapTarget.ppBBox) {
+        if (parsedSnapTarget.ppBBox) {
+          bBox = resolvePPBBox(parsedSnapTarget.ppBBox, baseRect);
+        } // BBox
+        if (bBox) {
+          // Drop invalid BBox.
+          // Expand into 4 lines.
+          parsedSnapTarget.edges.forEach(function (edge) {
+            var lengthenX = parsedSnapTarget.gravity,
+                lengthenY = parsedSnapTarget.gravity;
+            if (edge === 'outside') {
+              // Snap it when a part of the element is part of the range.
+              lengthenX += elementBBox.width;
+              lengthenY += elementBBox.height;
+            }
+            var xStart = bBox.left - lengthenX,
+                xEnd = bBox.right + lengthenX,
+                yStart = bBox.top - lengthenY,
+                yEnd = bBox.bottom + lengthenY;
+            var side = edge === 'inside' ? 'start' : 'end';
+            addSnapTarget({ xStart: xStart, xEnd: xEnd, y: bBox.top, sides: [side], center: false }); // Top
+            addSnapTarget({ x: bBox.left, yStart: yStart, yEnd: yEnd, sides: [side], center: false }); // Left
+            side = edge === 'inside' ? 'end' : 'start';
+            addSnapTarget({ xStart: xStart, xEnd: xEnd, y: bBox.bottom, sides: [side], center: false }); // Bottom
+            addSnapTarget({ x: bBox.right, yStart: yStart, yEnd: yEnd, sides: [side], center: false }); // Right
+          });
+        }
+      } else {
+        var expanded = [['x', 'y', 'xStart', 'xEnd', 'xStep', 'yStart', 'yEnd', 'yStep'].reduce(function (targetXY, prop) {
+          if (parsedSnapTarget[prop]) {
+            targetXY[prop] = resolvePPValue(parsedSnapTarget[prop], prop === 'xStep' || prop === 'yStep' ? 0 : baseOriginXY[prop2Axis[prop]], baseSizeXY[prop2Axis[prop]]);
+          }
+          return targetXY;
+        }, {})];
 
-      props.snapTargets = snapTargets.length ? snapTargets : null;
-    })();
+        ['x', 'y'].forEach(function (axis) {
+          var startProp = axis + 'Start',
+              endProp = axis + 'End',
+              stepProp = axis + 'Step',
+              gravityProp = axis + 'Gravity';
+          expanded = expanded.reduce(function (expanded, targetXY) {
+            var start = targetXY[startProp],
+                end = targetXY[endProp],
+                step = targetXY[stepProp];
+            if (start != null && end != null && start >= end) {
+              return expanded;
+            } // start >= end
+
+            if (step != null) {
+              if (step < 2) {
+                return expanded;
+              }
+              // step >= 2px -> Expand by step
+              var gravity = step / 2; // max
+              gravity = parsedSnapTarget.gravity > gravity ? gravity : null;
+              for (var curValue = start; curValue <= end; curValue += step) {
+                var expandedXY = Object.keys(targetXY).reduce(function (expandedXY, prop) {
+                  if (prop !== startProp && prop !== endProp && prop !== stepProp) {
+                    expandedXY[prop] = targetXY[prop];
+                  }
+                  return expandedXY;
+                }, {});
+                expandedXY[axis] = curValue;
+                expandedXY[gravityProp] = gravity;
+                expanded.push(expandedXY);
+              }
+            } else {
+              expanded.push(targetXY);
+            }
+            return expanded;
+          }, []);
+        });
+        expanded.forEach(function (targetXY) {
+          addSnapTarget(targetXY);
+        });
+      }
+
+      return snapTargets;
+    }, []);
+
+    props.snapTargets = snapTargets.length ? snapTargets : null;
   }
   window.initBBoxDone = true; // [DEBUG/]
 }
 
-function mousedown(props, event) {
-  if (props.disabled) {
-    return;
-  }
-
-  setDraggingCursor(props.options.handle);
-  if (props.options.zIndex !== false) {
-    props.elementStyle.zIndex = props.options.zIndex;
-  }
-  setDraggingCursor(body);
-  if (cssPropUserSelect) {
-    body.style[cssPropUserSelect] = 'none';
-  }
-
-  activeItem = props;
-  hasMoved = false;
-  pointerOffset = { left: props.elementBBox.left - event.pageX, top: props.elementBBox.top - event.pageY };
-}
-
 function dragEnd(props) {
-  setDraggableCursor(props.options.handle);
+  setDraggableCursor(props.options.handle, props.orgCursor);
+  body.style.cursor = cssOrgValueBodyCursor;
+
   if (props.options.zIndex !== false) {
     props.elementStyle.zIndex = props.orgZIndex;
   }
-  body.style.cursor = cssOrgValueCursor;
   if (cssPropUserSelect) {
-    body.style[cssPropUserSelect] = cssOrgValueUserSelect;
+    body.style[cssPropUserSelect] = cssOrgValueBodyUserSelect;
   }
   if (movingClass) {
     props.element.classList.remove(movingClass);
@@ -1111,6 +1148,30 @@ function dragEnd(props) {
   if (props.onDragEnd) {
     props.onDragEnd();
   }
+}
+
+function mousedown(props, event) {
+  if (props.disabled) {
+    return;
+  }
+  if (activeItem) {
+    dragEnd(activeItem);
+  } // activeItem is normally null by `mouseup`.
+
+  setDraggingCursor(props.options.handle);
+  body.style.cursor = cssValueDraggingCursor || // If it is `false` or `''`
+  window.getComputedStyle(props.options.handle, '').cursor;
+
+  if (props.options.zIndex !== false) {
+    props.elementStyle.zIndex = props.options.zIndex;
+  }
+  if (cssPropUserSelect) {
+    body.style[cssPropUserSelect] = 'none';
+  }
+
+  activeItem = props;
+  hasMoved = false;
+  pointerOffset = { left: props.elementBBox.left - event.pageX, top: props.elementBBox.top - event.pageY };
 }
 
 /**
@@ -1227,19 +1288,17 @@ function _setOptions(props, newOptions) {
     var corner = cleanString(newOptions.corner);
     if (corner) {
       if (corner !== 'all') {
-        (function () {
-          var added = {},
-              corners = corner.split(/\s/).reduce(function (corners, corner) {
-            corner = corner.trim().replace(/^(.).*?\-(.).*$/, '$1$2');
-            if ((corner = corner === 'tl' || corner === 'lt' ? 'tl' : corner === 'tr' || corner === 'rt' ? 'tr' : corner === 'bl' || corner === 'lb' ? 'bl' : corner === 'br' || corner === 'rb' ? 'br' : null) && !added[corner]) {
-              corners.push(corner);
-              added[corner] = true;
-            }
-            return corners;
-          }, []),
-              cornersLen = corners.length;
-          corner = !cornersLen ? null : cornersLen === 4 ? 'all' : corners.join(' ');
-        })();
+        var added = {},
+            corners = corner.split(/\s/).reduce(function (corners, corner) {
+          corner = corner.trim().replace(/^(.).*?\-(.).*$/, '$1$2');
+          if ((corner = corner === 'tl' || corner === 'lt' ? 'tl' : corner === 'tr' || corner === 'rt' ? 'tr' : corner === 'bl' || corner === 'lb' ? 'bl' : corner === 'br' || corner === 'rb' ? 'br' : null) && !added[corner]) {
+            corners.push(corner);
+            added[corner] = true;
+          }
+          return corners;
+        }, []),
+            cornersLen = corners.length;
+        corner = !cornersLen ? null : cornersLen === 4 ? 'all' : corners.join(' ');
       }
       if (corner) {
         options.corner = corner;
@@ -1278,147 +1337,143 @@ function _setOptions(props, newOptions) {
 
   // snap
   if (newOptions.snap != null) {
-    (function () {
-      var newSnapOptions = isObject(newOptions.snap) && newOptions.snap.targets != null ? newOptions.snap : { targets: newOptions.snap },
-          snapTargetsOptions = [],
-          snapOptions = commonSnapOptions({ targets: snapTargetsOptions }, newSnapOptions);
+    var newSnapOptions = isObject(newOptions.snap) && newOptions.snap.targets != null ? newOptions.snap : { targets: newOptions.snap },
+        snapTargetsOptions = [],
+        snapOptions = commonSnapOptions({ targets: snapTargetsOptions }, newSnapOptions);
 
-      // Set default options into top level.
-      if (!snapOptions.gravity) {
-        snapOptions.gravity = SNAP_GRAVITY;
-      }
-      if (!snapOptions.corner) {
-        snapOptions.corner = SNAP_CORNER;
-      }
-      if (!snapOptions.side) {
-        snapOptions.side = SNAP_SIDE;
-      }
-      if (typeof snapOptions.center !== 'boolean') {
-        snapOptions.center = false;
-      }
-      if (!snapOptions.edge) {
-        snapOptions.edge = SNAP_EDGE;
-      }
-      if (!snapOptions.base) {
-        snapOptions.base = SNAP_BASE;
+    // Set default options into top level.
+    if (!snapOptions.gravity) {
+      snapOptions.gravity = SNAP_GRAVITY;
+    }
+    if (!snapOptions.corner) {
+      snapOptions.corner = SNAP_CORNER;
+    }
+    if (!snapOptions.side) {
+      snapOptions.side = SNAP_SIDE;
+    }
+    if (typeof snapOptions.center !== 'boolean') {
+      snapOptions.center = false;
+    }
+    if (!snapOptions.edge) {
+      snapOptions.edge = SNAP_EDGE;
+    }
+    if (!snapOptions.base) {
+      snapOptions.base = SNAP_BASE;
+    }
+
+    var parsedSnapTargets = (Array.isArray(newSnapOptions.targets) ? newSnapOptions.targets : [newSnapOptions.targets]).reduce(function (parsedSnapTargets, target) {
+      if (target == null) {
+        return parsedSnapTargets;
       }
 
-      var parsedSnapTargets = (Array.isArray(newSnapOptions.targets) ? newSnapOptions.targets : [newSnapOptions.targets]).reduce(function (parsedSnapTargets, target) {
-        if (target == null) {
+      var isElementPre = isElement(target),
+          // Pre-check direct value
+      ppBBoxPre = validPPBBox(copyTree(target)),
+          // Pre-check direct value
+      newSnapTargetOptions = isElementPre || ppBBoxPre ? { target: target } : // Direct Element | PPBBox
+      isObject(target) && target.start == null && target.end == null && target.step == null ? target : // SnapTargetOptions
+      { x: target, y: target },
+          // Others, it might be {step, start, end}
+      expandedParsedSnapTargets = [],
+          snapTargetOptions = {},
+          newOptionsTarget = newSnapTargetOptions.target;
+      var ppBBox = void 0;
+
+      if (isElementPre || isElement(newOptionsTarget)) {
+        // Element
+        expandedParsedSnapTargets.push({ element: newOptionsTarget });
+        snapTargetOptions.target = newOptionsTarget;
+      } else if (ppBBox = ppBBoxPre || validPPBBox(copyTree(newOptionsTarget))) {
+        // Object -> PPBBox
+        expandedParsedSnapTargets.push({ ppBBox: ppBBox });
+        snapTargetOptions.target = ppBBox2OptionObject(ppBBox);
+      } else {
+        var invalid = void 0; // `true` if valid PPValue was given but the contained value is invalid.
+        var parsedXY = ['x', 'y'].reduce(function (parsedXY, axis) {
+          var newOptionsXY = newSnapTargetOptions[axis];
+          var ppValue = void 0;
+
+          if (ppValue = validPPValue(newOptionsXY)) {
+            // pixels | '<n>%'
+            parsedXY[axis] = ppValue;
+            snapTargetOptions[axis] = ppValue2OptionValue(ppValue);
+          } else {
+            // {start, end} | {step, start, end}
+            var start = void 0,
+                end = void 0,
+                step = void 0;
+            if (isObject(newOptionsXY)) {
+              start = validPPValue(newOptionsXY.start);
+              end = validPPValue(newOptionsXY.end);
+              step = validPPValue(newOptionsXY.step);
+              if (start && end && start.isRatio === end.isRatio && start.value >= end.value) {
+                // start >= end
+                invalid = true;
+              }
+            }
+            start = parsedXY[axis + 'Start'] = start || { value: 0, isRatio: false };
+            end = parsedXY[axis + 'End'] = end || { value: 1, isRatio: true };
+            snapTargetOptions[axis] = { start: ppValue2OptionValue(start), end: ppValue2OptionValue(end) };
+            if (step) {
+              if (step.isRatio ? step.value > 0 : step.value >= 2) {
+                // step > 0% || step >= 2px
+                parsedXY[axis + 'Step'] = step;
+                snapTargetOptions[axis].step = ppValue2OptionValue(step);
+              } else {
+                invalid = true;
+              }
+            }
+          }
+          return parsedXY;
+        }, {});
+        if (invalid) {
           return parsedSnapTargets;
         }
 
-        var isElementPre = isElement(target),
-            // Pre-check direct value
-        ppBBoxPre = validPPBBox(copyTree(target)),
-            // Pre-check direct value
-        newSnapTargetOptions = isElementPre || ppBBoxPre ? { target: target } : // Direct Element | PPBBox
-        isObject(target) && target.start == null && target.end == null && target.step == null ? target : // SnapTargetOptions
-        { x: target, y: target },
-            // Others, it might be {step, start, end}
-        expandedParsedSnapTargets = [],
-            snapTargetOptions = {},
-            newOptionsTarget = newSnapTargetOptions.target;
-        var ppBBox = void 0;
-
-        if (isElementPre || isElement(newOptionsTarget)) {
-          // Element
-          expandedParsedSnapTargets.push({ element: newOptionsTarget });
-          snapTargetOptions.target = newOptionsTarget;
-        } else if (ppBBox = ppBBoxPre || validPPBBox(copyTree(newOptionsTarget))) {
-          // Object -> PPBBox
-          expandedParsedSnapTargets.push({ ppBBox: ppBBox });
-          snapTargetOptions.target = ppBBox2OptionObject(ppBBox);
+        if (parsedXY.xStart && !parsedXY.xStep && parsedXY.yStart && !parsedXY.yStep) {
+          // Expand into 4 lines. This is not BBox, and `edge` is ignored.
+          expandedParsedSnapTargets.push({ xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yStart }, // Top
+          { xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yEnd }, // Bottom
+          { x: parsedXY.xStart, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd }, // Left
+          { x: parsedXY.xEnd, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd } // Right
+          );
         } else {
-          var invalid = void 0; // `true` if valid PPValue was given but the contained value is invalid.
-          var parsedXY = ['x', 'y'].reduce(function (parsedXY, axis) {
-            var newOptionsXY = newSnapTargetOptions[axis];
-            var ppValue = void 0;
-
-            if (ppValue = validPPValue(newOptionsXY)) {
-              // pixels | '<n>%'
-              parsedXY[axis] = ppValue;
-              snapTargetOptions[axis] = ppValue2OptionValue(ppValue);
-            } else {
-              // {start, end} | {step, start, end}
-              var start = void 0,
-                  end = void 0,
-                  step = void 0;
-              if (isObject(newOptionsXY)) {
-                start = validPPValue(newOptionsXY.start);
-                end = validPPValue(newOptionsXY.end);
-                step = validPPValue(newOptionsXY.step);
-                if (start && end && start.isRatio === end.isRatio && start.value >= end.value) {
-                  // start >= end
-                  invalid = true;
-                }
-              }
-              start = parsedXY[axis + 'Start'] = start || { value: 0, isRatio: false };
-              end = parsedXY[axis + 'End'] = end || { value: 1, isRatio: true };
-              snapTargetOptions[axis] = { start: ppValue2OptionValue(start), end: ppValue2OptionValue(end) };
-              if (step) {
-                if (step.isRatio ? step.value > 0 : step.value >= 2) {
-                  // step > 0% || step >= 2px
-                  parsedXY[axis + 'Step'] = step;
-                  snapTargetOptions[axis].step = ppValue2OptionValue(step);
-                } else {
-                  invalid = true;
-                }
-              }
-            }
-            return parsedXY;
-          }, {});
-          if (invalid) {
-            return parsedSnapTargets;
-          }
-
-          if (parsedXY.xStart && !parsedXY.xStep && parsedXY.yStart && !parsedXY.yStep) {
-            // Expand into 4 lines. This is not BBox, and `edge` is ignored.
-            expandedParsedSnapTargets.push({ xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yStart }, // Top
-            { xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yEnd }, // Bottom
-            { x: parsedXY.xStart, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd }, // Left
-            { x: parsedXY.xEnd, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd } // Right
-            );
-          } else {
-            expandedParsedSnapTargets.push(parsedXY);
-          }
-        }
-
-        if (expandedParsedSnapTargets.length) {
-          (function () {
-            snapTargetsOptions.push(commonSnapOptions(snapTargetOptions, newSnapTargetOptions));
-            // Copy common SnapOptions
-            var corner = snapTargetOptions.corner || snapOptions.corner,
-                side = snapTargetOptions.side || snapOptions.side,
-                edge = snapTargetOptions.edge || snapOptions.edge,
-                commonOptions = {
-              gravity: snapTargetOptions.gravity || snapOptions.gravity,
-              base: snapTargetOptions.base || snapOptions.base,
-              center: typeof snapTargetOptions.center === 'boolean' ? snapTargetOptions.center : snapOptions.center,
-              corners: corner === 'all' ? SNAP_ALL_CORNERS : corner.split(' '), // Split
-              sides: side === 'both' ? SNAP_ALL_SIDES : [side], // Split
-              edges: edge === 'both' ? SNAP_ALL_EDGES : [edge] // Split
-            };
-            expandedParsedSnapTargets.forEach(function (parsedSnapTarget) {
-              // Set common SnapOptions
-              ['gravity', 'corners', 'sides', 'center', 'edges', 'base'].forEach(function (option) {
-                parsedSnapTarget[option] = commonOptions[option];
-              });
-              parsedSnapTargets.push(parsedSnapTarget);
-            });
-          })();
-        }
-        return parsedSnapTargets;
-      }, []);
-
-      if (parsedSnapTargets.length) {
-        options.snap = snapOptions; // Update always
-        if (hasChanged(parsedSnapTargets, props.parsedSnapTargets)) {
-          props.parsedSnapTargets = parsedSnapTargets;
-          needsInitBBox = true;
+          expandedParsedSnapTargets.push(parsedXY);
         }
       }
-    })();
+
+      if (expandedParsedSnapTargets.length) {
+        snapTargetsOptions.push(commonSnapOptions(snapTargetOptions, newSnapTargetOptions));
+        // Copy common SnapOptions
+        var corner = snapTargetOptions.corner || snapOptions.corner,
+            side = snapTargetOptions.side || snapOptions.side,
+            edge = snapTargetOptions.edge || snapOptions.edge,
+            commonOptions = {
+          gravity: snapTargetOptions.gravity || snapOptions.gravity,
+          base: snapTargetOptions.base || snapOptions.base,
+          center: typeof snapTargetOptions.center === 'boolean' ? snapTargetOptions.center : snapOptions.center,
+          corners: corner === 'all' ? SNAP_ALL_CORNERS : corner.split(' '), // Split
+          sides: side === 'both' ? SNAP_ALL_SIDES : [side], // Split
+          edges: edge === 'both' ? SNAP_ALL_EDGES : [edge] // Split
+        };
+        expandedParsedSnapTargets.forEach(function (parsedSnapTarget) {
+          // Set common SnapOptions
+          ['gravity', 'corners', 'sides', 'center', 'edges', 'base'].forEach(function (option) {
+            parsedSnapTarget[option] = commonOptions[option];
+          });
+          parsedSnapTargets.push(parsedSnapTarget);
+        });
+      }
+      return parsedSnapTargets;
+    }, []);
+
+    if (parsedSnapTargets.length) {
+      options.snap = snapOptions; // Update always
+      if (hasChanged(parsedSnapTargets, props.parsedSnapTargets)) {
+        props.parsedSnapTargets = parsedSnapTargets;
+        needsInitBBox = true;
+      }
+    }
   } else if (newOptions.hasOwnProperty('snap') && props.parsedSnapTargets) {
     options.snap = props.parsedSnapTargets = props.snapTargets = void 0;
   }
@@ -1437,12 +1492,19 @@ function _setOptions(props, newOptions) {
     if (options.handle) {
       // Restore
       options.handle.style.cursor = props.orgCursor;
+      if (cssPropUserSelect) {
+        options.handle.style[cssPropUserSelect] = props.orgUserSelect;
+      }
       options.handle.removeEventListener('dragstart', dragstart, false);
       options.handle.removeEventListener('mousedown', props.handleMousedown, false);
     }
     var handle = options.handle = newOptions.handle;
     props.orgCursor = handle.style.cursor;
-    setDraggableCursor(handle);
+    setDraggableCursor(handle, props.orgCursor);
+    if (cssPropUserSelect) {
+      props.orgUserSelect = handle.style[cssPropUserSelect];
+      handle.style[cssPropUserSelect] = 'none';
+    }
     handle.addEventListener('dragstart', dragstart, false);
     handle.addEventListener('mousedown', props.handleMousedown, false);
   }
@@ -1450,6 +1512,9 @@ function _setOptions(props, newOptions) {
   // zIndex
   if (isFinite(newOptions.zIndex) || newOptions.zIndex === false) {
     options.zIndex = newOptions.zIndex;
+    if (props === activeItem) {
+      props.elementStyle.zIndex = options.zIndex === false ? props.orgZIndex : options.zIndex;
+    }
   }
 
   // left/top
@@ -1535,7 +1600,7 @@ var PlainDraggable = function () {
       mousedown(props, event);
     };
     props.handleScroll = _animEvent2.default.add(function () {
-      console.log('scroll');initBBox(props);
+      initBBox(props);
     });
     props.scrollElements = [];
 
@@ -1588,19 +1653,24 @@ var PlainDraggable = function () {
     },
     set: function set(value) {
       var props = insProps[this._id];
-      value = !!value;
-      if (value !== props.disabled) {
+      if ((value = !!value) !== props.disabled) {
         props.disabled = value;
         if (props.disabled) {
           if (props === activeItem) {
             dragEnd(props);
           }
           props.options.handle.style.cursor = props.orgCursor;
+          if (cssPropUserSelect) {
+            props.options.handle.style[cssPropUserSelect] = props.orgUserSelect;
+          }
           if (draggableClass) {
             props.element.classList.remove(draggableClass);
           }
         } else {
-          setDraggableCursor(props.options.handle);
+          setDraggableCursor(props.options.handle, props.orgCursor);
+          if (cssPropUserSelect) {
+            props.options.handle.style[cssPropUserSelect] = 'none';
+          }
           if (draggableClass) {
             props.element.classList.add(draggableClass);
           }
@@ -1613,7 +1683,7 @@ var PlainDraggable = function () {
       return insProps[this._id].element;
     }
   }, {
-    key: 'bBox',
+    key: 'rect',
     get: function get() {
       return copyTree(insProps[this._id].elementBBox);
     }
@@ -1704,15 +1774,22 @@ var PlainDraggable = function () {
       return cssWantedValueDraggableCursor;
     },
     set: function set(value) {
-      cssWantedValueDraggableCursor = value;
-      // Reset
-      cssValueDraggableCursor = null;
-      Object.keys(insProps).forEach(function (id) {
-        var props = insProps[id];
-        if (!props.disabled && props !== activeItem) {
-          setDraggableCursor(props.options.handle);
-        }
-      });
+      if (cssWantedValueDraggableCursor !== value) {
+        cssWantedValueDraggableCursor = value;
+        cssValueDraggableCursor = null; // Reset
+        Object.keys(insProps).forEach(function (id) {
+          var props = insProps[id];
+          if (props.disabled || props === activeItem && cssValueDraggingCursor !== false) {
+            return;
+          }
+          setDraggableCursor(props.options.handle, props.orgCursor);
+          if (props === activeItem) {
+            // Since cssValueDraggingCursor is `false`, copy cursor again.
+            body.style.cursor = cssOrgValueBodyCursor;
+            body.style.cursor = window.getComputedStyle(props.options.handle, '').cursor;
+          }
+        });
+      }
     }
   }, {
     key: 'draggingCursor',
@@ -1720,11 +1797,18 @@ var PlainDraggable = function () {
       return cssWantedValueDraggingCursor;
     },
     set: function set(value) {
-      cssWantedValueDraggingCursor = value;
-      // Reset
-      cssValueDraggingCursor = null;
-      if (activeItem) {
-        setDraggingCursor(activeItem.options.handle);
+      if (cssWantedValueDraggingCursor !== value) {
+        cssWantedValueDraggingCursor = value;
+        cssValueDraggingCursor = null; // Reset
+        if (activeItem) {
+          setDraggingCursor(activeItem.options.handle);
+          if (cssValueDraggingCursor === false) {
+            setDraggableCursor(activeItem.options.handle, activeItem.orgCursor); // draggableCursor
+            body.style.cursor = cssOrgValueBodyCursor;
+          }
+          body.style.cursor = cssValueDraggingCursor || // If it is `false` or `''`
+          window.getComputedStyle(activeItem.options.handle, '').cursor;
+        }
       }
     }
   }, {
@@ -1825,39 +1909,37 @@ document.addEventListener('mouseup', function () {
 }, false);
 
 {
-  (function () {
-    var initDoc = function initDoc() {
-      cssOrgValueCursor = body.style.cursor;
-      if (cssPropUserSelect = _cssprefix2.default.getProp('userSelect', body)) {
-        cssOrgValueUserSelect = body.style[cssPropUserSelect];
-      }
-
-      // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
-      window.addEventListener('resize', _animEvent2.default.add(function () {
-        if (resizing) {
-          console.log('`resize` event listener is already running.'); // [DEBUG/]
-          return;
-        }
-        resizing = true;
-        Object.keys(insProps).forEach(function (id) {
-          initBBox(insProps[id]);
-        });
-        resizing = false;
-      }), true);
-    };
-
-    var resizing = false;
-
-
-    if (body = document.body) {
-      initDoc();
-    } else {
-      document.addEventListener('DOMContentLoaded', function () {
-        body = document.body;
-        initDoc();
-      }, false);
+  var initDoc = function initDoc() {
+    cssOrgValueBodyCursor = body.style.cursor;
+    if (cssPropUserSelect = _cssprefix2.default.getName('userSelect')) {
+      cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
     }
-  })();
+
+    // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
+    window.addEventListener('resize', _animEvent2.default.add(function () {
+      if (resizing) {
+        console.log('`resize` event listener is already running.'); // [DEBUG/]
+        return;
+      }
+      resizing = true;
+      Object.keys(insProps).forEach(function (id) {
+        initBBox(insProps[id]);
+      });
+      resizing = false;
+    }), true);
+  };
+
+  var resizing = false;
+
+
+  if (body = document.body) {
+    initDoc();
+  } else {
+    document.addEventListener('DOMContentLoaded', function () {
+      body = document.body;
+      initDoc();
+    }, false);
+  }
 }
 
 exports.default = PlainDraggable;
