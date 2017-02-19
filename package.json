@@ -18,6 +18,7 @@
     "cssprefix": "^2.0.1",
     "jasmine-core": "^2.5.2",
     "log4js": "^1.1.0",
+    "m-class-list": "^0.1.1",
     "node-static-alias": "^1.0.0",
     "skeleton-loader": "0.0.7",
     "stats-filelist": "^1.0.0",
@@ -26,7 +27,8 @@
   },
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack",
-    "dev": "webpack --display-modules"
+    "dev": "webpack --display-modules",
+    "test": "node ./test/httpd"
   },
   "homepage": "https://anseki.github.io/plain-draggable/",
   "repository": {

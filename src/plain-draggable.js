@@ -8,6 +8,7 @@
 
 import CSSPrefix from 'cssprefix';
 import AnimEvent from 'anim-event';
+import mClassList from 'm-class-list';
 
 const
   ZINDEX = 9000,
@@ -678,7 +679,7 @@ function dragEnd(props) {
 
   if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.orgZIndex; }
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = cssOrgValueBodyUserSelect; }
-  if (movingClass) { props.element.classList.remove(movingClass); }
+  if (movingClass) { mClassList(props.element).remove(movingClass); }
 
   activeItem = null;
   if (props.onDragEnd) { props.onDragEnd(); }
@@ -1081,7 +1082,7 @@ class PlainDraggable {
     props.element = initAnim(element, isSvg);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
-    if (draggableClass) { element.classList.add(draggableClass); }
+    if (draggableClass) { mClassList(element).add(draggableClass); }
     // Prepare removable event listeners for each instance.
     props.handleMousedown = event => { mousedown(props, event); };
     props.handleScroll = AnimEvent.add(() => { initBBox(props); });
@@ -1132,11 +1133,11 @@ class PlainDraggable {
         if (props === activeItem) { dragEnd(props); }
         props.options.handle.style.cursor = props.orgCursor;
         if (cssPropUserSelect) { props.options.handle.style[cssPropUserSelect] = props.orgUserSelect; }
-        if (draggableClass) { props.element.classList.remove(draggableClass); }
+        if (draggableClass) { mClassList(props.element).remove(draggableClass); }
       } else {
         setDraggableCursor(props.options.handle, props.orgCursor);
         if (cssPropUserSelect) { props.options.handle.style[cssPropUserSelect] = 'none'; }
-        if (draggableClass) { props.element.classList.add(draggableClass); }
+        if (draggableClass) { mClassList(props.element).add(draggableClass); }
       }
     }
   }
@@ -1230,8 +1231,8 @@ class PlainDraggable {
       Object.keys(insProps).forEach(id => {
         const props = insProps[id];
         if (!props.disabled) {
-          if (draggableClass) { props.element.classList.remove(draggableClass); }
-          if (value) { props.element.classList.add(value); }
+          if (draggableClass) { mClassList(props.element).remove(draggableClass); }
+          if (value) { mClassList(props.element).add(value); }
         }
       });
       draggableClass = value;
@@ -1245,8 +1246,8 @@ class PlainDraggable {
     value = value ? (value + '') : void 0;
     if (value !== movingClass) {
       if (activeItem && hasMoved) {
-        if (movingClass) { activeItem.element.classList.remove(movingClass); }
-        if (value) { activeItem.element.classList.add(value); }
+        if (movingClass) { mClassList(activeItem.element).remove(movingClass); }
+        if (value) { mClassList(activeItem.element).add(value); }
       }
       movingClass = value;
     }
@@ -1285,7 +1286,7 @@ document.addEventListener('mousemove', AnimEvent.add(event => {
 
     if (!hasMoved) {
       hasMoved = true;
-      if (movingClass) { activeItem.element.classList.add(movingClass); }
+      if (movingClass) { mClassList(activeItem.element).add(movingClass); }
       if (activeItem.onMoveStart) { activeItem.onMoveStart(); }
     }
     if (activeItem.onMove) { activeItem.onMove(); }
