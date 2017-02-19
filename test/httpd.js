@@ -19,7 +19,7 @@ const
     'cssprefix'
   ],
 
-  EXT_DIR = path.resolve('../../test-ext');
+  EXT_DIR = path.resolve(__dirname, '../../test-ext');
 
 log4js.configure({
   appenders: [
