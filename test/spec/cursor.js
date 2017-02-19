@@ -43,7 +43,7 @@ describe('cursor', function() {
       normalValue.dragging = window.CSSPrefix.getValue('cursor', PlainDraggable.draggingCursor);
 
       beforeDone();
-    }, 'cursor');
+    });
   });
 
   afterAll(function() {

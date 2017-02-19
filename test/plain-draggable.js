@@ -64,7 +64,7 @@ var PlainDraggable =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -384,6 +384,119 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+/*
+ * mClassList
+ * https://github.com/anseki/m-class-list
+ *
+ * Copyright (c) 2017 anseki
+ * Licensed under the MIT license.
+ */
+
+function normalize(token) {
+  return (token + '').trim();
+} // Not `||`
+function applyList(list, element) {
+  element.setAttribute('class', list.join(' '));
+}
+
+function _add(list, element, tokens) {
+  if (tokens.filter(function (token) {
+    if (!(token = normalize(token)) || list.indexOf(token) !== -1) {
+      return false;
+    }
+    list.push(token);
+    return true;
+  }).length) {
+    applyList(list, element);
+  }
+}
+
+function _remove(list, element, tokens) {
+  if (tokens.filter(function (token) {
+    var i = void 0;
+    if (!(token = normalize(token)) || (i = list.indexOf(token)) === -1) {
+      return false;
+    }
+    list.splice(i, 1);
+    return true;
+  }).length) {
+    applyList(list, element);
+  }
+}
+
+function _toggle(list, element, token, force) {
+  var i = list.indexOf(token = normalize(token));
+  if (i !== -1) {
+    if (force) {
+      return true;
+    }
+    list.splice(i, 1);
+    applyList(list, element);
+    return false;
+  } else {
+    if (force === false) {
+      return false;
+    }
+    list.push(token);
+    applyList(list, element);
+    return true;
+  }
+}
+
+function _replace(list, element, token, newToken) {
+  var i = void 0;
+  if (!(token = normalize(token)) || !(newToken = normalize(newToken)) || token === newToken || (i = list.indexOf(token)) === -1) {
+    return;
+  }
+  list.splice(i, 1);
+  if (list.indexOf(newToken) === -1) {
+    list.push(newToken);
+  }
+  applyList(list, element);
+}
+
+function mClassList(element) {
+  return !mClassList.ignoreNative && element.classList || function () {
+    var list = (element.getAttribute('class') || '').trim().split(/\s+/).filter(function (token) {
+      return !!token;
+    });
+    return {
+      length: list.length,
+      item: function item(i) {
+        return list[i];
+      },
+      contains: function contains(token) {
+        return list.indexOf(normalize(token)) !== -1;
+      },
+      add: function add() {
+        _add(list, element, Array.prototype.slice.call(arguments));
+      },
+      remove: function remove() {
+        _remove(list, element, Array.prototype.slice.call(arguments));
+      },
+      toggle: function toggle(token, force) {
+        return _toggle(list, element, token, force);
+      },
+      replace: function replace(token, newToken) {
+        return _replace(list, element, token, newToken);
+      }
+    };
+  }();
+}
+
+exports.default = mClassList;
+module.exports = exports['default'];
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -402,6 +515,10 @@ var _cssprefix2 = _interopRequireDefault(_cssprefix);
 var _animEvent = __webpack_require__(0);
 
 var _animEvent2 = _interopRequireDefault(_animEvent);
+
+var _mClassList = __webpack_require__(2);
+
+var _mClassList2 = _interopRequireDefault(_mClassList);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1141,7 +1258,7 @@ function dragEnd(props) {
     body.style[cssPropUserSelect] = cssOrgValueBodyUserSelect;
   }
   if (movingClass) {
-    props.element.classList.remove(movingClass);
+    (0, _mClassList2.default)(props.element).remove(movingClass);
   }
 
   activeItem = null;
@@ -1593,7 +1710,7 @@ var PlainDraggable = function () {
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) {
-      element.classList.add(draggableClass);
+      (0, _mClassList2.default)(element).add(draggableClass);
     }
     // Prepare removable event listeners for each instance.
     props.handleMousedown = function (event) {
@@ -1664,7 +1781,7 @@ var PlainDraggable = function () {
             props.options.handle.style[cssPropUserSelect] = props.orgUserSelect;
           }
           if (draggableClass) {
-            props.element.classList.remove(draggableClass);
+            (0, _mClassList2.default)(props.element).remove(draggableClass);
           }
         } else {
           setDraggableCursor(props.options.handle, props.orgCursor);
@@ -1672,7 +1789,7 @@ var PlainDraggable = function () {
             props.options.handle.style[cssPropUserSelect] = 'none';
           }
           if (draggableClass) {
-            props.element.classList.add(draggableClass);
+            (0, _mClassList2.default)(props.element).add(draggableClass);
           }
         }
       }
@@ -1823,10 +1940,10 @@ var PlainDraggable = function () {
           var props = insProps[id];
           if (!props.disabled) {
             if (draggableClass) {
-              props.element.classList.remove(draggableClass);
+              (0, _mClassList2.default)(props.element).remove(draggableClass);
             }
             if (value) {
-              props.element.classList.add(value);
+              (0, _mClassList2.default)(props.element).add(value);
             }
           }
         });
@@ -1843,10 +1960,10 @@ var PlainDraggable = function () {
       if (value !== movingClass) {
         if (activeItem && hasMoved) {
           if (movingClass) {
-            activeItem.element.classList.remove(movingClass);
+            (0, _mClassList2.default)(activeItem.element).remove(movingClass);
           }
           if (value) {
-            activeItem.element.classList.add(value);
+            (0, _mClassList2.default)(activeItem.element).add(value);
           }
         }
         movingClass = value;
@@ -1889,7 +2006,7 @@ document.addEventListener('mousemove', _animEvent2.default.add(function (event) 
     if (!hasMoved) {
       hasMoved = true;
       if (movingClass) {
-        activeItem.element.classList.add(movingClass);
+        (0, _mClassList2.default)(activeItem.element).add(movingClass);
       }
       if (activeItem.onMoveStart) {
         activeItem.onMoveStart();
