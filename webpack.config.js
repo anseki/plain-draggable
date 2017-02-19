@@ -9,7 +9,8 @@ const webpack = require('webpack'),
 
   BABEL_TARGET_PACKAGES = [
     'cssprefix',
-    'anim-event'
+    'anim-event',
+    'm-class-list'
   ].map(packageName => require.resolve(packageName) // Get package root path
     .replace(new RegExp(`([\\/\\\\]node_modules[\\/\\\\]${packageName}[\\/\\\\]).*$`), '$1')),
 
