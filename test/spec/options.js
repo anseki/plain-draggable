@@ -303,7 +303,7 @@ describe('setOptions()', function() {
     )]);
     share = ppValue2OptionValue(share);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{target: parent}]}
+      {targets: [{boundingBox: parent}]}
     ));
 
     // PPBBox
@@ -326,7 +326,7 @@ describe('setOptions()', function() {
     share.width = ppValue2OptionValue(share.width);
     share.bottom = ppValue2OptionValue(share.bottom);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
-      {targets: [{target: share}]}
+      {targets: [{boundingBox: share}]}
     ));
 
     done();
@@ -745,7 +745,7 @@ describe('setOptions()', function() {
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [
-        {target: parent},
+        {boundingBox: parent},
         merge(optionValuesTarget2, {y: defaultXYOptions})
       ]}
     ));
@@ -774,7 +774,7 @@ describe('setOptions()', function() {
     share.bottom = ppValue2OptionValue(share.bottom);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [
-        {target: share},
+        {boundingBox: share},
         merge(optionValuesTarget2, {y: defaultXYOptions})
       ]}
     ));

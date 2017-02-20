@@ -582,17 +582,17 @@ describe('snapTargets', function() {
     expect(props.snapTargets).toEqual(targets.inside.concat(targets.outside));
 
     // inside
-    draggable.snap = {target: bBox2, edge: 'inside'};
+    draggable.snap = {boundingBox: bBox2, edge: 'inside'};
     targets = getBBoxTargets(bBox.left, bBox.top, bBox.width, bBox.height, SNAP_GRAVITY, elmWidth, elmHeight);
     expect(props.snapTargets).toEqual(targets.inside);
 
     // outside
-    draggable.snap = {target: bBox2, edge: 'outside'};
+    draggable.snap = {boundingBox: bBox2, edge: 'outside'};
     targets = getBBoxTargets(bBox.left, bBox.top, bBox.width, bBox.height, SNAP_GRAVITY, elmWidth, elmHeight);
     expect(props.snapTargets).toEqual(targets.outside);
 
     // base: document
-    draggable.snap = {target: bBox, base: 'document'};
+    draggable.snap = {boundingBox: bBox, base: 'document'};
     targets = getBBoxTargets(bBox.left, bBox.top, bBox.width, bBox.height, SNAP_GRAVITY, elmWidth, elmHeight);
     expect(props.snapTargets).toEqual(targets.inside.concat(targets.outside));
 
@@ -637,7 +637,7 @@ describe('snapTargets', function() {
       center: false,
       edge: SNAP_EDGE,
       base: SNAP_BASE,
-      targets: [{target: {
+      targets: [{boundingBox: {
         left: '50%',
         x: '50%',
         top: '25%',
@@ -657,7 +657,7 @@ describe('snapTargets', function() {
       width: '45%',
       height: '30%'
     };
-    iDraggable.snap = {target: bBox, base: 'document'};
+    iDraggable.snap = {boundingBox: bBox, base: 'document'};
     targets = getBBoxTargets(
       820 * 0.22, 680 * 0.2,
       820 * 0.45, 680 * 0.3,
@@ -668,13 +668,13 @@ describe('snapTargets', function() {
     var minLeft = parentBBox.left + elmWidth + SNAP_GRAVITY,
       minTop = parentBBox.top + elmHeight + SNAP_GRAVITY;
     bBox = {left: minLeft + 1, top: minTop + 1, width: 500, height: 300};
-    draggable.snap = {target: bBox, base: 'document'};
+    draggable.snap = {boundingBox: bBox, base: 'document'};
     targets = getBBoxTargets(bBox.left, bBox.top, bBox.width, bBox.height, SNAP_GRAVITY, elmWidth, elmHeight);
     expect(props.snapTargets).toEqual(targets.inside.concat(targets.outside));
 
     // Target is removed
     bBox = {left: minLeft + 1, top: minTop - SNAP_GRAVITY - 1, width: 500, height: 300};
-    draggable.snap = {target: bBox, base: 'document'};
+    draggable.snap = {boundingBox: bBox, base: 'document'};
     targets = getBBoxTargets(bBox.left, bBox.top, bBox.width, bBox.height, SNAP_GRAVITY, elmWidth, elmHeight);
     delete targets.outside[1].gravityYStart; // Reduce left
     delete targets.outside[3].gravityYStart; // Reduce right
@@ -683,7 +683,7 @@ describe('snapTargets', function() {
 
     // Line on edge: Target is not removed (gravity*Start is removed)
     bBox = {left: minLeft + 1, top: minTop - SNAP_GRAVITY, width: 500, height: 300};
-    draggable.snap = {target: bBox, base: 'document'};
+    draggable.snap = {boundingBox: bBox, base: 'document'};
     targets = getBBoxTargets(bBox.left, bBox.top, bBox.width, bBox.height, SNAP_GRAVITY, elmWidth, elmHeight);
     delete targets.outside[0].gravityYStart; // gravityYStart of top
     delete targets.outside[1].gravityYStart; // Reduce left
@@ -692,7 +692,7 @@ describe('snapTargets', function() {
 
     // gravity*Start is removed
     bBox = {left: minLeft + 1, top: minTop - 1, width: 500, height: 300};
-    draggable.snap = {target: bBox, base: 'document'};
+    draggable.snap = {boundingBox: bBox, base: 'document'};
     targets = getBBoxTargets(bBox.left, bBox.top, bBox.width, bBox.height, SNAP_GRAVITY, elmWidth, elmHeight);
     delete targets.outside[0].gravityYStart; // gravityYStart of top
     delete targets.outside[1].gravityYStart; // Reduce left
@@ -701,7 +701,7 @@ describe('snapTargets', function() {
 
     // gravity*Start on edge: gravity*Start is removed
     bBox = {left: minLeft + 1, top: minTop, width: 500, height: 300};
-    draggable.snap = {target: bBox, base: 'document'};
+    draggable.snap = {boundingBox: bBox, base: 'document'};
     targets = getBBoxTargets(bBox.left, bBox.top, bBox.width, bBox.height, SNAP_GRAVITY, elmWidth, elmHeight);
     delete targets.outside[0].gravityYStart; // gravityYStart of top
     delete targets.outside[1].gravityYStart; // Reduce left
@@ -729,12 +729,12 @@ describe('snapTargets', function() {
     expect(props.snapTargets).toEqual(targets.inside.concat(targets.outside));
 
     // inside
-    draggable.snap = {target: snapElm, edge: 'inside'};
+    draggable.snap = {boundingBox: snapElm, edge: 'inside'};
     targets = getBBoxTargets(left, top, width, height, SNAP_GRAVITY, elmWidth, elmHeight);
     expect(props.snapTargets).toEqual(targets.inside);
 
     // outside
-    draggable.snap = {target: snapElm, edge: 'outside'};
+    draggable.snap = {boundingBox: snapElm, edge: 'outside'};
     targets = getBBoxTargets(left, top, width, height, SNAP_GRAVITY, elmWidth, elmHeight);
     expect(props.snapTargets).toEqual(targets.outside);
 
@@ -748,7 +748,7 @@ describe('snapTargets', function() {
 
     // Change gravity
     var newGravity = 14;
-    draggable.snap = {target: snapElm, gravity: newGravity};
+    draggable.snap = {boundingBox: snapElm, gravity: newGravity};
     targets = getBBoxTargets(left, top, width, height, newGravity, elmWidth, elmHeight);
     expect(props.snapTargets).toEqual(targets.inside.concat(targets.outside));
     draggable.snap = snapElm;
