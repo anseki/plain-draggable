@@ -1362,7 +1362,7 @@ function _setOptions(props, newOptions) {
    * @typedef {Object} SnapTargetOptions
    * @property {(number|string)} [x] - pixels | '<n>%' | {start, end} | {step, start, end}
    * @property {(number|string)} [y]
-   * @property {(Element|Object)} [target] - Properties of Object are string or number from PPBBox.
+   * @property {(Element|Object)} [boundingBox] - Object has properties that are string or number from PPBBox.
    * @property {number} [gravity]
    * @property {string} [corner]
    * @property {string} [side]
@@ -1487,23 +1487,23 @@ function _setOptions(props, newOptions) {
           // Pre-check direct value
       ppBBoxPre = validPPBBox(copyTree(target)),
           // Pre-check direct value
-      newSnapTargetOptions = isElementPre || ppBBoxPre ? { target: target } : // Direct Element | PPBBox
+      newSnapTargetOptions = isElementPre || ppBBoxPre ? { boundingBox: target } : // Direct Element | PPBBox
       isObject(target) && target.start == null && target.end == null && target.step == null ? target : // SnapTargetOptions
       { x: target, y: target },
           // Others, it might be {step, start, end}
       expandedParsedSnapTargets = [],
           snapTargetOptions = {},
-          newOptionsTarget = newSnapTargetOptions.target;
+          newOptionsTarget = newSnapTargetOptions.boundingBox;
       var ppBBox = void 0;
 
       if (isElementPre || isElement(newOptionsTarget)) {
         // Element
         expandedParsedSnapTargets.push({ element: newOptionsTarget });
-        snapTargetOptions.target = newOptionsTarget;
+        snapTargetOptions.boundingBox = newOptionsTarget;
       } else if (ppBBox = ppBBoxPre || validPPBBox(copyTree(newOptionsTarget))) {
         // Object -> PPBBox
         expandedParsedSnapTargets.push({ ppBBox: ppBBox });
-        snapTargetOptions.target = ppBBox2OptionObject(ppBBox);
+        snapTargetOptions.boundingBox = ppBBox2OptionObject(ppBBox);
       } else {
         var invalid = void 0; // `true` if valid PPValue was given but the contained value is invalid.
         var parsedXY = ['x', 'y'].reduce(function (parsedXY, axis) {
