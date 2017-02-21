@@ -8,7 +8,7 @@ Features:
 
 - Accept HTML/SVG element as an element that comes to be draggable.
 - Restrict the draggable area.
-- Snap the draggable element to other elements, points, lines, continuous points (i.e. grid) or something.
+- Snap the draggable element to other elements, points, lines, consecutive points (i.e. grid) or something.
 - Use `requestAnimationFrame` for high performance.
 - Provide only basic methods, easy and simple usage.
 - No dependency.
@@ -258,44 +258,47 @@ If `false` is specified for both `PlainDraggable.draggableCursor` and `PlainDrag
 
 ## `Rect`
 
-An Object to indicate a position and size of a rectangle. It has following properties:
+An Object to indicate a position and size of a rectangle like [`DOMRect`](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect).  
+It has following properties:
 
 - `left` or `x`
 - `top` or `y`
 - `width` or `right`
 - `height` or `bottom`
 
-All values can be a number as pixels or string as percentage like `'30%'`.
+Also, it is relative to a "base".
 
-A "base" determines an origin for the `left`/`top`/`right`/`bottom`, and base values for percentage.
+The `left`/`top`/`right`/`bottom` indicate distance between left or top edge of the base and each side of the rectangle. Note that `right`/`bottom` also indicate distance from left or top edge of the base, not right or bottom edge.  
+The `x` is an alias for `left`, and the `y` is an alias for `top`.  
+The `width`/`height` indicate a size of the rectangle. The `width` is required if `right` is not specified, and the `height` is required if `bottom` is not specified.
+
+All values are a number as pixels or string as percentage (e.g. `'30%'`).  
+The "base" determines an origin of coordinates, and number of pixels of `100%`.
 
 - When the `Rect` object is specified for [`containment`](#options-containment) option, the base is the current document.  
 - When the `Rect` object is specified for [`snap`](#options-snap) option, the base is determined by [`base`](#snap-base) option.  
 - When the `Rect` object is got by [`rect`](#properties-rect) property, the base is the current document.
 
-The `x` is an alias for `left`, and the `y` is an alias for `top`. The `left`/`top`/`right`/`bottom` indicate distance between left or top edge of the base and each side of the rectangle. Note that `right`/`bottom` also indicate distance from left or top edge of the base, not right or bottom edge.  
-The `width`/`height` indicate a size of the rectangle. The `right` is required if `width` is not specified, and the `bottom` is required if `height` is not specified.
+Note that the `right` must be greater than or equal to `left`, and the `bottom` must be greater than or equal to `top`. In other words, the `width` and `height` can not be negative value. PlainDraggable does not exchange these, to avoid behavior that you don't want. For example, `{left: 400, right: '50%'}` is ignored when the base is resized to smaller than `800px`.
 
-Note that the `left` must be less than or equal to `right`, and the `top` must be less than or equal to `bottom`. In other words, the `width` and `height` can not be negative value. PlainDraggable does not exchange these, to avoid behavior that you don't want. For example, `{left: 400, right: '50%'}` is ignored when the base is resized to smaller than `800px`.
-
-For example, when the base is an element that sized `width: 600px; height: 400px;`:
-- `{left: 20, top: '10%', width: '50%', bottom: 390}` indicates a rectangle that is `left: 20px; top: 40px; width: 300px; height: 350px;`, positioned relative to the top-left corner of the element.
-- `{left: '50%', top: 0, width: '50%', height: '100%'}` indicates a rectangle that is the right half of the element.
+For example, when the base is sized `width: 600px; height: 400px;`:
+- `{left: 20, top: '10%', width: '50%', bottom: 390}` indicates a rectangle that is `left: 20px; top: 40px; width: 300px; height: 350px;`, positioned relative to the top-left corner of the base.
+- `{left: '50%', top: 0, width: '50%', height: '100%'}` indicates a rectangle that is the right half of the base.
 - `{left: '10%', top: '10%', right: '90%', bottom: '90%'}` indicates a rectangle that has `10%` margin at all sides.
 
 ## Snap
 
 You can specify [`snap`](#options-snap) option.  
-It makes one or more "snap targets". The draggable element gravitates toward a snap target when it is moved to near the snap target, and it sticks to the snap target.
+The `snap` option makes one or more "snap-targets". The draggable element gravitates toward a snap-target when it is moved to near the snap-target, and it sticks to the snap-target.
 
-Each snap target can be one of the following:
+Each snap-target can be one of the following:
 
 - Point
 - Line
 - Element
 - [`Rect`](#rect) object
 
-The point and line are the basic of snap target. The element and `Rect` object make multiple lines.
+The point and line are the basic of snap-target. The element and `Rect` object make multiple lines.
 
 Single value creates a point that the value indicates both X and Y coordinates of the point.
 
@@ -303,7 +306,7 @@ Single value creates a point that the value indicates both X and Y coordinates o
 draggable.snap = 160; // Point (X: 160px, Y: 160px)
 ```
 
-A value as coordinate can be a number as pixels or string as percentage like `'30%'`. The percentage works same as that of [`Rect`](#rect).  
+A value as coordinate is a number as pixels or string as percentage (e.g. `'30%'`). The percentage is calculated the same as the `x` and `y` of [`Rect`](#rect).  
 For example, this indicates the center of the base.
 
 ```js
@@ -324,7 +327,7 @@ An Object that has either one of `x` and `y` properties creates a line that the 
 draggable.snap = {y: 30}; // Horizontal Line (Y: 30px)
 ```
 
-The other property can be an Object that has one or both of `start` and `end` properties that indicate a coordinate on the axis. This Object indicates the range and length of the line.
+The other property can be an Object that has one or both of `start` and `end` properties that indicate a coordinate on the axis. This Object indicates the range on the axis for the line.
 
 ```js
 draggable.snap = {x: '50%', y: {start: 5, end: '50%'}}; // Vertical Line (X: 50%, Y: 5px .. 50%)
@@ -332,22 +335,23 @@ draggable.snap = {x: '50%', y: {start: 5, end: '50%'}}; // Vertical Line (X: 50%
 
 Note that the `start` must be less than or equal to `end`. PlainDraggable does not exchange these, to avoid behavior that you don't want. For example, `x: {start: 400, end: '50%'}` is ignored when the base is resized to smaller than `800px`.
 
-A `step` property of the Object copies the point or line repeatedly at specified intervals. This may be called "Grid". It can be also grid on only either one of X and Y axis.
+A `step` property of the Object copies the point or line repeatedly at specified intervals. This may be called "Grid". It can be also grid on only either one of X and Y axis.  
+Its value is a number as pixels or string as percentage (e.g. `'30%'`). The percentage is calculated the same as the `width` or `height` of [`Rect`](#rect).
 
 ```js
-draggable.snap = {step: 30}; // Continuous Points at 30px intervals
+draggable.snap = {step: 30}; // Consecutive Points at 30px intervals
 ```
 
 ```js
-draggable.snap = {x: {step: 10}, y: {step: 20}}; // Continuous Points at X: 10px and Y: 20px intervals
+draggable.snap = {x: {step: 10}, y: {step: 20}}; // Consecutive Points at X: 10px and Y: 20px intervals
 ```
 
 ```js
-draggable.snap = {y: {step: '10%'}}; // Continuous Horizontal Lines at 10% intervals
+draggable.snap = {y: {step: '10%'}}; // Consecutive Horizontal Lines at 10% intervals
 ```
 
 ```js
-draggable.snap = {y: {step: '10%', start: 5, end: '50%'}}; // Continuous Lines in specified range
+draggable.snap = {y: {step: '10%', start: 5, end: '50%'}}; // Consecutive Lines in specified range
 ```
 
 An element or a [`Rect`](#rect) object creates four lines that are edges of its rectangle.
@@ -362,42 +366,102 @@ draggable.snap = {left: '10%', top: 0, width: '80%', height: 280}; // Rect objec
 
 The base of the `Rect` object is determined by [`base`](#snap-base) option.
 
-You can specify options for the snap via properties of the Object that is passed to the `snap` option, or an Object instead of something that is not Object. For example, you can specify `{x: 80, y: 80, gravity: 30}` instead of `80` to specify the [`gravity`](#snap-gravity) option.
+You can specify options for the snap-target via properties of the Object that is passed to the `snap` option, or an Object instead of something that is not Object. For example, you can specify `{x: 80, y: 80, gravity: 30}` instead of `80` to specify the [`gravity`](#snap-gravity) option.  
+Also, you can specify an Array that contains multiple snap-targets.
 
 For options and more details, refer to the following.
 
-### Structure and Omission
+### Structure and Abbreviation
 
-Actuary, you saw omitted structure of a `snap` option in the above.  
+Actuary, you saw shortened structure of a `snap` option in the above.  
 A basic structure of a `snap` option is here:
 
-`SnapOptions`:
+**`SnapOptions`:**
 
 ```js
 {
-  targets: [snapTarget1, snapTarget2...], // `SnapTarget`s
-  option1: optionValue1, // Common options for all `SnapTarget`s
+  targets: [snapTarget1, snapTarget2...], // Array containing `SnapTarget`s
+  // Common options for all `SnapTarget`s in the `targets`
+  option1: optionValue1,
   option2: optionValue2,
     :
 }
 ```
 
-`SnapTarget`:
+**`SnapTarget`:**
 
 ```js
 {
-  x: xValue, // number, string or Object that can have `start`, `end` and `step`
+  x: xValue, // number, string or Object
   y: yValue,
-  target: elementOrRect, // Element or Rect object
-  option1: optionValue1, // Options for this `SnapTarget`, override common option
+  boundingBox: elementOrRect, // Element or Rect object
+  // Options for this `SnapTarget`, that overrides each common option
+  option1: optionValue1,
   option2: optionValue2,
     :
 }
 ```
 
-The `x` and `y` can be a number as pixels, string as percentage like `'30%'` or Object. The Object can have `start`, `end` and `step` properties, and these properties can be a number as pixels or string as percentage like `'30%'`.
+The `x` and `y` can be one of the following:
 
-If both `x` and `y` are not Object, this `SnapTarget` is a point, and these properties indicate coordinates of the point.
+- **Coordinate:**  
+A value that indicates a coordinate on the axis.
+- **Range:**  
+An Object that indicates a range on the axis, that can have `start` and `end` properties that are each coordinate on the axis.
+- **Repeated Coordinates:**  
+An Object that indicates repeated coordinates on the axis, that has `step` property that is interval between repeated coordinates. It can have `start` and `end` properties as a range.
 
-If either one of `x` and `y` is an Object that does not have `step`, this `SnapTarget` is a line. The property that is not Object, the `start` and `end` properties of the Object indicate a coordinate on each axis. Then the Object indicates the range and length of the line.
+All these values are a number as pixels or a string as percentage (e.g. `'30%'`). The `step` as percentage is calculated the same as the `width` or `height` of [`Rect`](#rect), and the other values as percentage are calculated the same as the `x` or `y` of that.
+
+The combination of the `x` and `y` determines what the `SnapTarget` indicates.
+
+- If both `x` and `y` indicate a coordinate, this `SnapTarget` indicates a point.
+- If either one of `x` and `y` indicates a coordinate and the other indicates a range, this `SnapTarget` indicates a line.
+- If either one of `x` and `y` indicates a coordinate and the other indicates repeated coordinates, this `SnapTarget` indicates consecutive points arranged linearly.
+- If both `x` and `y` indicate repeated coordinates, this `SnapTarget` indicates consecutive points arranged in the horizontal and vertical directions.
+- If either one of `x` and `y` indicates a range and the other indicates repeated coordinates, this `SnapTarget` indicates consecutive parallel lines.
+- If both `x` and `y` indicate a range, this `SnapTarget` indicates four lines as a rectangle. Unlike `boundingBox`, this does not accept `edge` option.
+
+An **important point**, the default for the `x` and `y` is a range, and the default for the `start` is `0`, and the default for the `end` is `'100%'`.  
+Therefore, you can specify either one of the `x` and `y` to indicat a line. For example, `{y: 30}` indicates a horizontal line. The `x` having either one or both of the `start` and `end` is required only when the line should be shortened.  
+Also, you can specify the `step` only to indicate consecutive points or lines. For example, `{y: {step: 50}}` indicates consecutive horizontal lines.
+
+The `boundingBox` is used instead of the `x` and `y`, to indicate a rectangle.  
+You can specify an element or [`Rect`](#rect) object, then this `SnapTarget` indicates four lines as a rectangle.
+
+You can specify one or more `SnapTarget`s for the `targets` Array of `SnapOptions`.  
+Both `SnapTarget` and `SnapOptions` can be specified one or more options. The options in `SnapTarget` override each option in `SnapOptions`.  
+For example:
+
+```js
+draggable.snap = {
+  targets: [
+    {x: 100},
+    {x: 200, gravity: 60},
+    {x: 300}
+  ],
+  gravity: 50,
+  center: true
+};
+```
+A `50` is applied to the `gravity` option of first and third snap-targets.  
+A `60` is applied to the `gravity` option of second snap-target only.  
+A `true` is applied to the `center` option of all three snap-targets.
+
+#### Abbreviation
+
+As above, you can specify the `snap` option in detail. Or, you can also specify it simply as follows.
+
+You can specify single thing for the `SnapTarget` directly. It is considered as both `x` and `y`, or `boundingBox`.  
+For example:
+
+```js
+draggable.snap = {
+  targets: [
+    100, // {x: 100, y: 100}
+    document.getElementById('snap-box'), // {boundingBox: document.getElementById('snap-box')}
+    {x: 20, y: 0, width: 400, height: 200} // {boundingBox: {x: 20, y: 0, width: 400, height: 200}}
+  ]
+};
+```
 
