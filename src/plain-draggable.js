@@ -480,7 +480,7 @@ function initBBox(props) {
   // Adjust position
   move(props, {left: elementBBox.left, top: elementBBox.top});
 
-  // Snap targets
+  // Snap-targets
 
   /**
    * @typedef {Object} SnapTarget
@@ -888,13 +888,13 @@ function setOptions(props, newOptions) {
             {x: target, y: target}, // Others, it might be {step, start, end}
           expandedParsedSnapTargets = [],
           snapTargetOptions = {},
-          newOptionsTarget = newSnapTargetOptions.boundingBox;
+          newOptionsBBox = newSnapTargetOptions.boundingBox;
         let ppBBox;
 
-        if (isElementPre || isElement(newOptionsTarget)) { // Element
-          expandedParsedSnapTargets.push({element: newOptionsTarget});
-          snapTargetOptions.boundingBox = newOptionsTarget;
-        } else if ((ppBBox = ppBBoxPre || validPPBBox(copyTree(newOptionsTarget)))) { // Object -> PPBBox
+        if (isElementPre || isElement(newOptionsBBox)) { // Element
+          expandedParsedSnapTargets.push({element: newOptionsBBox});
+          snapTargetOptions.boundingBox = newOptionsBBox;
+        } else if ((ppBBox = ppBBoxPre || validPPBBox(copyTree(newOptionsBBox)))) { // Object -> PPBBox
           expandedParsedSnapTargets.push({ppBBox: ppBBox});
           snapTargetOptions.boundingBox = ppBBox2OptionObject(ppBBox);
 
