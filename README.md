@@ -39,13 +39,15 @@ By default, the moving is restricted to inside of the `element`'s parent element
 </div>
 ```
 
-```js
-draggable = new PlainDraggable(document.getElementById('draggable'));
-```
-
 The `<div id="draggable">` can be moved within the gray box. (See [`containment`](#options-containment) option.)
 
-For options and more details, refer to the following.
+You can specify a "Grid" that the draggable element snaps to.
+
+```js
+draggable.snap = {step: 30};
+```
+
+For options, methods and more details, refer to the following.
 
 ## Constructor
 
@@ -315,7 +317,8 @@ Each snap-target can be one of the following:
 
 The point and line are the basic of snap-target. The element and `Rect` object create multiple lines.
 
-Single value creates a point that the value indicates both X and Y coordinates of the point. Then a top-left corner (default) of the draggable element snaps to this point.
+Single value creates a point that the value indicates both X and Y coordinates of the point. Then a top-left corner (default) of the draggable element snaps to this point.  
+This is simplest case.
 
 ```js
 draggable.snap = 160; // Point (X: 160px, Y: 160px)
@@ -334,7 +337,7 @@ An Object that has `x` and `y` properties creates a point that the properties in
 draggable.snap = {x: 160, y: '40%'}; // Point (X: 160px, Y: 40%)
 ```
 
-That is, a value that does not have both `x` and `y` is regarded as a point that the value indicates the same value for the `x` and `y`. For example, `30` is regarded as `{x: 30, y: 30}`.
+That is, a value that does not have both `x` and `y` is considered as a point that the value indicates the same value for the `x` and `y`. For example, `30` is considered as `{x: 30, y: 30}`.
 
 An Object that has either one of `x` and `y` properties creates a line that the property indicates a coordinate on the axis. Then two sides (default) of the draggable element along a direction of this line snap to this line.
 
@@ -357,7 +360,7 @@ Its value is a number as pixels or string as percentage (e.g. `'30%'`). The perc
 ```js
 // Consecutive Points at 30px intervals, on X and Y
 draggable.snap = {step: 30};
-// As previously mentioned, this is regarded as {x: {step: 30}, y: {step: 30}}.
+// As previously mentioned, this is considered as {x: {step: 30}, y: {step: 30}}.
 ```
 
 ```js
@@ -478,7 +481,7 @@ A `true` is applied to the [`center`](#snap-center) option of all three snap-tar
 
 As above, you can specify the `snap` option in detail. Or, you can also specify it simply as follows.
 
-You can specify something for the `SnapTarget` directly. It is regarded as both `x` and `y`, or `boundingBox`.  
+You can specify something for the `SnapTarget` directly. It is considered as both `x` and `y`, or `boundingBox`.  
 For example, the following two codes work same:
 
 ```js
