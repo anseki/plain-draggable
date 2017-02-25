@@ -88,9 +88,16 @@ You should call `position` method if you changed the layout without resizing the
 |--|--|
 | HTML/SVG element or [`Rect`](#rect) | Parent element |
 
-A rectangle that restricts the draggable element moving. The draggable element can not move to the outside of this rectangle even if a mouse is moved to there.  
+A rectangle that restricts the draggable element moving. The draggable element can not move to the outside of this rectangle even if a mouse pointer is moved to there.  
 It can be a HTML or SVG element, or `Rect` object like `{left: '10%', top: 20, right: '90%', height: 300}` (See [`Rect`](#rect)). The base of the `Rect` object is the current document.  
 Note that the rectangle is "padding-box" of the element if an element is specified. That is, it is the inside of borders of the element.
+
+The width or height can be less than the size of the draggable element, like zero, to disable a moving on that axis.  
+For example, this draggable element can be moved in a horizontal direction only.
+
+```js
+draggable.containment = {left: 20, top: 20, width: 800, height: 0};
+```
 
 The default is the draggable element's parent element.
 
@@ -149,10 +156,29 @@ It is called even if the draggable element is not moved because [`containment`](
 In the function, `this` refers to the current PlainDraggable instance.
 
 An Object that has `left` and `top` properties as new position is passed to the function. These are numbers that were calculated the same as [`left`/`top`](#options-left_top) options.  
-It is new position that the draggable element is about to go to. Therefore it might differ from a position of a mouse.  
+It is new position that the draggable element is about to go to. Therefore it might differ from a position of a mouse pointer. And also, You can change these properties.
+
+For example:
+
+```js
+draggable.onDrag = function(newPosition) {
+  if (newPosition.left > this.rect.left) {
+    newPosition.left = this.rect.left + 48; // Move it 48px to the right forcibly.
+  }
+};
+```
+
 Also, `snapped` property is `true` if the position was determined by the draggable element being snapped (See [Snap](#snap)).
 
 If the function returns `false`, the moving is canceled.
+
+For example:
+
+```js
+draggable.onDrag = function(newPosition) {
+  return !!newPosition.snapped; // It is moved only when it is snapped.
+};
+```
 
 ### <a name="options-onmove"></a>`onMove`
 
@@ -183,7 +209,7 @@ In the function, `this` refers to the current PlainDraggable instance.
 | function or `undefined` | `undefined` |
 
 A function that is called when a mouse button was released.  
-It is called even if the mouse was not moved.
+It is called even if the mouse pointer was not moved.
 
 In the function, `this` refers to the current PlainDraggable instance.
 
