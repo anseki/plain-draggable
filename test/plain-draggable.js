@@ -572,6 +572,7 @@ cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'a
 
 // class
 draggableClass = 'plain-draggable',
+    draggingClass = 'plain-draggable-dragging',
     movingClass = 'plain-draggable-moving';
 
 // [DEBUG]
@@ -1029,7 +1030,7 @@ function initBBox(props) {
   // Adjust position
   move(props, { left: elementBBox.left, top: elementBBox.top });
 
-  // Snap targets
+  // Snap-targets
 
   /**
    * @typedef {Object} SnapTarget
@@ -1260,6 +1261,9 @@ function dragEnd(props) {
   if (movingClass) {
     (0, _mClassList2.default)(props.element).remove(movingClass);
   }
+  if (draggingClass) {
+    (0, _mClassList2.default)(props.element).remove(draggingClass);
+  }
 
   activeItem = null;
   if (props.onDragEnd) {
@@ -1284,6 +1288,9 @@ function mousedown(props, event) {
   }
   if (cssPropUserSelect) {
     body.style[cssPropUserSelect] = 'none';
+  }
+  if (draggingClass) {
+    (0, _mClassList2.default)(props.element).add(draggingClass);
   }
 
   activeItem = props;
@@ -1493,14 +1500,14 @@ function _setOptions(props, newOptions) {
           // Others, it might be {step, start, end}
       expandedParsedSnapTargets = [],
           snapTargetOptions = {},
-          newOptionsTarget = newSnapTargetOptions.boundingBox;
+          newOptionsBBox = newSnapTargetOptions.boundingBox;
       var ppBBox = void 0;
 
-      if (isElementPre || isElement(newOptionsTarget)) {
+      if (isElementPre || isElement(newOptionsBBox)) {
         // Element
-        expandedParsedSnapTargets.push({ element: newOptionsTarget });
-        snapTargetOptions.boundingBox = newOptionsTarget;
-      } else if (ppBBox = ppBBoxPre || validPPBBox(copyTree(newOptionsTarget))) {
+        expandedParsedSnapTargets.push({ element: newOptionsBBox });
+        snapTargetOptions.boundingBox = newOptionsBBox;
+      } else if (ppBBox = ppBBoxPre || validPPBBox(copyTree(newOptionsBBox))) {
         // Object -> PPBBox
         expandedParsedSnapTargets.push({ ppBBox: ppBBox });
         snapTargetOptions.boundingBox = ppBBox2OptionObject(ppBBox);
@@ -1948,6 +1955,25 @@ var PlainDraggable = function () {
           }
         });
         draggableClass = value;
+      }
+    }
+  }, {
+    key: 'draggingClass',
+    get: function get() {
+      return draggingClass;
+    },
+    set: function set(value) {
+      value = value ? value + '' : void 0;
+      if (value !== draggingClass) {
+        if (activeItem) {
+          if (draggingClass) {
+            (0, _mClassList2.default)(activeItem.element).remove(draggingClass);
+          }
+          if (value) {
+            (0, _mClassList2.default)(activeItem.element).add(value);
+          }
+        }
+        draggingClass = value;
       }
     }
   }, {

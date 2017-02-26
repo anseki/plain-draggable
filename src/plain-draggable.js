@@ -45,7 +45,8 @@ let insId = 0,
   cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
   cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'],
   // class
-  draggableClass = 'plain-draggable', movingClass = 'plain-draggable-moving';
+  draggableClass = 'plain-draggable',
+  draggingClass = 'plain-draggable-dragging', movingClass = 'plain-draggable-moving';
 
 // [DEBUG]
 window.insProps = insProps;
@@ -680,6 +681,7 @@ function dragEnd(props) {
   if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.orgZIndex; }
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = cssOrgValueBodyUserSelect; }
   if (movingClass) { mClassList(props.element).remove(movingClass); }
+  if (draggingClass) { mClassList(props.element).remove(draggingClass); }
 
   activeItem = null;
   if (props.onDragEnd) { props.onDragEnd(); }
@@ -695,6 +697,7 @@ function mousedown(props, event) {
 
   if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.options.zIndex; }
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = 'none'; }
+  if (draggingClass) { mClassList(props.element).add(draggingClass); }
 
   activeItem = props;
   hasMoved = false;
@@ -1236,6 +1239,20 @@ class PlainDraggable {
         }
       });
       draggableClass = value;
+    }
+  }
+
+  static get draggingClass() {
+    return draggingClass;
+  }
+  static set draggingClass(value) {
+    value = value ? (value + '') : void 0;
+    if (value !== draggingClass) {
+      if (activeItem) {
+        if (draggingClass) { mClassList(activeItem.element).remove(draggingClass); }
+        if (value) { mClassList(activeItem.element).add(value); }
+      }
+      draggingClass = value;
     }
   }
 
