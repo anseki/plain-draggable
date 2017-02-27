@@ -1077,8 +1077,8 @@ describe('setOptions()', function() {
           x: left, y: top, right: left + width, bottom: top + height});
 
         done();
-      }, 50);
-    }, 50);
+      }, 900);
+    }, 900);
   });
 
 });

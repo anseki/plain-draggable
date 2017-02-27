@@ -1,8 +1,12 @@
 # PlainDraggable
 
+[![npm](https://img.shields.io/npm/v/plain-draggable.svg)](https://www.npmjs.com/package/plain-draggable) [![GitHub issues](https://img.shields.io/github/issues/anseki/plain-draggable.svg)](https://github.com/anseki/plain-draggable/issues) [![dependencies](https://img.shields.io/badge/dependencies-No%20dependency-brightgreen.svg)](package.json) [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE-MIT)
+
 The simple and high performance library to allow HTML/SVG element to be dragged.
 
 **<a href="https://anseki.github.io/plain-draggable/">Document and Examples https://anseki.github.io/plain-draggable/</a>**
+
+[![ss-01](ss-01.png)](https://anseki.github.io/plain-draggable/)
 
 Features:
 
@@ -84,15 +88,14 @@ You should call `position` method if you changed the layout without resizing the
 
 ### <a name="options-containment"></a>`containment`
 
-| Type | Default |
-|--|--|
-| HTML/SVG element or [`Rect`](#rect) | Parent element |
+*Type:* HTML/SVG element or [`Rect`](#rect)  
+*Default:* Parent element
 
 A rectangle that restricts the draggable element moving. The draggable element can not move to the outside of this rectangle even if a mouse pointer is moved to there.  
 It can be a HTML or SVG element, or `Rect` object like `{left: '10%', top: 20, right: '90%', height: 300}` (See [`Rect`](#rect)). The base of the `Rect` object is the current document.  
 Note that the rectangle is "padding-box" of the element if an element is specified. That is, it is the inside of borders of the element.
 
-The width or height can be less than the size of the draggable element, like zero, to disable a moving on that axis.  
+The width or height can be less than the size of the draggable element, such as zero, to disable a moving on that axis.  
 For example, this draggable element can be moved in a horizontal direction only.
 
 ```js
@@ -105,35 +108,31 @@ You can specify a `<body>` element that means all of a page, or `{left: 0, top: 
 
 ### <a name="options-snap"></a>`snap`
 
-| Type | Default |
-|--|--|
-| number, string, HTML/SVG element, [`Rect`](#rect), Array, Object or `undefined` | `undefined` |
+*Type:* number, string, HTML/SVG element, [`Rect`](#rect), Array, Object or `undefined`  
+*Default:* `undefined`
 
 See [Snap](#snap).
 
 ### <a name="options-handle"></a>`handle`
 
-| Type | Default |
-|--|--|
-| HTML/SVG element | Draggable element |
+*Type:* HTML/SVG element  
+*Default:* Draggable element
 
 A part element of the draggable element that receives mouse operations. A user seizes and drags this element to move the draggable element.  
 The default is the draggable element itself, and all of the draggable element can be seized and dragged.
 
 ### <a name="options-zIndex"></a>`zIndex`
 
-| Type | Default |
-|--|--|
-| number or boolean | `9000` |
+*Type:* number or boolean  
+*Default:* `9000`
 
 A `z-index` CSS property that is applied to the draggable element when it is being dragged. It is restored when the dragging finished.  
 If `false` is specified, it is not changed.
 
 ### <a name="options-left_top"></a>`left`/`top`
 
-| Type | Default |
-|--|--|
-| number or `undefined` | `undefined` |
+*Type:* number or `undefined`  
+*Default:* `undefined`
 
 The distance between a left or top edge of the draggable element and a left or top edge of the document, in pixels.
 
@@ -146,9 +145,8 @@ draggable.left += 10;
 
 ### <a name="options-ondrag"></a>`onDrag`
 
-| Type | Default |
-|--|--|
-| function or `undefined` | `undefined` |
+*Type:* function or `undefined`  
+*Default:* `undefined`
 
 A function that is called when the draggable element was dragged. That is not moved yet.  
 It is called even if the draggable element is not moved because [`containment`](#options-containment) or [`snap`](#options-snap) avoided the moving. Use [`onMove`](#options-onmove) if you want to do something when the draggable element was moved.
@@ -156,7 +154,7 @@ It is called even if the draggable element is not moved because [`containment`](
 In the function, `this` refers to the current PlainDraggable instance.
 
 An Object that has `left` and `top` properties as new position is passed to the function. These are numbers that were calculated the same as [`left`/`top`](#options-left_top) options.  
-It is new position that the draggable element is about to go to. Therefore it might differ from a position of a mouse pointer. And also, You can change these properties.
+It is new position that the draggable element is about to go to. Therefore it might differ from a position of a mouse pointer. And also, you can change these properties.
 
 For example:
 
@@ -178,24 +176,31 @@ For example:
 draggable.onDrag = function(newPosition) {
   return !!newPosition.snapped; // It is moved only when it is snapped.
 };
+// The `gravity` option also can be used for the same purpose.
 ```
 
 ### <a name="options-onmove"></a>`onMove`
 
-| Type | Default |
-|--|--|
-| function or `undefined` | `undefined` |
+*Type:* function or `undefined`  
+*Default:* `undefined`
 
 A function that is called when the draggable element was moved.  
 It is not called when the draggable element is not moved because [`containment`](#options-containment) or [`snap`](#options-snap) avoided the moving even if the draggable element is dragged.
 
 In the function, `this` refers to the current PlainDraggable instance.
 
+For example:
+
+```js
+draggable.onMove = function() {
+  console.log(this.rect); // current position and size
+};
+```
+
 ### <a name="options-onmovestart"></a>`onMoveStart`
 
-| Type | Default |
-|--|--|
-| function or `undefined` | `undefined` |
+*Type:* function or `undefined`  
+*Default:* `undefined`
 
 A function that is called when the moving the draggable element started.  
 It is not called until the draggable element is moved even if it was dragged, and it is called at most once, while a mouse button is being pressed.
@@ -204,9 +209,8 @@ In the function, `this` refers to the current PlainDraggable instance.
 
 ### <a name="options-ondragend"></a>`onDragEnd`
 
-| Type | Default |
-|--|--|
-| function or `undefined` | `undefined` |
+*Type:* function or `undefined`  
+*Default:* `undefined`
 
 A function that is called when a mouse button was released.  
 It is called even if the mouse pointer was not moved.
@@ -217,9 +221,8 @@ In the function, `this` refers to the current PlainDraggable instance.
 
 ### `disabled`
 
-| Type | Default |
-|--|--|
-| boolean | `false` |
+*Type:* boolean  
+*Default:* `false`
 
 If `true` is specified, the draggable element stops a moving immediately, and it does not receive mouse operations.
 
@@ -227,9 +230,7 @@ If `true` is specified, the draggable element stops a moving immediately, and it
 
 **Read-only**
 
-| Type |
-|--|
-| HTML/SVG element |
+*Type:* HTML/SVG element
 
 The element that was passed to [constructor](#constructor).
 
@@ -237,9 +238,7 @@ The element that was passed to [constructor](#constructor).
 
 **Read-only**
 
-| Type |
-|--|
-| [`Rect`](#rect) |
+*Type:* [`Rect`](#rect)
 
 A [`Rect`](#rect) object to indicate current position and size of the draggable element.  
 The base of the `Rect` object is the current document.
@@ -272,13 +271,11 @@ You can use [`setOptions`](#setoptions) method instead to set multiple options.
 
 **Static Property**
 
-| Type | Default |
-|--|--|
-| string or Array | `PlainDraggable.draggableCursor`: ![grab](grab.png) (See below)<br>`PlainDraggable.draggingCursor`: ![grabbing](grabbing.png) (See below) |
+*Type:* string or Array  
+*Default:* (depend on web browser)
 
-Default values (depend on web browser):
-- `PlainDraggable.draggableCursor`: `['grab', 'all-scroll', 'move']` or `['all-scroll', 'move']` (For Webkit)
-- `PlainDraggable.draggingCursor`: `['grabbing', 'move']` or `'move'` (For Webkit)
+- `PlainDraggable.draggableCursor`: ![grab](grab.png) `['grab', 'all-scroll', 'move']` or `['all-scroll', 'move']` (For Webkit)
+- `PlainDraggable.draggingCursor`: ![grabbing](grabbing.png) `['grabbing', 'move']` or `'move'` (For Webkit)
 
 `PlainDraggable.draggableCursor` is a `cursor` CSS property that is applied to the [`handle`](#options-handle) element.  
 `PlainDraggable.draggingCursor` is a `cursor` CSS property that is applied to the [`handle`](#options-handle) element while a mouse button is being pressed.  
@@ -289,16 +286,28 @@ Note that the allowed values of the `cursor` CSS property depend on each web bro
 If `false` is specified, it is not changed.  
 If `false` is specified for both `PlainDraggable.draggableCursor` and `PlainDraggable.draggingCursor`, PlainDraggable does nothing to a `cursor` CSS property.
 
-### `PlainDraggable.draggableClass`/`PlainDraggable.movingClass`
+### `PlainDraggable.draggableClass`/`PlainDraggable.draggingClass`/`PlainDraggable.movingClass`
 
 **Static Property**
 
-| Type | Default |
-|--|--|
-| string | `PlainDraggable.draggableClass`: `'plain-draggable'`<br>`PlainDraggable.movingClass`: `'plain-draggable-moving'` |
+*Type:* string  
+*Default:*
 
-`PlainDraggable.draggableClass` is a class name that is added to the [`handle`](#options-handle) element.  
-`PlainDraggable.movingClass` is a class name that is added to the [`handle`](#options-handle) element within the period from when the draggable element starts moving until a mouse button is released. Then, the draggable element has both classes.
+- `PlainDraggable.draggableClass`: `'plain-draggable'`
+- `PlainDraggable.draggingClass`: `'plain-draggable-dragging'`
+- `PlainDraggable.movingClass`: `'plain-draggable-moving'`
+
+`PlainDraggable.draggableClass` is a class name that is added to the draggable element.  
+`PlainDraggable.draggingClass` is a class name that is added to the draggable element within the period from when a mouse button is pressed until the button is released. Then, the draggable element has both classes.  
+`PlainDraggable.movingClass` is a class name that is added to the draggable element within the period from when the draggable element starts moving until a mouse button is released. Then, the draggable element has three classes.
+
+For example:
+
+```js
+PlainDraggable.draggableClass = 'cat';
+PlainDraggable.draggingClass = 'lift';
+PlainDraggable.movingClass = 'swing';
+```
 
 ## `Rect`
 
@@ -341,13 +350,14 @@ Each snap-target can be one of the following:
 - Line
 - Element or [`Rect`](#rect) object
 
+The point acts on both a horizontal direction and a vertical direction, and the line acts on either direction.  
 The point and line are the basic of snap-target. The element and `Rect` object create multiple lines.
 
 Single value creates a point that the value indicates both X and Y coordinates of the point. Then a top-left corner (default) of the draggable element snaps to this point.  
 This is simplest case.
 
 ```js
-draggable.snap = 160; // Point (X: 160px, Y: 160px)
+draggable.snap = 60; // Point (X: 60px, Y: 60px)
 ```
 
 A value as coordinate is a number as pixels or string as percentage (e.g. `'30%'`). The percentage is calculated the same as the `x` and `y` of [`Rect`](#rect).  
@@ -368,14 +378,14 @@ That is, a value that does not have both `x` and `y` is considered as a point th
 An Object that has either one of `x` and `y` properties creates a line that the property indicates a coordinate on the axis. Then two sides (default) of the draggable element along a direction of this line snap to this line.
 
 ```js
-draggable.snap = {x: 30}; // Vertical Line (from top edge to bottom edge)
+draggable.snap = {x: 130}; // Vertical Line (from top edge to bottom edge)
 ```
 
 By default, the line has full length of size of the base.  
 The other property can be an Object that has one or both of `start` and `end` properties that indicate a coordinate on the axis. This Object indicates the range on the axis for the line.
 
 ```js
-draggable.snap = {x: 30, y: {start: 5, end: '50%'}}; // Vertical Line
+draggable.snap = {x: 130, y: {start: 5, end: '50%'}}; // Vertical Line
 ```
 
 Note that the `end` must be greater than or equal to `start`. PlainDraggable does not invert these to avoid behavior that you don't want. For example, `x: {start: 400, end: '50%'}` is ignored when the base is resized to smaller than `800px` width.
@@ -384,9 +394,9 @@ A `step` property of the Object copies the point or line repeatedly at specified
 Its value is a number as pixels or string as percentage (e.g. `'30%'`). The percentage is calculated the same as the `width` or `height` of [`Rect`](#rect).
 
 ```js
-// Consecutive Points at 30px intervals, on X and Y
-draggable.snap = {step: 30};
-// As previously mentioned, this is considered as {x: {step: 30}, y: {step: 30}}.
+// Consecutive Points at 40px intervals, on X and Y
+draggable.snap = {step: 40};
+// As previously mentioned, this is considered as {x: {step: 40}, y: {step: 40}}.
 ```
 
 ```js
@@ -395,18 +405,18 @@ draggable.snap = {x: {step: 10}, y: {step: 20}};
 ```
 
 ```js
-// Consecutive Horizontal Lines at 10% intervals (from left edge to right edge)
-draggable.snap = {y: {step: '10%'}};
+// Consecutive Horizontal Lines at 25% intervals (from left edge to right edge)
+draggable.snap = {y: {step: '25%'}};
 ```
 
 ```js
-// 6 Consecutive Horizontal Lines (from left edge to right edge)
-draggable.snap = {y: {step: '10%', end: '50%'}};
+// 4 Consecutive Horizontal Lines (from left edge to right edge)
+draggable.snap = {y: {step: '20%', end: '60%'}};
 ```
 
 ```js
-// 6 Consecutive Horizontal Lines (200px length)
-draggable.snap = {x: {end: 200}, y: {step: '10%', end: '50%'}};
+// 4 Consecutive Horizontal Lines (300px length)
+draggable.snap = {x: {end: 300}, y: {step: '20%', end: '60%'}};
 ```
 
 An element or a [`Rect`](#rect) object creates four lines that overlap with edges of its rectangle.
@@ -555,20 +565,20 @@ These are specified in the [`SnapOptions` and `SnapTarget`](#structure-and-abbre
 
 #### <a name="snap-gravity"></a>`gravity`
 
-| Type | Default |
-|--|--|
-| number | `20` |
+*Type:* number  
+*Default:* `20`
 
 Distance from the draggable element, in pixels.  
 The draggable element gravitates toward the snap-target when the distance becomes less than or equal to this.
+
+To avoid staying between "[repeated coordinates](#structure-and-abbreviation)", you can specify a number greater than or equal to the half of the `step`. Or, [`onDrag`](#options-ondrag) option also can be used for the same purpose.
 
 #### <a name="snap-corner"></a>`corner`
 
 **For snap-target as point**
 
-| Type | Default |
-|--|--|
-| string | `'tl'` |
+*Type:* string  
+*Default:* `'tl'`
 
 One or more corners of the draggable element that gravitate toward the snap-target.  
 It is a value that indicates a corner or a list of the values separated by space or comma.
@@ -585,9 +595,8 @@ Allowed values are:
 
 **For snap-target as line**
 
-| Type | Default |
-|--|--|
-| string | `'both'` |
+*Type:* string  
+*Default:* `'both'`
 
 One or more sides of the draggable element that gravitate toward the snap-target.  
 It is a value that indicates a side or a list of the values separated by space or comma.
@@ -602,9 +611,8 @@ Allowed values are:
 
 **For snap-target as point or line**
 
-| Type | Default |
-|--|--|
-| boolean | `false` |
+*Type:* boolean  
+*Default:* `false`
 
 If `true` is specified, the center of the draggable element gravitates toward the snap-target. The [`corner`](#snap-corner) and [`side`](#snap-side) options are ignored.
 
@@ -612,9 +620,8 @@ If `true` is specified, the center of the draggable element gravitates toward th
 
 **For snap-target as element or [`Rect`](#rect) object**
 
-| Type | Default |
-|--|--|
-| string | `'both'` |
+*Type:* string  
+*Default:* `'both'`
 
 One or more sides of each edge of the rectangle that the draggable element gravitates toward. The rectangle is that of the element or [`Rect`](#rect) object that is specified for the [`boundingBox`](#structure-and-abbreviation).  
 It is a value that indicates a side or a list of the values separated by space or comma.
@@ -627,9 +634,8 @@ Allowed values are:
 
 #### <a name="snap-base"></a>`base`
 
-| Type | Default |
-|--|--|
-| string | `'containment'` |
+*Type:* string  
+*Default:* `'containment'`
 
 A base for the [`Rect`](#rect) object. The [`x` and `y`](#structure-and-abbreviation) also are relative to this.  
 
