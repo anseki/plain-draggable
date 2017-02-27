@@ -1,10 +1,19 @@
 {
   "name": "plain-draggable",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "title": "PlainDraggable",
   "description": "The simple and high performance library to allow HTML/SVG element to be dragged.",
   "keywords": [
-    "%keywords%"
+    "draggable",
+    "drag",
+    "html",
+    "dom",
+    "svg",
+    "grid",
+    "snaps",
+    "performance",
+    "ui",
+    "requestanimationframe "
   ],
   "main": "plain-draggable.min.js",
   "jsnext:main": "./src/plain-draggable.js",
