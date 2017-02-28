@@ -5,6 +5,8 @@
 const webpack = require('webpack'),
   path = require('path'),
   BUILD = process.env.NODE_ENV === 'production',
+  LIGHT = process.env.DIV === 'light',
+  SRC = process.env.SRC === 'yes',
   PKG = require('./package'),
 
   BABEL_TARGET_PACKAGES = [
@@ -17,13 +19,26 @@ const webpack = require('webpack'),
   BABEL_PARAMS = {
     presets: ['es2015'],
     plugins: ['add-module-exports']
+  },
+  BABEL_RULE = {
+    loader: 'babel-loader',
+    options: BABEL_PARAMS
   };
+
+function preProc(key, content) {
+  return (content + '')
+    .replace(new RegExp(`[^\\n]*\\[${key}\\/\\][^\\n]*\\n?`, 'g'), '')
+    .replace(new RegExp(`\\/\\*\\s*\\[${key}\\]\\s*\\*\\/[\\s\\S]*?\\/\\*\\s*\\[\\/${key}\\]\\s*\\*\\/`, 'g'), '')
+    .replace(new RegExp(`[^\\n]*\\[${key}\\][\\s\\S]*?\\[\\/${key}\\][^\\n]*\\n?`, 'g'), '');
+}
+
+if (!LIGHT && SRC) { throw new Error('This options break source file.'); }
 
 module.exports = {
   entry: './src/plain-draggable.js',
   output: {
-    path: BUILD ? __dirname : path.join(__dirname, 'test'),
-    filename: BUILD ? 'plain-draggable.min.js' : 'plain-draggable.js',
+    path: BUILD ? __dirname : path.join(__dirname, SRC ? 'src' : 'test'),
+    filename: 'plain-draggable' + (LIGHT ? '-light' : '') + (BUILD ? '.min.js' : '.js'),
     library: 'PlainDraggable',
     libraryTarget: 'var'
   },
@@ -34,30 +49,25 @@ module.exports = {
         test: /\.js$/,
         exclude: absPath => !BABEL_TARGET_PACKAGES.find(target => absPath.indexOf(target) === 0) &&
           absPath.split(path.sep).includes('node_modules'),
-        use: BUILD ? [
-          {
-            loader: 'babel-loader',
-            options: BABEL_PARAMS
-          },
-          {
+        use: BUILD ? [BABEL_RULE, {
+          loader: 'skeleton-loader',
+          options: {
+            procedure: content =>
+              LIGHT ? preProc('SNAP', preProc('DEBUG', content)) :
+              preProc('DEBUG', content)
+          }
+        }] :
+        (SRC ? [] : [BABEL_RULE]).concat(
+          LIGHT ? [{
             loader: 'skeleton-loader',
             options: {
-              procedure: content => (content + '')
-                .replace(/[^\n]*\[DEBUG\/\][^\n]*\n?/g, '')
-                .replace(/\/\*\s*\[DEBUG\]\s*\*\/[\s\S]*?\/\*\s*\[\/DEBUG\]\s*\*\//g, '')
-                .replace(/[^\n]*\[DEBUG\][\s\S]*?\[\/DEBUG\][^\n]*\n?/g, '')
+              procedure: content => preProc('SNAP', content)
             }
-          }
-        ] : [
-          {
-            loader: 'babel-loader',
-            options: BABEL_PARAMS
-          }
-        ]
+          }] : [])
       }
     ]
   },
-  devtool: BUILD ? false : 'source-map',
+  devtool: BUILD || SRC ? false : 'source-map',
   plugins: BUILD ? [
     new webpack.optimize.UglifyJsPlugin({compress: {warnings: true}}),
     new webpack.BannerPlugin({raw: true,

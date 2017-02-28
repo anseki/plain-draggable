@@ -12,10 +12,12 @@ import mClassList from 'm-class-list';
 
 const
   ZINDEX = 9000,
+  // [SNAP]
   SNAP_GRAVITY = 20, SNAP_CORNER = 'tl', SNAP_SIDE = 'both', SNAP_EDGE = 'both', SNAP_BASE = 'containment',
   SNAP_ALL_CORNERS = ['tl', 'tr', 'bl', 'br'],
   SNAP_ALL_SIDES = ['start', 'end'],
   SNAP_ALL_EDGES = ['inside', 'outside'],
+  // [/SNAP]
 
   IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
   IS_GECKO = 'MozAppearance' in document.documentElement.style,
@@ -52,6 +54,7 @@ let insId = 0,
 window.insProps = insProps;
 window.IS_WEBKIT = IS_WEBKIT;
 window.IS_GECKO = IS_GECKO;
+// [SNAP]
 window.SNAP_GRAVITY = SNAP_GRAVITY;
 window.SNAP_CORNER = SNAP_CORNER;
 window.SNAP_SIDE = SNAP_SIDE;
@@ -60,6 +63,7 @@ window.SNAP_BASE = SNAP_BASE;
 window.SNAP_ALL_CORNERS = SNAP_ALL_CORNERS;
 window.SNAP_ALL_SIDES = SNAP_ALL_SIDES;
 window.SNAP_ALL_EDGES = SNAP_ALL_EDGES;
+// [/SNAP]
 // [/DEBUG]
 
 function copyTree(obj) {
@@ -473,13 +477,15 @@ function initBBox(props) {
     elementBBox = props.elementBBox = getBBox(props.element),
     containmentBBox = props.containmentBBox =
       props.containmentIsBBox ? (resolvePPBBox(props.options.containment, docBBox) || docBBox) :
-        getBBox(props.options.containment, true),
-    minLeft = props.minLeft = containmentBBox.left,
-    maxLeft = props.maxLeft = containmentBBox.right - elementBBox.width,
-    minTop = props.minTop = containmentBBox.top,
-    maxTop = props.maxTop = containmentBBox.bottom - elementBBox.height;
+        getBBox(props.options.containment, true);
+  props.minLeft = containmentBBox.left;
+  props.maxLeft = containmentBBox.right - elementBBox.width;
+  props.minTop = containmentBBox.top;
+  props.maxTop = containmentBBox.bottom - elementBBox.height;
   // Adjust position
   move(props, {left: elementBBox.left, top: elementBBox.top});
+
+  // [SNAP]
 
   // Snap-targets
 
@@ -495,7 +501,7 @@ function initBBox(props) {
 
   if (props.parsedSnapTargets) {
     const elementSizeXY = {x: elementBBox.width, y: elementBBox.height},
-      minXY = {x: minLeft, y: minTop}, maxXY = {x: maxLeft, y: maxTop},
+      minXY = {x: props.minLeft, y: props.minTop}, maxXY = {x: props.maxLeft, y: props.maxTop},
       prop2Axis = {left: 'x', right: 'x', x: 'x', width: 'x', xStart: 'x', xEnd: 'x', xStep: 'x',
         top: 'y', bottom: 'y', y: 'y', height: 'y', yStart: 'y', yEnd: 'y', yStep: 'y'},
 
@@ -671,6 +677,7 @@ function initBBox(props) {
 
     props.snapTargets = snapTargets.length ? snapTargets : null;
   }
+  // [/SNAP]
   window.initBBoxDone = true; // [DEBUG/]
 }
 
@@ -757,6 +764,8 @@ function setOptions(props, newOptions) {
       needsInitBBox = true;
     }
   }
+
+  // [SNAP]
 
   /**
    * @typedef {Object} SnapOptions
@@ -986,6 +995,8 @@ function setOptions(props, newOptions) {
     options.snap = props.parsedSnapTargets = props.snapTargets = void 0;
   }
 
+  // [/SNAP]
+
   if (needsInitBBox) { initBBox(props); }
 
   // Gecko, Trident pick drag-event of some elements such as img, a, etc.
@@ -1166,8 +1177,10 @@ class PlainDraggable {
   }
   set containment(value) { setOptions(insProps[this._id], {containment: value}); }
 
+  // [SNAP]
   get snap() { return copyTree(insProps[this._id].options.snap); }
   set snap(value) { setOptions(insProps[this._id], {snap: value}); }
+  // [/SNAP]
 
   get handle() { return insProps[this._id].options.handle; }
   set handle(value) { setOptions(insProps[this._id], {handle: value}); }
@@ -1277,6 +1290,7 @@ document.addEventListener('mousemove', AnimEvent.add(event => {
         left: event.pageX + pointerOffset.left,
         top: event.pageY + pointerOffset.top
       },
+      // [SNAP]
       activeItem.snapTargets ? position => { // Snap
         let snappedX = false, snappedY = false, i, iLen = activeItem.snapTargets.length;
         for (i = 0; i < iLen && (!snappedX || !snappedY); i++) {
@@ -1299,7 +1313,9 @@ document.addEventListener('mousemove', AnimEvent.add(event => {
         }
         position.snapped = snappedX || snappedY;
         return activeItem.onDrag ? activeItem.onDrag(position) : true;
-      } : activeItem.onDrag)) {
+      } :
+      // [/SNAP]
+      activeItem.onDrag)) {
 
     if (!hasMoved) {
       hasMoved = true;

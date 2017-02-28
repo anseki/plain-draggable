@@ -525,7 +525,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var ZINDEX = 9000,
-    SNAP_GRAVITY = 20,
+
+// [SNAP]
+SNAP_GRAVITY = 20,
     SNAP_CORNER = 'tl',
     SNAP_SIDE = 'both',
     SNAP_EDGE = 'both',
@@ -533,7 +535,10 @@ var ZINDEX = 9000,
     SNAP_ALL_CORNERS = ['tl', 'tr', 'bl', 'br'],
     SNAP_ALL_SIDES = ['start', 'end'],
     SNAP_ALL_EDGES = ['inside', 'outside'],
-    IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
+
+// [/SNAP]
+
+IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
     IS_GECKO = 'MozAppearance' in document.documentElement.style,
     isObject = function () {
   var toString = {}.toString,
@@ -579,6 +584,7 @@ draggableClass = 'plain-draggable',
 window.insProps = insProps;
 window.IS_WEBKIT = IS_WEBKIT;
 window.IS_GECKO = IS_GECKO;
+// [SNAP]
 window.SNAP_GRAVITY = SNAP_GRAVITY;
 window.SNAP_CORNER = SNAP_CORNER;
 window.SNAP_SIDE = SNAP_SIDE;
@@ -587,6 +593,7 @@ window.SNAP_BASE = SNAP_BASE;
 window.SNAP_ALL_CORNERS = SNAP_ALL_CORNERS;
 window.SNAP_ALL_SIDES = SNAP_ALL_SIDES;
 window.SNAP_ALL_EDGES = SNAP_ALL_EDGES;
+// [/SNAP]
 // [/DEBUG]
 
 function copyTree(obj) {
@@ -1030,6 +1037,8 @@ function initBBox(props) {
   // Adjust position
   move(props, { left: elementBBox.left, top: elementBBox.top });
 
+  // [SNAP]
+
   // Snap-targets
 
   /**
@@ -1245,6 +1254,7 @@ function initBBox(props) {
 
     props.snapTargets = snapTargets.length ? snapTargets : null;
   }
+  // [/SNAP]
   window.initBBoxDone = true; // [DEBUG/]
 }
 
@@ -1353,6 +1363,8 @@ function _setOptions(props, newOptions) {
       needsInitBBox = true;
     }
   }
+
+  // [SNAP]
 
   /**
    * @typedef {Object} SnapOptions
@@ -1602,6 +1614,8 @@ function _setOptions(props, newOptions) {
     options.snap = props.parsedSnapTargets = props.snapTargets = void 0;
   }
 
+  // [/SNAP]
+
   if (needsInitBBox) {
     initBBox(props);
   }
@@ -1836,6 +1850,9 @@ var PlainDraggable = function () {
     set: function set(value) {
       _setOptions(insProps[this._id], { containment: value });
     }
+
+    // [SNAP]
+
   }, {
     key: 'snap',
     get: function get() {
@@ -1844,6 +1861,8 @@ var PlainDraggable = function () {
     set: function set(value) {
       _setOptions(insProps[this._id], { snap: value });
     }
+    // [/SNAP]
+
   }, {
     key: 'handle',
     get: function get() {
@@ -2004,7 +2023,9 @@ document.addEventListener('mousemove', _animEvent2.default.add(function (event) 
   if (activeItem && move(activeItem, {
     left: event.pageX + pointerOffset.left,
     top: event.pageY + pointerOffset.top
-  }, activeItem.snapTargets ? function (position) {
+  },
+  // [SNAP]
+  activeItem.snapTargets ? function (position) {
     // Snap
     var snappedX = false,
         snappedY = false,
@@ -2027,7 +2048,9 @@ document.addEventListener('mousemove', _animEvent2.default.add(function (event) 
     }
     position.snapped = snappedX || snappedY;
     return activeItem.onDrag ? activeItem.onDrag(position) : true;
-  } : activeItem.onDrag)) {
+  } :
+  // [/SNAP]
+  activeItem.onDrag)) {
 
     if (!hasMoved) {
       hasMoved = true;
