@@ -20,7 +20,7 @@ const
   // [/SNAP]
 
   IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
-  IS_GECKO = 'MozAppearance' in document.documentElement.style,
+  IS_GECKO = 'MozAppearance' in document.documentElement.style, // [SVG/]
 
   isObject = (() => {
     const toString = {}.toString, fnToString = {}.hasOwnProperty.toString,
@@ -53,7 +53,7 @@ let insId = 0,
 // [DEBUG]
 window.insProps = insProps;
 window.IS_WEBKIT = IS_WEBKIT;
-window.IS_GECKO = IS_GECKO;
+window.IS_GECKO = IS_GECKO; // [SVG/]
 // [SNAP]
 window.SNAP_GRAVITY = SNAP_GRAVITY;
 window.SNAP_CORNER = SNAP_CORNER;
@@ -296,6 +296,7 @@ function setDraggingCursor(element) {
   if (cssValueDraggingCursor !== false) { element.style.cursor = cssValueDraggingCursor; }
 }
 
+// [SVG]
 /**
  * Get SVG coordinates from viewport coordinates.
  * @param {props} props - `props` of instance.
@@ -309,6 +310,7 @@ function viewPoint2SvgPoint(props, clientX, clientY) {
   svgPoint.y = clientY;
   return svgPoint.matrixTransform(props.svgCtmElement.getScreenCTM().inverse());
 }
+// [/SVG]
 
 /**
  * Move HTMLElement.
@@ -332,6 +334,7 @@ function moveHtml(props, position) {
   return moved;
 }
 
+// [SVG]
 /**
  * Move SVGElement.
  * @param {props} props - `props` of instance.
@@ -349,6 +352,7 @@ function moveSvg(props, position) {
   }
   return false;
 }
+// [/SVG]
 
 /**
  * Set `props.element` position.
@@ -442,6 +446,7 @@ function initHtml(props) {
   });
 }
 
+// [SVG]
 /**
  * Initialize SVGElement, and get `offset` that is used by `moveSvg`.
  * @param {props} props - `props` of instance.
@@ -464,6 +469,7 @@ function initSvg(props) {
     curPoint = viewPoint2SvgPoint(props, curRect.left, curRect.top);
   svgTransform.setTranslate(curPoint.x + offset.x - originBBox.x, curPoint.y + offset.y - originBBox.y);
 }
+// [/SVG]
 
 /**
  * Set `elementBBox`, `containmentBBox`, `min/max``Left/Top` and `snapTargets`.
@@ -1079,6 +1085,7 @@ class PlainDraggable {
       throw new Error('Invalid options.');
     }
 
+    // [SVG]
     let isSvg, ownerSvg;
     // SVGElement which is not root view
     if ((isSvg = element instanceof SVGElement && (ownerSvg = element.ownerSVGElement))) {
@@ -1092,8 +1099,9 @@ class PlainDraggable {
       props.svgCtmElement = !IS_GECKO ? svgView :
         svgView.appendChild(document.createElementNS(ownerSvg.namespaceURI, 'rect'));
     }
+    // [/SVG]
 
-    props.element = initAnim(element, isSvg);
+    props.element = initAnim(element/* [SVG] */, isSvg/* [/SVG] */);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) { mClassList(element).add(draggableClass); }
@@ -1102,13 +1110,15 @@ class PlainDraggable {
     props.handleScroll = AnimEvent.add(() => { initBBox(props); });
     props.scrollElements = [];
 
+    // [SVG]
     if (isSvg) { // SVGElement
       props.initElm = initSvg;
       props.moveElm = moveSvg;
     } else { // HTMLElement
+      // [/SVG]
       props.initElm = initHtml;
       props.moveElm = moveHtml;
-    }
+    } // [SVG/]
 
     // Default options
     if (!options.containment) {

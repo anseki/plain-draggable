@@ -841,6 +841,7 @@ function setDraggingCursor(element) {
   }
 }
 
+// [SVG]
 /**
  * Get SVG coordinates from viewport coordinates.
  * @param {props} props - `props` of instance.
@@ -854,6 +855,7 @@ function viewPoint2SvgPoint(props, clientX, clientY) {
   svgPoint.y = clientY;
   return svgPoint.matrixTransform(props.svgCtmElement.getScreenCTM().inverse());
 }
+// [/SVG]
 
 /**
  * Move HTMLElement.
@@ -877,6 +879,7 @@ function moveHtml(props, position) {
   return moved;
 }
 
+// [SVG]
 /**
  * Move SVGElement.
  * @param {props} props - `props` of instance.
@@ -894,6 +897,7 @@ function moveSvg(props, position) {
   }
   return false;
 }
+// [/SVG]
 
 /**
  * Set `props.element` position.
@@ -993,6 +997,7 @@ function initHtml(props) {
   });
 }
 
+// [SVG]
 /**
  * Initialize SVGElement, and get `offset` that is used by `moveSvg`.
  * @param {props} props - `props` of instance.
@@ -1018,6 +1023,7 @@ function initSvg(props) {
   curPoint = viewPoint2SvgPoint(props, curRect.left, curRect.top);
   svgTransform.setTranslate(curPoint.x + offset.x - originBBox.x, curPoint.y + offset.y - originBBox.y);
 }
+// [/SVG]
 
 /**
  * Set `elementBBox`, `containmentBBox`, `min/max``Left/Top` and `snapTargets`.
@@ -1713,6 +1719,7 @@ var PlainDraggable = function () {
 
     var isSvg = void 0,
         ownerSvg = void 0;
+    // [SVG]
     // SVGElement which is not root view
     if (isSvg = element instanceof SVGElement && (ownerSvg = element.ownerSVGElement)) {
       // It means `instanceof SVGLocatable`
@@ -1726,6 +1733,7 @@ var PlainDraggable = function () {
       var svgView = element.nearestViewportElement;
       props.svgCtmElement = !IS_GECKO ? svgView : svgView.appendChild(document.createElementNS(ownerSvg.namespaceURI, 'rect'));
     }
+    // [/SVG]
 
     props.element = initAnim(element, isSvg);
     props.elementStyle = element.style;
@@ -1742,15 +1750,17 @@ var PlainDraggable = function () {
     });
     props.scrollElements = [];
 
+    // [SVG]
     if (isSvg) {
       // SVGElement
       props.initElm = initSvg;
       props.moveElm = moveSvg;
     } else {
       // HTMLElement
+      // [/SVG]
       props.initElm = initHtml;
       props.moveElm = moveHtml;
-    }
+    } // [SVG/]
 
     // Default options
     if (!options.containment) {

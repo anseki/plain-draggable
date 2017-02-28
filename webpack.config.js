@@ -11,6 +11,7 @@ const webpack = require('webpack'),
 
   BUILD_PATH = BUILD ? __dirname : path.join(__dirname, 'test'),
   BUILD_FILE = 'plain-draggable' + (LIGHT ? '-light' : '') + (BUILD ? '.min.js' : '.js'),
+  ENTRY_PATH = path.resolve('./src/plain-draggable.js'),
 
   BABEL_TARGET_PACKAGES = [
     'cssprefix',
@@ -19,7 +20,7 @@ const webpack = require('webpack'),
   ].map(packageName => require.resolve(packageName) // Get package root path
     .replace(new RegExp(`([\\/\\\\]node_modules[\\/\\\\]${packageName}[\\/\\\\]).*$`), '$1')),
 
-  LIGHT_TAGS = ['SNAP'],
+  LIGHT_TAGS = ['SNAP', 'SVG'],
 
   BABEL_PARAMS = {
     presets: ['es2015'],
@@ -44,7 +45,7 @@ function lighten(content) {
 if (!LIGHT && SRC) { throw new Error('This options break source file.'); }
 
 module.exports = {
-  entry: './src/plain-draggable.js',
+  entry: ENTRY_PATH,
   output: {
     path: BUILD_PATH,
     filename: BUILD_FILE,
@@ -61,17 +62,21 @@ module.exports = {
         use: BUILD ? [BABEL_RULE, {
           loader: 'skeleton-loader',
           options: {
-            procedure: content => preProc('DEBUG', LIGHT ? lighten(content) : content)
+            procedure: function(content) {
+              return preProc('DEBUG', LIGHT && this.resourcePath === ENTRY_PATH ? lighten(content) : content);
+            }
           }
         }] : [BABEL_RULE].concat(LIGHT ? [{
           loader: 'skeleton-loader',
           options: {
-            procedure: content => {
-              content = lighten(content);
-              if (SRC) {
-                const srcPath = path.join(__dirname, 'src', BUILD_FILE);
-                require('fs').writeFileSync(srcPath, content);
-                console.log(`Output: ${srcPath}`);
+            procedure: function(content) {
+              if (this.resourcePath === ENTRY_PATH) {
+                content = lighten(content);
+                if (SRC) {
+                  const destPath = path.join(__dirname, 'src', BUILD_FILE);
+                  require('fs').writeFileSync(destPath, content);
+                  console.log(`Output: ${destPath}`);
+                }
               }
               return content;
             }
