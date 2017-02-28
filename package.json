@@ -38,8 +38,7 @@
     "build": "cross-env NODE_ENV=production webpack",
     "dev": "webpack --display-modules",
     "build-light": "cross-env DIV=light NODE_ENV=production webpack",
-    "dev-light": "cross-env DIV=light webpack --display-modules",
-    "src-light": "cross-env DIV=light SRC=yes webpack --display-modules",
+    "dev-light": "cross-env DIV=light SRC=yes webpack --display-modules",
     "test": "node ./test/httpd"
   },
   "homepage": "https://anseki.github.io/plain-draggable/",

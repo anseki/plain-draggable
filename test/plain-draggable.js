@@ -1029,11 +1029,11 @@ function initBBox(props) {
 
   var docBBox = getBBox(document.documentElement),
       elementBBox = props.elementBBox = getBBox(props.element),
-      containmentBBox = props.containmentBBox = props.containmentIsBBox ? resolvePPBBox(props.options.containment, docBBox) || docBBox : getBBox(props.options.containment, true),
-      minLeft = props.minLeft = containmentBBox.left,
-      maxLeft = props.maxLeft = containmentBBox.right - elementBBox.width,
-      minTop = props.minTop = containmentBBox.top,
-      maxTop = props.maxTop = containmentBBox.bottom - elementBBox.height;
+      containmentBBox = props.containmentBBox = props.containmentIsBBox ? resolvePPBBox(props.options.containment, docBBox) || docBBox : getBBox(props.options.containment, true);
+  props.minLeft = containmentBBox.left;
+  props.maxLeft = containmentBBox.right - elementBBox.width;
+  props.minTop = containmentBBox.top;
+  props.maxTop = containmentBBox.bottom - elementBBox.height;
   // Adjust position
   move(props, { left: elementBBox.left, top: elementBBox.top });
 
@@ -1053,8 +1053,8 @@ function initBBox(props) {
 
   if (props.parsedSnapTargets) {
     var elementSizeXY = { x: elementBBox.width, y: elementBBox.height },
-        minXY = { x: minLeft, y: minTop },
-        maxXY = { x: maxLeft, y: maxTop },
+        minXY = { x: props.minLeft, y: props.minTop },
+        maxXY = { x: props.maxLeft, y: props.maxTop },
         prop2Axis = { left: 'x', right: 'x', x: 'x', width: 'x', xStart: 'x', xEnd: 'x', xStep: 'x',
       top: 'y', bottom: 'y', y: 'y', height: 'y', yStart: 'y', yEnd: 'y', yStep: 'y' },
         snapTargets = props.parsedSnapTargets.reduce(function (snapTargets, parsedSnapTarget) {

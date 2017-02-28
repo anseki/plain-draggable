@@ -9,12 +9,17 @@ const webpack = require('webpack'),
   SRC = process.env.SRC === 'yes',
   PKG = require('./package'),
 
+  BUILD_PATH = BUILD ? __dirname : path.join(__dirname, 'test'),
+  BUILD_FILE = 'plain-draggable' + (LIGHT ? '-light' : '') + (BUILD ? '.min.js' : '.js'),
+
   BABEL_TARGET_PACKAGES = [
     'cssprefix',
     'anim-event',
     'm-class-list'
   ].map(packageName => require.resolve(packageName) // Get package root path
     .replace(new RegExp(`([\\/\\\\]node_modules[\\/\\\\]${packageName}[\\/\\\\]).*$`), '$1')),
+
+  LIGHT_TAGS = ['SNAP'],
 
   BABEL_PARAMS = {
     presets: ['es2015'],
@@ -32,13 +37,17 @@ function preProc(key, content) {
     .replace(new RegExp(`[^\\n]*\\[${key}\\][\\s\\S]*?\\[\\/${key}\\][^\\n]*\\n?`, 'g'), '');
 }
 
+function lighten(content) {
+  return LIGHT_TAGS.reduce((content, tag) => preProc(tag, content), content);
+}
+
 if (!LIGHT && SRC) { throw new Error('This options break source file.'); }
 
 module.exports = {
   entry: './src/plain-draggable.js',
   output: {
-    path: BUILD ? __dirname : path.join(__dirname, SRC ? 'src' : 'test'),
-    filename: 'plain-draggable' + (LIGHT ? '-light' : '') + (BUILD ? '.min.js' : '.js'),
+    path: BUILD_PATH,
+    filename: BUILD_FILE,
     library: 'PlainDraggable',
     libraryTarget: 'var'
   },
@@ -52,22 +61,26 @@ module.exports = {
         use: BUILD ? [BABEL_RULE, {
           loader: 'skeleton-loader',
           options: {
-            procedure: content =>
-              LIGHT ? preProc('SNAP', preProc('DEBUG', content)) :
-              preProc('DEBUG', content)
+            procedure: content => preProc('DEBUG', LIGHT ? lighten(content) : content)
           }
-        }] :
-        (SRC ? [] : [BABEL_RULE]).concat(
-          LIGHT ? [{
-            loader: 'skeleton-loader',
-            options: {
-              procedure: content => preProc('SNAP', content)
+        }] : [BABEL_RULE].concat(LIGHT ? [{
+          loader: 'skeleton-loader',
+          options: {
+            procedure: content => {
+              content = lighten(content);
+              if (SRC) {
+                const srcPath = path.join(__dirname, 'src', BUILD_FILE);
+                require('fs').writeFileSync(srcPath, content);
+                console.log(`Output: ${srcPath}`);
+              }
+              return content;
             }
-          }] : [])
+          }
+        }] : [])
       }
     ]
   },
-  devtool: BUILD || SRC ? false : 'source-map',
+  devtool: BUILD ? false : 'source-map',
   plugins: BUILD ? [
     new webpack.optimize.UglifyJsPlugin({compress: {warnings: true}}),
     new webpack.BannerPlugin({raw: true,
