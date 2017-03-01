@@ -5,7 +5,7 @@
 const webpack = require('webpack'),
   path = require('path'),
   BUILD = process.env.NODE_ENV === 'production',
-  LIMIT = process.env.DIV === 'limit',
+  LIMIT = process.env.EDITION === 'limit',
   SRC = process.env.SRC === 'yes',
   PKG = require('./package'),
 

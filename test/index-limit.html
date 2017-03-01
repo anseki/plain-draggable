@@ -12,13 +12,13 @@
   <script src="/test-page-loader/test-page-loader.js"></script>
 
   <script>
-    document.cookie = 'LIMIT=false;path=/';
+    window.LIMIT = true;
+    document.cookie = 'LIMIT=true;path=/';
   </script>
 
   <script src="spec/funcs.js"></script>
   <script src="spec/bbox.js"></script>
   <script src="spec/options.js"></script>
-  <script src="spec/snap.js"></script>
   <script src="spec/cursor.js"></script>
 
 </head>

@@ -1370,4 +1370,8 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
   }
 }
 
+/* [SNAP/]
+PlainDraggable.limit = true;
+[SNAP/] */
+
 export default PlainDraggable;

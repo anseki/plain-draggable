@@ -2,6 +2,7 @@
 describe('functions', function() {
   'use strict';
 
+  var LIMIT = self.top.LIMIT;
   var window, document, pageDone;
 
   beforeAll(function(beforeDone) {
@@ -16,6 +17,10 @@ describe('functions', function() {
 
   afterAll(function() {
     pageDone();
+  });
+
+  it('Check Edition (to be LIMIT: ' + !!LIMIT + ')', function() {
+    expect(!!window.PlainDraggable.limit).toBe(!!LIMIT);
   });
 
   it('isElement', function() {
@@ -268,6 +273,7 @@ describe('functions', function() {
   });
 
   it('commonSnapOptions', function() {
+    if (LIMIT) { return; }
     // Export inner functions
     new window.PlainDraggable(document.body.appendChild(document.createElement('div'))); // eslint-disable-line no-new
     var commonSnapOptions = window.commonSnapOptions;

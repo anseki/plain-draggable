@@ -1492,6 +1492,8 @@ document.addEventListener('mouseup', function () {
   }
 }
 
+PlainDraggable.limit = true;
+
 exports.default = PlainDraggable;
 module.exports = exports['default'];
 

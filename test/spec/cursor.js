@@ -61,6 +61,10 @@ describe('cursor', function() {
     pageDone();
   });
 
+  it('Check Edition (to be LIMIT: ' + !!self.top.LIMIT + ')', function() {
+    expect(!!window.PlainDraggable.limit).toBe(!!self.top.LIMIT);
+  });
+
   it('is changed by mouse events', function(done) {
     // Check
     expect(normalValue.draggable == null).toBe(false);

@@ -2,6 +2,7 @@
 describe('setOptions()', function() {
   'use strict';
 
+  var LIMIT = self.top.LIMIT;
   var window, document, body, pageDone,
     parent, elm1, handle, draggable, props,
     SNAP_GRAVITY, SNAP_CORNER, SNAP_SIDE, SNAP_EDGE, SNAP_BASE,
@@ -33,37 +34,39 @@ describe('setOptions()', function() {
       draggable = new window.PlainDraggable(elm1);
       props = window.insProps[draggable._id];
 
-      SNAP_GRAVITY = window.SNAP_GRAVITY;
-      SNAP_CORNER = window.SNAP_CORNER;
-      SNAP_SIDE = window.SNAP_SIDE;
-      SNAP_EDGE = window.SNAP_EDGE;
-      SNAP_BASE = window.SNAP_BASE;
-      SNAP_ALL_CORNERS = window.SNAP_ALL_CORNERS;
-      SNAP_ALL_SIDES = window.SNAP_ALL_SIDES;
-      SNAP_ALL_EDGES = window.SNAP_ALL_EDGES;
+      if (!LIMIT) {
+        SNAP_GRAVITY = window.SNAP_GRAVITY;
+        SNAP_CORNER = window.SNAP_CORNER;
+        SNAP_SIDE = window.SNAP_SIDE;
+        SNAP_EDGE = window.SNAP_EDGE;
+        SNAP_BASE = window.SNAP_BASE;
+        SNAP_ALL_CORNERS = window.SNAP_ALL_CORNERS;
+        SNAP_ALL_SIDES = window.SNAP_ALL_SIDES;
+        SNAP_ALL_EDGES = window.SNAP_ALL_EDGES;
 
-      DEFAULT_SNAP_CORNERS =
-        SNAP_CORNER === 'all' ? SNAP_ALL_CORNERS : SNAP_CORNER.split(' ');
-      DEFAULT_SNAP_SIDES =
-        SNAP_SIDE === 'both' ? SNAP_ALL_SIDES : SNAP_SIDE.split(' ');
-      DEFAULT_SNAP_EDGES =
-        SNAP_EDGE === 'both' ? SNAP_ALL_EDGES : SNAP_EDGE.split(' ');
-      DEFAULT_PARSED_SNAP_TARGET = {
-        gravity: SNAP_GRAVITY,
-        corners: DEFAULT_SNAP_CORNERS,
-        sides: DEFAULT_SNAP_SIDES,
-        center: false,
-        edges: DEFAULT_SNAP_EDGES,
-        base: SNAP_BASE
-      };
-      DEFAULT_SNAP_OPTIONS = {
-        gravity: SNAP_GRAVITY,
-        corner: SNAP_CORNER,
-        side: SNAP_SIDE,
-        center: false,
-        edge: SNAP_EDGE,
-        base: SNAP_BASE
-      };
+        DEFAULT_SNAP_CORNERS =
+          SNAP_CORNER === 'all' ? SNAP_ALL_CORNERS : SNAP_CORNER.split(' ');
+        DEFAULT_SNAP_SIDES =
+          SNAP_SIDE === 'both' ? SNAP_ALL_SIDES : SNAP_SIDE.split(' ');
+        DEFAULT_SNAP_EDGES =
+          SNAP_EDGE === 'both' ? SNAP_ALL_EDGES : SNAP_EDGE.split(' ');
+        DEFAULT_PARSED_SNAP_TARGET = {
+          gravity: SNAP_GRAVITY,
+          corners: DEFAULT_SNAP_CORNERS,
+          sides: DEFAULT_SNAP_SIDES,
+          center: false,
+          edges: DEFAULT_SNAP_EDGES,
+          base: SNAP_BASE
+        };
+        DEFAULT_SNAP_OPTIONS = {
+          gravity: SNAP_GRAVITY,
+          corner: SNAP_CORNER,
+          side: SNAP_SIDE,
+          center: false,
+          edge: SNAP_EDGE,
+          base: SNAP_BASE
+        };
+      }
       ppValue2OptionValue = window.ppValue2OptionValue;
 
       beforeDone();
@@ -72,6 +75,10 @@ describe('setOptions()', function() {
 
   afterAll(function() {
     pageDone();
+  });
+
+  it('Check Edition (to be LIMIT: ' + !!LIMIT + ')', function() {
+    expect(!!window.PlainDraggable.limit).toBe(!!LIMIT);
   });
 
   it('should accept an element as `containment`', function(done) {
@@ -174,6 +181,7 @@ describe('setOptions()', function() {
   });
 
   it('`snap` - value types', function(done) {
+    if (LIMIT) { done(); return; }
     var share;
 
     // pixels
@@ -333,6 +341,7 @@ describe('setOptions()', function() {
   });
 
   it('`snap` - start/end', function(done) {
+    if (LIMIT) { done(); return; }
     var share;
 
     // px
@@ -495,6 +504,7 @@ describe('setOptions()', function() {
   });
 
   it('`snap` - step', function(done) {
+    if (LIMIT) { done(); return; }
     var share;
 
     // No `start`, `end` / px
@@ -642,6 +652,7 @@ describe('setOptions()', function() {
   });
 
   it('`snap` - omission', function(done) {
+    if (LIMIT) { done(); return; }
     var share,
       target1 = {x: 8, y: 16, gravity: 17},
       target2 = {x: '30%'},
@@ -860,6 +871,7 @@ describe('setOptions()', function() {
   });
 
   it('`snap` - inheritance', function(done) {
+    if (LIMIT) { done(); return; }
     var x1 = 8, x2 = 32, y1 = 16,
       gravity1 = 64,
       side1 = 'start', side2 = 'end',
@@ -930,6 +942,7 @@ describe('setOptions()', function() {
   });
 
   it('`snap` - same options', function(done) {
+    if (LIMIT) { done(); return; }
     // Ignore same parsed options
     draggable.snap = {edge: 'outside', x: 16, y: 32};
     expect(props.parsedSnapTargets).toEqual([

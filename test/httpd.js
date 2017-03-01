@@ -39,12 +39,22 @@ http.createServer((request, response) => {
   request.addListener('end', () => {
     (new staticAlias.Server(DOC_ROOT, {
       cache: false,
+      headers: {'Cache-Control': 'no-cache, must-revalidate'},
       alias: MODULE_PACKAGES.map(packageName => (
         { // node_modules
           match: new RegExp(`^/${packageName}/.+`),
           serve: `${require.resolve(packageName).replace(/([\/\\]node_modules)[\/\\].*$/, '$1')}<% reqPath %>`,
           allowOutside: true
         })).concat([
+          // limited-function script
+          {
+            match: /^\/plain-draggable\.js$/,
+            serve: params => {
+              return /\bLIMIT=true\b/.test(params.cookie) ?
+                params.absPath.replace(/\.js$/, '-limit.js') : params.absPath;
+            }
+          },
+
           // test-ext
           {
             match: /^\/ext\/.+/,

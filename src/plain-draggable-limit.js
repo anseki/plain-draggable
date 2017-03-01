@@ -819,4 +819,6 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
   }
 }
 
+PlainDraggable.limit = true;
+
 export default PlainDraggable;

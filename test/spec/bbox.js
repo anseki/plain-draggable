@@ -17,6 +17,10 @@ describe('BBox', function() {
     pageDone();
   });
 
+  it('Check Edition (to be LIMIT: ' + !!self.top.LIMIT + ')', function() {
+    expect(!!window.PlainDraggable.limit).toBe(!!self.top.LIMIT);
+  });
+
   it('keeps original BBox if possible', function() {
     var draggable, element, orgBBox, curBBox, saveWidth;
 

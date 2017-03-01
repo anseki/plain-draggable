@@ -127,6 +127,10 @@ describe('snapTargets', function() {
     pageDone();
   });
 
+  it('Check Edition (to be LIMIT: ' + !!self.top.LIMIT + ')', function() {
+    expect(!!window.PlainDraggable.limit).toBe(!!self.top.LIMIT);
+  });
+
   it('Point', function(done) {
     var parentBBox = window.getBBox(parent), share;
 

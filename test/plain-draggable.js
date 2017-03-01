@@ -2120,6 +2120,10 @@ document.addEventListener('mouseup', function () {
   }
 }
 
+/* [SNAP/]
+PlainDraggable.limit = true;
+[SNAP/] */
+
 exports.default = PlainDraggable;
 module.exports = exports['default'];
 
