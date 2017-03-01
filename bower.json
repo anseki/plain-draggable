@@ -1,6 +1,6 @@
 {
   "name": "plain-draggable",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "description": "The simple and high performance library to allow HTML/SVG element to be dragged.",
   "keywords": [
     "draggable",
