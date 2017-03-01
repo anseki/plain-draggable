@@ -525,24 +525,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var ZINDEX = 9000,
-
-// [SNAP]
-SNAP_GRAVITY = 20,
-    SNAP_CORNER = 'tl',
-    SNAP_SIDE = 'both',
-    SNAP_EDGE = 'both',
-    SNAP_BASE = 'containment',
-    SNAP_ALL_CORNERS = ['tl', 'tr', 'bl', 'br'],
-    SNAP_ALL_SIDES = ['start', 'end'],
-    SNAP_ALL_EDGES = ['inside', 'outside'],
-
-// [/SNAP]
-
-IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
-    IS_GECKO = 'MozAppearance' in document.documentElement.style,
-    // [SVG/]
-
-isObject = function () {
+    IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
+    isObject = function () {
   var toString = {}.toString,
       fnToString = {}.hasOwnProperty.toString,
       objFnString = fnToString.call(Object);
@@ -585,17 +569,6 @@ draggableClass = 'plain-draggable',
 // [DEBUG]
 window.insProps = insProps;
 window.IS_WEBKIT = IS_WEBKIT;
-window.IS_GECKO = IS_GECKO; // [SVG/]
-// [SNAP]
-window.SNAP_GRAVITY = SNAP_GRAVITY;
-window.SNAP_CORNER = SNAP_CORNER;
-window.SNAP_SIDE = SNAP_SIDE;
-window.SNAP_EDGE = SNAP_EDGE;
-window.SNAP_BASE = SNAP_BASE;
-window.SNAP_ALL_CORNERS = SNAP_ALL_CORNERS;
-window.SNAP_ALL_SIDES = SNAP_ALL_SIDES;
-window.SNAP_ALL_EDGES = SNAP_ALL_EDGES;
-// [/SNAP]
 // [/DEBUG]
 
 function copyTree(obj) {
@@ -843,22 +816,6 @@ function setDraggingCursor(element) {
   }
 }
 
-// [SVG]
-/**
- * Get SVG coordinates from viewport coordinates.
- * @param {props} props - `props` of instance.
- * @param {number} clientX - viewport X.
- * @param {number} clientY - viewport Y.
- * @returns {SVGPoint} - SVG coordinates.
- */
-function viewPoint2SvgPoint(props, clientX, clientY) {
-  var svgPoint = props.svgPoint;
-  svgPoint.x = clientX;
-  svgPoint.y = clientY;
-  return svgPoint.matrixTransform(props.svgCtmElement.getScreenCTM().inverse());
-}
-// [/SVG]
-
 /**
  * Move HTMLElement.
  * @param {props} props - `props` of instance.
@@ -880,26 +837,6 @@ function moveHtml(props, position) {
   }
   return moved;
 }
-
-// [SVG]
-/**
- * Move SVGElement.
- * @param {props} props - `props` of instance.
- * @param {{left: number, top: number}} position - New position.
- * @returns {boolean} - `true` if it was moved.
- */
-function moveSvg(props, position) {
-  var elementBBox = props.elementBBox;
-  if (position.left !== elementBBox.left || position.top !== elementBBox.top) {
-    var offset = props.svgOffset,
-        originBBox = props.svgOriginBBox,
-        point = viewPoint2SvgPoint(props, position.left - window.pageXOffset, position.top - window.pageYOffset);
-    props.svgTransform.setTranslate(point.x + offset.x - originBBox.x, point.y + offset.y - originBBox.y);
-    return true;
-  }
-  return false;
-}
-// [/SVG]
 
 /**
  * Set `props.element` position.
@@ -999,34 +936,6 @@ function initHtml(props) {
   });
 }
 
-// [SVG]
-/**
- * Initialize SVGElement, and get `offset` that is used by `moveSvg`.
- * @param {props} props - `props` of instance.
- * @returns {void}
- */
-function initSvg(props) {
-  var element = props.element,
-      svgTransform = props.svgTransform,
-      curRect = element.getBoundingClientRect(); // Get Rect before change position.
-
-  svgTransform.setTranslate(0, 0);
-  var originBBox = props.svgOriginBBox = element.getBBox(),
-
-  // Try to get SVG coordinates of current position.
-  newRect = element.getBoundingClientRect(),
-      originPoint = viewPoint2SvgPoint(props, newRect.left, newRect.top),
-
-  // Gecko bug, getScreenCTM returns incorrect CTM, and originPoint might not be current position.
-  offset = props.svgOffset = { x: originBBox.x - originPoint.x, y: originBBox.y - originPoint.y },
-
-
-  // Restore position
-  curPoint = viewPoint2SvgPoint(props, curRect.left, curRect.top);
-  svgTransform.setTranslate(curPoint.x + offset.x - originBBox.x, curPoint.y + offset.y - originBBox.y);
-}
-// [/SVG]
-
 /**
  * Set `elementBBox`, `containmentBBox`, `min/max``Left/Top` and `snapTargets`.
  * @param {props} props - `props` of instance.
@@ -1045,224 +954,6 @@ function initBBox(props) {
   // Adjust position
   move(props, { left: elementBBox.left, top: elementBBox.top });
 
-  // [SNAP]
-
-  // Snap-targets
-
-  /**
-   * @typedef {Object} SnapTarget
-   * @property {number} [x] - A coordinate it moves to. It has x or y or both.
-   * @property {number} [y]
-   * @property {number} [gravityXStart] - Gravity zone. It has *Start or *End or both, and *X* or *Y* or both.
-   * @property {number} [gravityXEnd]
-   * @property {number} [gravityYStart]
-   * @property {number} [gravityYEnd]
-   */
-
-  if (props.parsedSnapTargets) {
-    var elementSizeXY = { x: elementBBox.width, y: elementBBox.height },
-        minXY = { x: props.minLeft, y: props.minTop },
-        maxXY = { x: props.maxLeft, y: props.maxTop },
-        prop2Axis = { left: 'x', right: 'x', x: 'x', width: 'x', xStart: 'x', xEnd: 'x', xStep: 'x',
-      top: 'y', bottom: 'y', y: 'y', height: 'y', yStart: 'y', yEnd: 'y', yStep: 'y' },
-        snapTargets = props.parsedSnapTargets.reduce(function (snapTargets, parsedSnapTarget) {
-      var baseRect = parsedSnapTarget.base === 'containment' ? containmentBBox : docBBox,
-          baseOriginXY = { x: baseRect.left, y: baseRect.top },
-          baseSizeXY = { x: baseRect.width, y: baseRect.height };
-
-      /**
-       * Basically, shallow copy from parsedSnapTarget, and it can have resolved values.
-       * @typedef {{x: (number|PPValue), y, xStart, xEnd, xStep, yStart, yEnd, yStep}} TargetXY
-       * @property {string[]} [corners] - Applied value.
-       * @property {string[]} [sides]
-       * @property {boolean} center
-       * @property {number} [xGravity] - Override parsedSnapTarget.gravity.
-       * @property {number} [yGravity]
-       */
-
-      // Add single Point or Line (i.e. targetXY has no *Step)
-      function addSnapTarget(targetXY) {
-        if (targetXY.center == null) {
-          targetXY.center = parsedSnapTarget.center;
-        }
-        if (targetXY.xGravity == null) {
-          targetXY.xGravity = parsedSnapTarget.gravity;
-        }
-        if (targetXY.yGravity == null) {
-          targetXY.yGravity = parsedSnapTarget.gravity;
-        }
-
-        if (targetXY.x != null && targetXY.y != null) {
-          // Point
-          targetXY.x = resolvePPValue(targetXY.x, baseOriginXY.x, baseSizeXY.x);
-          targetXY.y = resolvePPValue(targetXY.y, baseOriginXY.y, baseSizeXY.y);
-
-          if (targetXY.center) {
-            targetXY.x -= elementSizeXY.x / 2;
-            targetXY.y -= elementSizeXY.y / 2;
-            targetXY.corners = ['tl'];
-          }
-
-          (targetXY.corners || parsedSnapTarget.corners).forEach(function (corner) {
-            var x = targetXY.x - (corner === 'tr' || corner === 'br' ? elementSizeXY.x : 0),
-                y = targetXY.y - (corner === 'bl' || corner === 'br' ? elementSizeXY.y : 0);
-            if (x >= minXY.x && x <= maxXY.x && y >= minXY.y && y <= maxXY.y) {
-              var snapTarget = { x: x, y: y },
-                  gravityXStart = x - targetXY.xGravity,
-                  gravityXEnd = x + targetXY.xGravity,
-                  gravityYStart = y - targetXY.yGravity,
-                  gravityYEnd = y + targetXY.yGravity;
-              if (gravityXStart > minXY.x) {
-                snapTarget.gravityXStart = gravityXStart;
-              }
-              if (gravityXEnd < maxXY.x) {
-                snapTarget.gravityXEnd = gravityXEnd;
-              }
-              if (gravityYStart > minXY.y) {
-                snapTarget.gravityYStart = gravityYStart;
-              }
-              if (gravityYEnd < maxXY.y) {
-                snapTarget.gravityYEnd = gravityYEnd;
-              }
-              snapTargets.push(snapTarget);
-            }
-          });
-        } else {
-          // Line
-          var specAxis = targetXY.x != null ? 'x' : 'y',
-              rangeAxis = specAxis === 'x' ? 'y' : 'x',
-              startProp = rangeAxis + 'Start',
-              endProp = rangeAxis + 'End',
-              gravityProp = specAxis + 'Gravity',
-              specAxisL = specAxis.toUpperCase(),
-              rangeAxisL = rangeAxis.toUpperCase(),
-              gravitySpecStartProp = 'gravity' + specAxisL + 'Start',
-              gravitySpecEndProp = 'gravity' + specAxisL + 'End',
-              gravityRangeStartProp = 'gravity' + rangeAxisL + 'Start',
-              gravityRangeEndProp = 'gravity' + rangeAxisL + 'End';
-          targetXY[specAxis] = resolvePPValue(targetXY[specAxis], baseOriginXY[specAxis], baseSizeXY[specAxis]);
-          targetXY[startProp] = resolvePPValue(targetXY[startProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]);
-          targetXY[endProp] = resolvePPValue(targetXY[endProp], baseOriginXY[rangeAxis], baseSizeXY[rangeAxis]) - elementSizeXY[rangeAxis]; // Reduce the end of the line.
-          if (targetXY[startProp] > targetXY[endProp] || // Smaller than element size.
-          targetXY[startProp] > maxXY[rangeAxis] || targetXY[endProp] < minXY[rangeAxis]) {
-            return;
-          }
-
-          if (targetXY.center) {
-            targetXY[specAxis] -= elementSizeXY[specAxis] / 2;
-            targetXY.sides = ['start'];
-          }
-
-          (targetXY.sides || parsedSnapTarget.sides).forEach(function (side) {
-            var xy = targetXY[specAxis] - (side === 'end' ? elementSizeXY[specAxis] : 0);
-            if (xy >= minXY[specAxis] && xy <= maxXY[specAxis]) {
-              var snapTarget = {},
-                  gravitySpecStart = xy - targetXY[gravityProp],
-                  gravitySpecEnd = xy + targetXY[gravityProp];
-              snapTarget[specAxis] = xy;
-              if (gravitySpecStart > minXY[specAxis]) {
-                snapTarget[gravitySpecStartProp] = gravitySpecStart;
-              }
-              if (gravitySpecEnd < maxXY[specAxis]) {
-                snapTarget[gravitySpecEndProp] = gravitySpecEnd;
-              }
-              if (targetXY[startProp] > minXY[rangeAxis]) {
-                snapTarget[gravityRangeStartProp] = targetXY[startProp];
-              }
-              if (targetXY[endProp] < maxXY[rangeAxis]) {
-                snapTarget[gravityRangeEndProp] = targetXY[endProp];
-              }
-              snapTargets.push(snapTarget);
-            }
-          });
-        }
-      }
-
-      var bBox = void 0;
-      if ((bBox = parsedSnapTarget.element ? getBBox(parsedSnapTarget.element) : null) || // Element
-      parsedSnapTarget.ppBBox) {
-        if (parsedSnapTarget.ppBBox) {
-          bBox = resolvePPBBox(parsedSnapTarget.ppBBox, baseRect);
-        } // BBox
-        if (bBox) {
-          // Drop invalid BBox.
-          // Expand into 4 lines.
-          parsedSnapTarget.edges.forEach(function (edge) {
-            var lengthenX = parsedSnapTarget.gravity,
-                lengthenY = parsedSnapTarget.gravity;
-            if (edge === 'outside') {
-              // Snap it when a part of the element is part of the range.
-              lengthenX += elementBBox.width;
-              lengthenY += elementBBox.height;
-            }
-            var xStart = bBox.left - lengthenX,
-                xEnd = bBox.right + lengthenX,
-                yStart = bBox.top - lengthenY,
-                yEnd = bBox.bottom + lengthenY;
-            var side = edge === 'inside' ? 'start' : 'end';
-            addSnapTarget({ xStart: xStart, xEnd: xEnd, y: bBox.top, sides: [side], center: false }); // Top
-            addSnapTarget({ x: bBox.left, yStart: yStart, yEnd: yEnd, sides: [side], center: false }); // Left
-            side = edge === 'inside' ? 'end' : 'start';
-            addSnapTarget({ xStart: xStart, xEnd: xEnd, y: bBox.bottom, sides: [side], center: false }); // Bottom
-            addSnapTarget({ x: bBox.right, yStart: yStart, yEnd: yEnd, sides: [side], center: false }); // Right
-          });
-        }
-      } else {
-        var expanded = [['x', 'y', 'xStart', 'xEnd', 'xStep', 'yStart', 'yEnd', 'yStep'].reduce(function (targetXY, prop) {
-          if (parsedSnapTarget[prop]) {
-            targetXY[prop] = resolvePPValue(parsedSnapTarget[prop], prop === 'xStep' || prop === 'yStep' ? 0 : baseOriginXY[prop2Axis[prop]], baseSizeXY[prop2Axis[prop]]);
-          }
-          return targetXY;
-        }, {})];
-
-        ['x', 'y'].forEach(function (axis) {
-          var startProp = axis + 'Start',
-              endProp = axis + 'End',
-              stepProp = axis + 'Step',
-              gravityProp = axis + 'Gravity';
-          expanded = expanded.reduce(function (expanded, targetXY) {
-            var start = targetXY[startProp],
-                end = targetXY[endProp],
-                step = targetXY[stepProp];
-            if (start != null && end != null && start >= end) {
-              return expanded;
-            } // start >= end
-
-            if (step != null) {
-              if (step < 2) {
-                return expanded;
-              }
-              // step >= 2px -> Expand by step
-              var gravity = step / 2; // max
-              gravity = parsedSnapTarget.gravity > gravity ? gravity : null;
-              for (var curValue = start; curValue <= end; curValue += step) {
-                var expandedXY = Object.keys(targetXY).reduce(function (expandedXY, prop) {
-                  if (prop !== startProp && prop !== endProp && prop !== stepProp) {
-                    expandedXY[prop] = targetXY[prop];
-                  }
-                  return expandedXY;
-                }, {});
-                expandedXY[axis] = curValue;
-                expandedXY[gravityProp] = gravity;
-                expanded.push(expandedXY);
-              }
-            } else {
-              expanded.push(targetXY);
-            }
-            return expanded;
-          }, []);
-        });
-        expanded.forEach(function (targetXY) {
-          addSnapTarget(targetXY);
-        });
-      }
-
-      return snapTargets;
-    }, []);
-
-    props.snapTargets = snapTargets.length ? snapTargets : null;
-  }
-  // [/SNAP]
   window.initBBoxDone = true; // [DEBUG/]
 }
 
@@ -1372,258 +1063,6 @@ function _setOptions(props, newOptions) {
     }
   }
 
-  // [SNAP]
-
-  /**
-   * @typedef {Object} SnapOptions
-   * @property {SnapTargetOptions[]} targets
-   * @property {number} [gravity]
-   * @property {string} [corner]
-   * @property {string} [side]
-   * @property {boolean} [center]
-   * @property {string} [edge]
-   * @property {string} [base]
-   */
-
-  /**
-   * @typedef {Object} SnapTargetOptions
-   * @property {(number|string)} [x] - pixels | '<n>%' | {start, end} | {step, start, end}
-   * @property {(number|string)} [y]
-   * @property {(Element|Object)} [boundingBox] - Object has properties that are string or number from PPBBox.
-   * @property {number} [gravity]
-   * @property {string} [corner]
-   * @property {string} [side]
-   * @property {boolean} [center]
-   * @property {string} [edge]
-   * @property {string} [base]
-   */
-
-  /**
-   * @typedef {Object} ParsedSnapTarget
-   * @property {PPValue} [x] - (input: pixels | '<n>%')
-   * @property {PPValue} [y]
-   * @property {PPValue} [xStart] - (input: {start, end} | {step, start, end})
-   * @property {PPValue} [xEnd]
-   * @property {PPValue} [xStep] - (input: {step, start, end})
-   * @property {PPValue} [yStart]
-   * @property {PPValue} [yEnd]
-   * @property {PPValue} [yStep]
-   * @property {Element} [element]
-   * @property {PPBBox} [ppBBox]
-   * @property {number} gravity
-   * @property {string[]} corners
-   * @property {string[]} sides
-   * @property {boolean} center
-   * @property {string[]} edges
-   * @property {string} base
-   */
-
-  // Normalize `gravity`, `corner`, `side`, `center`, `edge`, `base`
-  function commonSnapOptions(options, newOptions) {
-    function cleanString(inString) {
-      return typeof inString === 'string' ? inString.replace(/[, ]+/g, ' ').trim().toLowerCase() : null;
-    }
-
-    // gravity
-    if (isFinite(newOptions.gravity) && newOptions.gravity > 0) {
-      options.gravity = newOptions.gravity;
-    }
-    // corner
-    var corner = cleanString(newOptions.corner);
-    if (corner) {
-      if (corner !== 'all') {
-        var added = {},
-            corners = corner.split(/\s/).reduce(function (corners, corner) {
-          corner = corner.trim().replace(/^(.).*?\-(.).*$/, '$1$2');
-          if ((corner = corner === 'tl' || corner === 'lt' ? 'tl' : corner === 'tr' || corner === 'rt' ? 'tr' : corner === 'bl' || corner === 'lb' ? 'bl' : corner === 'br' || corner === 'rb' ? 'br' : null) && !added[corner]) {
-            corners.push(corner);
-            added[corner] = true;
-          }
-          return corners;
-        }, []),
-            cornersLen = corners.length;
-        corner = !cornersLen ? null : cornersLen === 4 ? 'all' : corners.join(' ');
-      }
-      if (corner) {
-        options.corner = corner;
-      }
-    }
-    // side
-    var side = cleanString(newOptions.side);
-    if (side) {
-      if (side === 'start' || side === 'end' || side === 'both') {
-        options.side = side;
-      } else if (side === 'start end' || side === 'end start') {
-        options.side = 'both';
-      }
-    }
-    // center
-    if (typeof newOptions.center === 'boolean') {
-      options.center = newOptions.center;
-    }
-    // edge
-    var edge = cleanString(newOptions.edge);
-    if (edge) {
-      if (edge === 'inside' || edge === 'outside' || edge === 'both') {
-        options.edge = edge;
-      } else if (edge === 'inside outside' || edge === 'outside inside') {
-        options.edge = 'both';
-      }
-    }
-    // base
-    var base = typeof newOptions.base === 'string' ? newOptions.base.trim().toLowerCase() : null;
-    if (base && (base === 'containment' || base === 'document')) {
-      options.base = base;
-    }
-    return options;
-  }
-  window.commonSnapOptions = commonSnapOptions; // [DEBUG/]
-
-  // snap
-  if (newOptions.snap != null) {
-    var newSnapOptions = isObject(newOptions.snap) && newOptions.snap.targets != null ? newOptions.snap : { targets: newOptions.snap },
-        snapTargetsOptions = [],
-        snapOptions = commonSnapOptions({ targets: snapTargetsOptions }, newSnapOptions);
-
-    // Set default options into top level.
-    if (!snapOptions.gravity) {
-      snapOptions.gravity = SNAP_GRAVITY;
-    }
-    if (!snapOptions.corner) {
-      snapOptions.corner = SNAP_CORNER;
-    }
-    if (!snapOptions.side) {
-      snapOptions.side = SNAP_SIDE;
-    }
-    if (typeof snapOptions.center !== 'boolean') {
-      snapOptions.center = false;
-    }
-    if (!snapOptions.edge) {
-      snapOptions.edge = SNAP_EDGE;
-    }
-    if (!snapOptions.base) {
-      snapOptions.base = SNAP_BASE;
-    }
-
-    var parsedSnapTargets = (Array.isArray(newSnapOptions.targets) ? newSnapOptions.targets : [newSnapOptions.targets]).reduce(function (parsedSnapTargets, target) {
-      if (target == null) {
-        return parsedSnapTargets;
-      }
-
-      var isElementPre = isElement(target),
-          // Pre-check direct value
-      ppBBoxPre = validPPBBox(copyTree(target)),
-          // Pre-check direct value
-      newSnapTargetOptions = isElementPre || ppBBoxPre ? { boundingBox: target } : // Direct Element | PPBBox
-      isObject(target) && target.start == null && target.end == null && target.step == null ? target : // SnapTargetOptions
-      { x: target, y: target },
-          // Others, it might be {step, start, end}
-      expandedParsedSnapTargets = [],
-          snapTargetOptions = {},
-          newOptionsBBox = newSnapTargetOptions.boundingBox;
-      var ppBBox = void 0;
-
-      if (isElementPre || isElement(newOptionsBBox)) {
-        // Element
-        expandedParsedSnapTargets.push({ element: newOptionsBBox });
-        snapTargetOptions.boundingBox = newOptionsBBox;
-      } else if (ppBBox = ppBBoxPre || validPPBBox(copyTree(newOptionsBBox))) {
-        // Object -> PPBBox
-        expandedParsedSnapTargets.push({ ppBBox: ppBBox });
-        snapTargetOptions.boundingBox = ppBBox2OptionObject(ppBBox);
-      } else {
-        var invalid = void 0; // `true` if valid PPValue was given but the contained value is invalid.
-        var parsedXY = ['x', 'y'].reduce(function (parsedXY, axis) {
-          var newOptionsXY = newSnapTargetOptions[axis];
-          var ppValue = void 0;
-
-          if (ppValue = validPPValue(newOptionsXY)) {
-            // pixels | '<n>%'
-            parsedXY[axis] = ppValue;
-            snapTargetOptions[axis] = ppValue2OptionValue(ppValue);
-          } else {
-            // {start, end} | {step, start, end}
-            var start = void 0,
-                end = void 0,
-                step = void 0;
-            if (isObject(newOptionsXY)) {
-              start = validPPValue(newOptionsXY.start);
-              end = validPPValue(newOptionsXY.end);
-              step = validPPValue(newOptionsXY.step);
-              if (start && end && start.isRatio === end.isRatio && start.value >= end.value) {
-                // start >= end
-                invalid = true;
-              }
-            }
-            start = parsedXY[axis + 'Start'] = start || { value: 0, isRatio: false };
-            end = parsedXY[axis + 'End'] = end || { value: 1, isRatio: true };
-            snapTargetOptions[axis] = { start: ppValue2OptionValue(start), end: ppValue2OptionValue(end) };
-            if (step) {
-              if (step.isRatio ? step.value > 0 : step.value >= 2) {
-                // step > 0% || step >= 2px
-                parsedXY[axis + 'Step'] = step;
-                snapTargetOptions[axis].step = ppValue2OptionValue(step);
-              } else {
-                invalid = true;
-              }
-            }
-          }
-          return parsedXY;
-        }, {});
-        if (invalid) {
-          return parsedSnapTargets;
-        }
-
-        if (parsedXY.xStart && !parsedXY.xStep && parsedXY.yStart && !parsedXY.yStep) {
-          // Expand into 4 lines. This is not BBox, and `edge` is ignored.
-          expandedParsedSnapTargets.push({ xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yStart }, // Top
-          { xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yEnd }, // Bottom
-          { x: parsedXY.xStart, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd }, // Left
-          { x: parsedXY.xEnd, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd } // Right
-          );
-        } else {
-          expandedParsedSnapTargets.push(parsedXY);
-        }
-      }
-
-      if (expandedParsedSnapTargets.length) {
-        snapTargetsOptions.push(commonSnapOptions(snapTargetOptions, newSnapTargetOptions));
-        // Copy common SnapOptions
-        var corner = snapTargetOptions.corner || snapOptions.corner,
-            side = snapTargetOptions.side || snapOptions.side,
-            edge = snapTargetOptions.edge || snapOptions.edge,
-            commonOptions = {
-          gravity: snapTargetOptions.gravity || snapOptions.gravity,
-          base: snapTargetOptions.base || snapOptions.base,
-          center: typeof snapTargetOptions.center === 'boolean' ? snapTargetOptions.center : snapOptions.center,
-          corners: corner === 'all' ? SNAP_ALL_CORNERS : corner.split(' '), // Split
-          sides: side === 'both' ? SNAP_ALL_SIDES : [side], // Split
-          edges: edge === 'both' ? SNAP_ALL_EDGES : [edge] // Split
-        };
-        expandedParsedSnapTargets.forEach(function (parsedSnapTarget) {
-          // Set common SnapOptions
-          ['gravity', 'corners', 'sides', 'center', 'edges', 'base'].forEach(function (option) {
-            parsedSnapTarget[option] = commonOptions[option];
-          });
-          parsedSnapTargets.push(parsedSnapTarget);
-        });
-      }
-      return parsedSnapTargets;
-    }, []);
-
-    if (parsedSnapTargets.length) {
-      options.snap = snapOptions; // Update always
-      if (hasChanged(parsedSnapTargets, props.parsedSnapTargets)) {
-        props.parsedSnapTargets = parsedSnapTargets;
-        needsInitBBox = true;
-      }
-    }
-  } else if (newOptions.hasOwnProperty('snap') && props.parsedSnapTargets) {
-    options.snap = props.parsedSnapTargets = props.snapTargets = void 0;
-  }
-
-  // [/SNAP]
-
   if (needsInitBBox) {
     initBBox(props);
   }
@@ -1719,25 +1158,7 @@ var PlainDraggable = function () {
       throw new Error('Invalid options.');
     }
 
-    // [SVG]
-    var isSvg = void 0,
-        ownerSvg = void 0;
-    // SVGElement which is not root view
-    if (isSvg = element instanceof SVGElement && (ownerSvg = element.ownerSVGElement)) {
-      // It means `instanceof SVGLocatable`
-      if (!element.getBBox) {
-        throw new Error('This element is not accepted.');
-      }
-      // Trident bug, returned value must be used (That is not given value).
-      props.svgTransform = element.transform.baseVal.appendItem(ownerSvg.createSVGTransform());
-      props.svgPoint = ownerSvg.createSVGPoint();
-      // Gecko bug, view.getScreenCTM returns CTM with root view.
-      var svgView = element.nearestViewportElement;
-      props.svgCtmElement = !IS_GECKO ? svgView : svgView.appendChild(document.createElementNS(ownerSvg.namespaceURI, 'rect'));
-    }
-    // [/SVG]
-
-    props.element = initAnim(element /* [SVG] */, isSvg /* [/SVG] */);
+    props.element = initAnim(element);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) {
@@ -1752,17 +1173,8 @@ var PlainDraggable = function () {
     });
     props.scrollElements = [];
 
-    // [SVG]
-    if (isSvg) {
-      // SVGElement
-      props.initElm = initSvg;
-      props.moveElm = moveSvg;
-    } else {
-      // HTMLElement
-      // [/SVG]
-      props.initElm = initHtml;
-      props.moveElm = moveHtml;
-    } // [SVG/]
+    props.initElm = initHtml;
+    props.moveElm = moveHtml;
 
     // Default options
     if (!options.containment) {
@@ -1862,19 +1274,6 @@ var PlainDraggable = function () {
     set: function set(value) {
       _setOptions(insProps[this._id], { containment: value });
     }
-
-    // [SNAP]
-
-  }, {
-    key: 'snap',
-    get: function get() {
-      return copyTree(insProps[this._id].options.snap);
-    },
-    set: function set(value) {
-      _setOptions(insProps[this._id], { snap: value });
-    }
-    // [/SNAP]
-
   }, {
     key: 'handle',
     get: function get() {
@@ -2035,34 +1434,7 @@ document.addEventListener('mousemove', _animEvent2.default.add(function (event) 
   if (activeItem && move(activeItem, {
     left: event.pageX + pointerOffset.left,
     top: event.pageY + pointerOffset.top
-  },
-  // [SNAP]
-  activeItem.snapTargets ? function (position) {
-    // Snap
-    var snappedX = false,
-        snappedY = false,
-        i = void 0,
-        iLen = activeItem.snapTargets.length;
-    for (i = 0; i < iLen && (!snappedX || !snappedY); i++) {
-      var snapTarget = activeItem.snapTargets[i];
-      if ((snapTarget.gravityXStart == null || position.left >= snapTarget.gravityXStart) && (snapTarget.gravityXEnd == null || position.left <= snapTarget.gravityXEnd) && (snapTarget.gravityYStart == null || position.top >= snapTarget.gravityYStart) && (snapTarget.gravityYEnd == null || position.top <= snapTarget.gravityYEnd)) {
-        if (!snappedX && snapTarget.x != null) {
-          position.left = snapTarget.x;
-          snappedX = true;
-          i = -1; // Restart loop
-        }
-        if (!snappedY && snapTarget.y != null) {
-          position.top = snapTarget.y;
-          snappedY = true;
-          i = -1; // Restart loop
-        }
-      }
-    }
-    position.snapped = snappedX || snappedY;
-    return activeItem.onDrag ? activeItem.onDrag(position) : true;
-  } :
-  // [/SNAP]
-  activeItem.onDrag)) {
+  }, activeItem.onDrag)) {
 
     if (!hasMoved) {
       hasMoved = true;
@@ -2125,4 +1497,4 @@ module.exports = exports['default'];
 
 /***/ })
 /******/ ]);
-//# sourceMappingURL=plain-draggable.js.map
+//# sourceMappingURL=plain-draggable-limit.js.map

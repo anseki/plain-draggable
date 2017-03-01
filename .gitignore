@@ -1,6 +1,2 @@
 node_modules
 .vscode
-plain-draggable-light.min.js
-test/plain-draggable-light.js
-test/plain-draggable-light.js.map
-src/plain-draggable-light.js

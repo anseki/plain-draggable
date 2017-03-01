@@ -5,12 +5,12 @@
 const webpack = require('webpack'),
   path = require('path'),
   BUILD = process.env.NODE_ENV === 'production',
-  LIGHT = process.env.DIV === 'light',
+  LIMIT = process.env.DIV === 'limit',
   SRC = process.env.SRC === 'yes',
   PKG = require('./package'),
 
   BUILD_PATH = BUILD ? __dirname : path.join(__dirname, 'test'),
-  BUILD_FILE = 'plain-draggable' + (LIGHT ? '-light' : '') + (BUILD ? '.min.js' : '.js'),
+  BUILD_FILE = 'plain-draggable' + (LIMIT ? '-limit' : '') + (BUILD ? '.min.js' : '.js'),
   ENTRY_PATH = path.resolve('./src/plain-draggable.js'),
 
   BABEL_TARGET_PACKAGES = [
@@ -20,7 +20,7 @@ const webpack = require('webpack'),
   ].map(packageName => require.resolve(packageName) // Get package root path
     .replace(new RegExp(`([\\/\\\\]node_modules[\\/\\\\]${packageName}[\\/\\\\]).*$`), '$1')),
 
-  LIGHT_TAGS = ['SNAP', 'SVG'],
+  LIMIT_TAGS = ['SNAP', 'SVG'],
 
   BABEL_PARAMS = {
     presets: ['es2015'],
@@ -38,11 +38,11 @@ function preProc(key, content) {
     .replace(new RegExp(`[^\\n]*\\[${key}\\][\\s\\S]*?\\[\\/${key}\\][^\\n]*\\n?`, 'g'), '');
 }
 
-function lighten(content) {
-  return LIGHT_TAGS.reduce((content, tag) => preProc(tag, content), content);
+function limitCode(content) {
+  return LIMIT_TAGS.reduce((content, tag) => preProc(tag, content), content);
 }
 
-if (!LIGHT && SRC) { throw new Error('This options break source file.'); }
+if (!LIMIT && SRC) { throw new Error('This options break source file.'); }
 
 module.exports = {
   entry: ENTRY_PATH,
@@ -63,15 +63,15 @@ module.exports = {
           loader: 'skeleton-loader',
           options: {
             procedure: function(content) {
-              return preProc('DEBUG', LIGHT && this.resourcePath === ENTRY_PATH ? lighten(content) : content);
+              return preProc('DEBUG', LIMIT && this.resourcePath === ENTRY_PATH ? limitCode(content) : content);
             }
           }
-        }] : [BABEL_RULE].concat(LIGHT ? [{
+        }] : [BABEL_RULE].concat(LIMIT ? [{
           loader: 'skeleton-loader',
           options: {
             procedure: function(content) {
               if (this.resourcePath === ENTRY_PATH) {
-                content = lighten(content);
+                content = limitCode(content);
                 if (SRC) {
                   const destPath = path.join(__dirname, 'src', BUILD_FILE);
                   require('fs').writeFileSync(destPath, content);
