@@ -43,7 +43,8 @@ http.createServer((request, response) => {
       alias: MODULE_PACKAGES.map(packageName => (
         { // node_modules
           match: new RegExp(`^/${packageName}/.+`),
-          serve: `${require.resolve(packageName).replace(/([\/\\]node_modules)[\/\\].*$/, '$1')}<% reqPath %>`,
+          serve: `${require.resolve(packageName).replace(
+            new RegExp(`^(.*[/\\\\]node_modules)[/\\\\]${packageName}[/\\\\].*$`), '$1')}<% reqPath %>`,
           allowOutside: true
         })).concat([
           // limited-function script
@@ -72,8 +73,8 @@ http.createServer((request, response) => {
                     filter: stats => /^[^\.].*\.html$/.test(stats.name),
                     listOf: 'fullPath'
                   }).sort()
-                  .map(fullPath => {
-                    const htmlPath = path.relative(EXT_DIR, fullPath).replace(path.sep, '/');
+                  .map(fullPath => { // abs URL for '/ext' (no trailing slash)
+                    const htmlPath = `/ext/${path.relative(EXT_DIR, fullPath).replace(/\\/g, '/')}`;
                     return `<li><a href="${htmlPath}">${htmlPath}</a></li>`;
                   }).join('')
                 }</ul></body></html>`);
