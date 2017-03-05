@@ -4,42 +4,52 @@
 
 const webpack = require('webpack'),
   path = require('path'),
+  PKG = require('./package'),
+
   BUILD = process.env.NODE_ENV === 'production',
   LIMIT = process.env.EDITION === 'limit',
   SRC = process.env.SRC === 'yes',
-  PKG = require('./package'),
 
-  BUILD_PATH = BUILD ? __dirname : path.join(__dirname, 'test'),
+  SRC_PATH = path.resolve(__dirname, 'src'),
+  ENTRY_PATH = path.resolve(SRC_PATH, 'plain-draggable.js'),
+  BUILD_PATH = BUILD ? __dirname : path.resolve(__dirname, 'test'),
   BUILD_FILE = 'plain-draggable' + (LIMIT ? '-limit' : '') + (BUILD ? '.min.js' : '.js'),
-  ENTRY_PATH = path.resolve('./src/plain-draggable.js'),
 
-  BABEL_TARGET_PACKAGES = [
+  IMPORTED_PACKAGES_PATH = [
     'cssprefix',
     'anim-event',
     'm-class-list'
   ].map(packageName => require.resolve(packageName) // Get package root path
-    .replace(new RegExp(`([\\/\\\\]node_modules[\\/\\\\]${packageName}[\\/\\\\]).*$`), '$1')),
+    .replace(new RegExp(`^(.*[/\\\\]node_modules[/\\\\]${packageName}[/\\\\]).*$`), '$1')),
 
   LIMIT_TAGS = ['SNAP', 'SVG'],
 
-  BABEL_PARAMS = {
-    presets: ['es2015'],
-    plugins: ['add-module-exports']
-  },
   BABEL_RULE = {
     loader: 'babel-loader',
-    options: BABEL_PARAMS
+    options: {
+      presets: ['es2015'],
+      plugins: ['add-module-exports']
+    }
   };
 
-function preProc(key, content) {
-  return (content + '')
-    .replace(new RegExp(`[^\\n]*\\[${key}\\/\\][^\\n]*\\n?`, 'g'), '')
-    .replace(new RegExp(`\\/\\*\\s*\\[${key}\\]\\s*\\*\\/[\\s\\S]*?\\/\\*\\s*\\[\\/${key}\\]\\s*\\*\\/`, 'g'), '')
-    .replace(new RegExp(`[^\\n]*\\[${key}\\][\\s\\S]*?\\[\\/${key}\\][^\\n]*\\n?`, 'g'), '');
-}
-
-function limitCode(content) {
-  return LIMIT_TAGS.reduce((content, tag) => preProc(tag, content), content);
+/**
+ * @param {(string|string[])} tag - A tag or an array of tags that are removed.
+ * @param {string} content - A content that is processed.
+ * @param {string} srcPath - A full path to the source file.
+ * @param {(string|RegExp|Array)} pathTest - The content is changed when any test passed.
+ *     A string which must be at the start of it, a RegExp which tests it or an array of these.
+ * @returns {string} - A content that might have been changed.
+ */
+function preProc(tag, content, srcPath, pathTest) {
+  if (!(Array.isArray(pathTest) ? pathTest : [pathTest]).some(test =>
+      test instanceof RegExp ? test.test(srcPath) : srcPath.indexOf(test) === 0)) {
+    return content;
+  }
+  content = content ? content + '' : '';
+  return (Array.isArray(tag) ? tag : [tag]).reduce((content, tag) => content
+    .replace(new RegExp(`[^\\n]*\\[${tag}/\\][^\\n]*\\n?`, 'g'), '')
+    .replace(new RegExp(`/\\*\\s*\\[${tag}\\]\\s*\\*/[\\s\\S]*?/\\*\\s*\\[/${tag}\\]\\s*\\*/`, 'g'), '')
+    .replace(new RegExp(`[^\\n]*\\[${tag}\\][\\s\\S]*?\\[/${tag}\\][^\\n]*\\n?`, 'g'), ''), content);
 }
 
 if (!LIMIT && SRC) { throw new Error('This options break source file.'); }
@@ -57,13 +67,15 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
-        exclude: absPath => !BABEL_TARGET_PACKAGES.find(target => absPath.indexOf(target) === 0) &&
+        exclude: absPath => !IMPORTED_PACKAGES_PATH.find(packagePath => absPath.indexOf(packagePath) === 0) &&
           absPath.split(path.sep).includes('node_modules'),
         use: BUILD ? [BABEL_RULE, {
           loader: 'skeleton-loader',
           options: {
             procedure: function(content) {
-              return preProc('DEBUG', LIMIT && this.resourcePath === ENTRY_PATH ? limitCode(content) : content);
+              return preProc('DEBUG',
+                LIMIT ? preProc(LIMIT_TAGS, content, this.resourcePath, SRC_PATH) : content,
+                this.resourcePath, IMPORTED_PACKAGES_PATH.concat(SRC_PATH));
             }
           }
         }] : [BABEL_RULE].concat(LIMIT ? [{
@@ -71,9 +83,9 @@ module.exports = {
           options: {
             procedure: function(content) {
               if (this.resourcePath === ENTRY_PATH) {
-                content = limitCode(content);
+                content = preProc(LIMIT_TAGS, content, '', '');
                 if (SRC) {
-                  const destPath = path.join(__dirname, 'src', BUILD_FILE);
+                  const destPath = path.resolve(SRC_PATH, BUILD_FILE);
                   require('fs').writeFileSync(destPath, content);
                   console.log(`Output: ${destPath}`);
                 }
