@@ -41,8 +41,9 @@ const webpack = require('webpack'),
  * @returns {string} - A content that might have been changed.
  */
 function preProc(tag, content, srcPath, pathTest) {
-  if (!(Array.isArray(pathTest) ? pathTest : [pathTest]).some(test =>
-      test instanceof RegExp ? test.test(srcPath) : srcPath.indexOf(test) === 0)) {
+  if (srcPath && pathTest &&
+      !(Array.isArray(pathTest) ? pathTest : [pathTest]).some(test =>
+        test instanceof RegExp ? test.test(srcPath) : srcPath.indexOf(test) === 0)) {
     return content;
   }
   content = content ? content + '' : '';
@@ -83,7 +84,7 @@ module.exports = {
           options: {
             procedure: function(content) {
               if (this.resourcePath === ENTRY_PATH) {
-                content = preProc(LIMIT_TAGS, content, '', '');
+                content = preProc(LIMIT_TAGS, content);
                 if (SRC) {
                   const destPath = path.resolve(SRC_PATH, BUILD_FILE);
                   require('fs').writeFileSync(destPath, content);
