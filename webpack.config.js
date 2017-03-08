@@ -70,31 +70,27 @@ module.exports = {
         test: /\.js$/,
         exclude: absPath => !IMPORTED_PACKAGES_PATH.find(packagePath => absPath.indexOf(packagePath) === 0) &&
           absPath.split(path.sep).includes('node_modules'),
-        use: BUILD ? [BABEL_RULE, {
-          loader: 'skeleton-loader',
-          options: {
-            procedure: function(content) {
-              return preProc('DEBUG',
-                LIMIT ? preProc(LIMIT_TAGS, content, this.resourcePath, SRC_PATH) : content,
-                this.resourcePath, IMPORTED_PACKAGES_PATH.concat(SRC_PATH));
-            }
-          }
-        }] : [BABEL_RULE].concat(LIMIT ? [{
-          loader: 'skeleton-loader',
-          options: {
-            procedure: function(content) {
-              if (this.resourcePath === ENTRY_PATH) {
-                content = preProc(LIMIT_TAGS, content);
-                if (SRC) {
-                  const destPath = path.resolve(SRC_PATH, BUILD_FILE);
-                  require('fs').writeFileSync(destPath, content);
-                  console.log(`Output: ${destPath}`);
+        use: [
+          BABEL_RULE,
+          {
+            loader: 'skeleton-loader',
+            options: {
+              procedure: function(content) {
+                if (LIMIT) {
+                  content = preProc(LIMIT_TAGS, content, this.resourcePath, SRC_PATH);
+                  if (!BUILD && SRC && this.resourcePath === ENTRY_PATH) { // source for limit edition
+                    const destPath = path.resolve(SRC_PATH, BUILD_FILE);
+                    require('fs').writeFileSync(destPath, content);
+                    console.log(`Output: ${destPath}`);
+                  }
                 }
+                return BUILD ?
+                  preProc('DEBUG', content, this.resourcePath, IMPORTED_PACKAGES_PATH.concat(SRC_PATH)) :
+                  content;
               }
-              return content;
             }
           }
-        }] : [])
+        ]
       }
     ]
   },
