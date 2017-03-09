@@ -236,7 +236,7 @@ window.resolvePPBBox = resolvePPBBox; // [DEBUG/]
 
 /**
  * @param {Element} element - A target element.
- * @param {boolean} [getPaddingBox] - Get padding-box instead of border-box as bounding-box.
+ * @param {?boolean} getPaddingBox - Get padding-box instead of border-box as bounding-box.
  * @returns {BBox} - A bounding-box of `element`.
  */
 function getBBox(element, getPaddingBox) {
@@ -262,13 +262,13 @@ window.getBBox = getBBox; // [DEBUG/]
 /**
  * Optimize an element for animation.
  * @param {Element} element - A target element.
- * @param {boolean} [isSvg] - Initialize for SVGElement if `true`.
+ * @param {?boolean} gpuTrigger - Initialize for SVGElement if `true`.
  * @returns {Element} - A target element.
  */
-function initAnim(element, isSvg) {
+function initAnim(element, gpuTrigger) {
   const style = element.style;
   style.webkitTapHighlightColor = 'transparent';
-  if (!isSvg) { style[CSSPrefix.getName('transform')] = 'translateZ(0)'; }
+  if (gpuTrigger) { style[CSSPrefix.getName('transform')] = 'translateZ(0)'; }
   style[CSSPrefix.getName('boxShadow')] = '0 0 1px transparent';
   return element;
 }
@@ -1085,6 +1085,7 @@ class PlainDraggable {
       throw new Error('Invalid options.');
     }
 
+    let gpuTrigger = true;
     // [SVG]
     let isSvg, ownerSvg;
     // SVGElement which is not root view
@@ -1098,10 +1099,11 @@ class PlainDraggable {
       const svgView = element.nearestViewportElement;
       props.svgCtmElement = !IS_GECKO ? svgView :
         svgView.appendChild(document.createElementNS(ownerSvg.namespaceURI, 'rect'));
+      gpuTrigger = false;
     }
     // [/SVG]
 
-    props.element = initAnim(element/* [SVG] */, isSvg/* [/SVG] */);
+    props.element = initAnim(element, gpuTrigger);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) { mClassList(element).add(draggableClass); }
