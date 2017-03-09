@@ -42,7 +42,7 @@ let insId = 0,
   activeItem, hasMoved, pointerOffset, body,
   // CSS property/value
   cssValueDraggableCursor, cssValueDraggingCursor, cssOrgValueBodyCursor,
-  cssPropUserSelect, cssOrgValueBodyUserSelect,
+  cssPropTransform, cssPropUserSelect, cssOrgValueBodyUserSelect,
   // Try to set `cursor` property.
   cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
   cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'],
@@ -268,8 +268,8 @@ window.getBBox = getBBox; // [DEBUG/]
 function initAnim(element, gpuTrigger) {
   const style = element.style;
   style.webkitTapHighlightColor = 'transparent';
-  if (gpuTrigger) { style[CSSPrefix.getName('transform')] = 'translateZ(0)'; }
   style[CSSPrefix.getName('boxShadow')] = '0 0 1px transparent';
+  if (gpuTrigger && cssPropTransform) { style[cssPropTransform] = 'translateZ(0)'; }
   return element;
 }
 
@@ -313,12 +313,29 @@ function viewPoint2SvgPoint(props, clientX, clientY) {
 // [/SVG]
 
 /**
- * Move HTMLElement.
+ * Move by `translate`.
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
  * @returns {boolean} - `true` if it was moved.
  */
-function moveHtml(props, position) {
+function moveTranslate(props, position) {
+  const elementBBox = props.elementBBox;
+  if (position.left !== elementBBox.left || position.top !== elementBBox.top) {
+    const offset = props.htmlOffset;
+    props.elementStyle[cssPropTransform] =
+      `translate(${position.left + offset.left}px, ${position.top + offset.top}px)`;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Move by `left` and `top`.
+ * @param {props} props - `props` of instance.
+ * @param {{left: number, top: number}} position - New position.
+ * @returns {boolean} - `true` if it was moved.
+ */
+function moveLeftTop(props, position) {
   const elementBBox = props.elementBBox,
     elementStyle = props.elementStyle,
     offset = props.htmlOffset;
@@ -396,11 +413,39 @@ function move(props, position, cbCheck) {
 }
 
 /**
- * Initialize HTMLElement, and get `offset` that is used by `moveHtml`.
+ * Initialize HTMLElement for `translate`, and get `offset` that is used by `moveTranslate`.
  * @param {props} props - `props` of instance.
  * @returns {void}
  */
-function initHtml(props) {
+function initTranslate(props) {
+  const element = props.element,
+    elementStyle = props.elementStyle,
+    curPosition = getBBox(element); // Get BBox before change style.
+
+  if (!props.orgStyle) {
+    props.orgStyle = {};
+    props.orgStyle[cssPropTransform] = elementStyle[cssPropTransform] || '';
+  } else {
+    elementStyle[cssPropTransform] = props.orgStyle[cssPropTransform];
+  }
+
+  elementStyle[cssPropTransform] = 'translate(0, 0)';
+  // Get document offset.
+  const newBBox = getBBox(element),
+    offset = props.htmlOffset =
+      {left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0}; // avoid `-0`
+
+  // Restore position
+  elementStyle[cssPropTransform] =
+    `translate(${curPosition.left + offset.left}px, ${curPosition.top + offset.top}px)`;
+}
+
+/**
+ * Initialize HTMLElement for `left` and `top`, and get `offset` that is used by `moveLeftTop`.
+ * @param {props} props - `props` of instance.
+ * @returns {void}
+ */
+function initLeftTop(props) {
   const element = props.element,
     elementStyle = props.elementStyle,
     curPosition = getBBox(element), // Get BBox before change style.
@@ -414,7 +459,7 @@ function initHtml(props) {
     props.lastStyle = {};
   } else {
     RESTORE_PROPS.forEach(prop => {
-      // Skip this if it seems user changed it. (Perfect check is impossible.)
+      // Skip this if it seems user changed it. (it can't check perfectly.)
       if (props.lastStyle[prop] == null || elementStyle[prop] === props.lastStyle[prop]) {
         elementStyle[prop] = props.orgStyle[prop];
       }
@@ -1087,10 +1132,10 @@ class PlainDraggable {
 
     let gpuTrigger = true;
     // [SVG]
-    let isSvg, ownerSvg;
+    let ownerSvg;
     // SVGElement which is not root view
-    if ((isSvg = element instanceof SVGElement && (ownerSvg = element.ownerSVGElement))) {
-      // It means `instanceof SVGLocatable`
+    if (element instanceof SVGElement && (ownerSvg = element.ownerSVGElement)) {
+      // It means `instanceof SVGLocatable` (many browsers don't have SVGLocatable)
       if (!element.getBBox) { throw new Error('This element is not accepted.'); }
       // Trident bug, returned value must be used (That is not given value).
       props.svgTransform = element.transform.baseVal.appendItem(ownerSvg.createSVGTransform());
@@ -1100,8 +1145,26 @@ class PlainDraggable {
       props.svgCtmElement = !IS_GECKO ? svgView :
         svgView.appendChild(document.createElementNS(ownerSvg.namespaceURI, 'rect'));
       gpuTrigger = false;
-    }
-    // [/SVG]
+      props.initElm = initSvg;
+      props.moveElm = moveSvg;
+
+    } else {
+      // [/SVG]
+      const cssPropWillChange = CSSPrefix.getName('willChange');
+      if (cssPropWillChange) { gpuTrigger = false; }
+
+      if (!options.leftTop && cssPropTransform) { // translate
+        if (cssPropWillChange) { element.style[cssPropWillChange] = 'transform'; }
+        props.initElm = initTranslate;
+        props.moveElm = moveTranslate;
+
+      } else { // left and top
+        if (cssPropWillChange) { element.style[cssPropWillChange] = 'left, top'; }
+        props.initElm = initLeftTop;
+        props.moveElm = moveLeftTop;
+        // throw new Error('`transform` is not supported.');
+      }
+    } // [SVG/]
 
     props.element = initAnim(element, gpuTrigger);
     props.elementStyle = element.style;
@@ -1111,16 +1174,6 @@ class PlainDraggable {
     props.handleMousedown = event => { mousedown(props, event); };
     props.handleScroll = AnimEvent.add(() => { initBBox(props); });
     props.scrollElements = [];
-
-    // [SVG]
-    if (isSvg) { // SVGElement
-      props.initElm = initSvg;
-      props.moveElm = moveSvg;
-    } else { // HTMLElement
-      // [/SVG]
-      props.initElm = initHtml;
-      props.moveElm = moveHtml;
-    } // [SVG/]
 
     // Default options
     if (!options.containment) {
@@ -1345,6 +1398,7 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
 {
   let resizing = false;
   function initDoc() {
+    cssPropTransform = CSSPrefix.getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
     if ((cssPropUserSelect = CSSPrefix.getName('userSelect'))) {
       cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];

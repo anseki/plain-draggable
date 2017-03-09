@@ -570,6 +570,7 @@ var insId = 0,
 cssValueDraggableCursor = void 0,
     cssValueDraggingCursor = void 0,
     cssOrgValueBodyCursor = void 0,
+    cssPropTransform = void 0,
     cssPropUserSelect = void 0,
     cssOrgValueBodyUserSelect = void 0,
 
@@ -775,7 +776,7 @@ window.resolvePPBBox = resolvePPBBox; // [DEBUG/]
 
 /**
  * @param {Element} element - A target element.
- * @param {boolean} [getPaddingBox] - Get padding-box instead of border-box as bounding-box.
+ * @param {?boolean} getPaddingBox - Get padding-box instead of border-box as bounding-box.
  * @returns {BBox} - A bounding-box of `element`.
  */
 function getBBox(element, getPaddingBox) {
@@ -801,16 +802,16 @@ window.getBBox = getBBox; // [DEBUG/]
 /**
  * Optimize an element for animation.
  * @param {Element} element - A target element.
- * @param {boolean} [isSvg] - Initialize for SVGElement if `true`.
+ * @param {?boolean} gpuTrigger - Initialize for SVGElement if `true`.
  * @returns {Element} - A target element.
  */
-function initAnim(element, isSvg) {
+function initAnim(element, gpuTrigger) {
   var style = element.style;
   style.webkitTapHighlightColor = 'transparent';
-  if (!isSvg) {
-    style[_cssprefix2.default.getName('transform')] = 'translateZ(0)';
-  }
   style[_cssprefix2.default.getName('boxShadow')] = '0 0 1px transparent';
+  if (gpuTrigger && cssPropTransform) {
+    style[cssPropTransform] = 'translateZ(0)';
+  }
   return element;
 }
 
@@ -860,12 +861,28 @@ function viewPoint2SvgPoint(props, clientX, clientY) {
 // [/SVG]
 
 /**
- * Move HTMLElement.
+ * Move by `translate`.
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
  * @returns {boolean} - `true` if it was moved.
  */
-function moveHtml(props, position) {
+function moveTranslate(props, position) {
+  var elementBBox = props.elementBBox;
+  if (position.left !== elementBBox.left || position.top !== elementBBox.top) {
+    var offset = props.htmlOffset;
+    props.elementStyle[cssPropTransform] = 'translate(' + (position.left + offset.left) + 'px, ' + (position.top + offset.top) + 'px)';
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Move by `left` and `top`.
+ * @param {props} props - `props` of instance.
+ * @param {{left: number, top: number}} position - New position.
+ * @returns {boolean} - `true` if it was moved.
+ */
+function moveLeftTop(props, position) {
   var elementBBox = props.elementBBox,
       elementStyle = props.elementStyle,
       offset = props.htmlOffset;
@@ -948,11 +965,37 @@ function move(props, position, cbCheck) {
 }
 
 /**
- * Initialize HTMLElement, and get `offset` that is used by `moveHtml`.
+ * Initialize HTMLElement for `translate`, and get `offset` that is used by `moveTranslate`.
  * @param {props} props - `props` of instance.
  * @returns {void}
  */
-function initHtml(props) {
+function initTranslate(props) {
+  var element = props.element,
+      elementStyle = props.elementStyle,
+      curPosition = getBBox(element); // Get BBox before change style.
+
+  if (!props.orgStyle) {
+    props.orgStyle = {};
+    props.orgStyle[cssPropTransform] = elementStyle[cssPropTransform] || '';
+  } else {
+    elementStyle[cssPropTransform] = props.orgStyle[cssPropTransform];
+  }
+
+  elementStyle[cssPropTransform] = 'translate(0, 0)';
+  // Get document offset.
+  var newBBox = getBBox(element),
+      offset = props.htmlOffset = { left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0 }; // avoid `-0`
+
+  // Restore position
+  elementStyle[cssPropTransform] = 'translate(' + (curPosition.left + offset.left) + 'px, ' + (curPosition.top + offset.top) + 'px)';
+}
+
+/**
+ * Initialize HTMLElement for `left` and `top`, and get `offset` that is used by `moveLeftTop`.
+ * @param {props} props - `props` of instance.
+ * @returns {void}
+ */
+function initLeftTop(props) {
   var element = props.element,
       elementStyle = props.elementStyle,
       curPosition = getBBox(element),
@@ -967,7 +1010,7 @@ function initHtml(props) {
     props.lastStyle = {};
   } else {
     RESTORE_PROPS.forEach(function (prop) {
-      // Skip this if it seems user changed it. (Perfect check is impossible.)
+      // Skip this if it seems user changed it. (it can't check perfectly.)
       if (props.lastStyle[prop] == null || elementStyle[prop] === props.lastStyle[prop]) {
         elementStyle[prop] = props.orgStyle[prop];
       }
@@ -1719,12 +1762,12 @@ var PlainDraggable = function () {
       throw new Error('Invalid options.');
     }
 
+    var gpuTrigger = true;
     // [SVG]
-    var isSvg = void 0,
-        ownerSvg = void 0;
+    var ownerSvg = void 0;
     // SVGElement which is not root view
-    if (isSvg = element instanceof SVGElement && (ownerSvg = element.ownerSVGElement)) {
-      // It means `instanceof SVGLocatable`
+    if (element instanceof SVGElement && (ownerSvg = element.ownerSVGElement)) {
+      // It means `instanceof SVGLocatable` (many browsers don't have SVGLocatable)
       if (!element.getBBox) {
         throw new Error('This element is not accepted.');
       }
@@ -1734,10 +1777,35 @@ var PlainDraggable = function () {
       // Gecko bug, view.getScreenCTM returns CTM with root view.
       var svgView = element.nearestViewportElement;
       props.svgCtmElement = !IS_GECKO ? svgView : svgView.appendChild(document.createElementNS(ownerSvg.namespaceURI, 'rect'));
-    }
-    // [/SVG]
+      gpuTrigger = false;
+      props.initElm = initSvg;
+      props.moveElm = moveSvg;
+    } else {
+      // [/SVG]
+      var cssPropWillChange = _cssprefix2.default.getName('willChange');
+      if (cssPropWillChange) {
+        gpuTrigger = false;
+      }
 
-    props.element = initAnim(element /* [SVG] */, isSvg /* [/SVG] */);
+      if (!options.leftTop && cssPropTransform) {
+        // translate
+        if (cssPropWillChange) {
+          element.style[cssPropWillChange] = 'transform';
+        }
+        props.initElm = initTranslate;
+        props.moveElm = moveTranslate;
+      } else {
+        // left and top
+        if (cssPropWillChange) {
+          element.style[cssPropWillChange] = 'left, top';
+        }
+        props.initElm = initLeftTop;
+        props.moveElm = moveLeftTop;
+        // throw new Error('`transform` is not supported.');
+      }
+    } // [SVG/]
+
+    props.element = initAnim(element, gpuTrigger);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) {
@@ -1751,18 +1819,6 @@ var PlainDraggable = function () {
       initBBox(props);
     });
     props.scrollElements = [];
-
-    // [SVG]
-    if (isSvg) {
-      // SVGElement
-      props.initElm = initSvg;
-      props.moveElm = moveSvg;
-    } else {
-      // HTMLElement
-      // [/SVG]
-      props.initElm = initHtml;
-      props.moveElm = moveHtml;
-    } // [SVG/]
 
     // Default options
     if (!options.containment) {
@@ -2088,6 +2144,7 @@ document.addEventListener('mouseup', function () {
 
 {
   var initDoc = function initDoc() {
+    cssPropTransform = _cssprefix2.default.getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
     if (cssPropUserSelect = _cssprefix2.default.getName('userSelect')) {
       cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
