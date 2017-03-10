@@ -422,24 +422,51 @@ function move(props, position, cbCheck) {
 function initTranslate(props) {
   const element = props.element,
     elementStyle = props.elementStyle,
-    curPosition = getBBox(element); // Get BBox before change style.
+    curPosition = getBBox(element), // Get BBox before change style.
+    RESTORE_PROPS = ['display', 'width', 'height'];
+  RESTORE_PROPS.unshift(cssPropTransform);
 
   if (!props.orgStyle) {
-    props.orgStyle = {};
-    props.orgStyle[cssPropTransform] = elementStyle[cssPropTransform] || '';
+    props.orgStyle = RESTORE_PROPS.reduce((orgStyle, prop) => {
+      orgStyle[prop] = elementStyle[prop] || '';
+      return orgStyle;
+    }, {});
+    props.lastStyle = {};
   } else {
-    elementStyle[cssPropTransform] = props.orgStyle[cssPropTransform];
+    RESTORE_PROPS.forEach(prop => {
+      // Skip this if it seems user changed it. (it can't check perfectly.)
+      if (props.lastStyle[prop] == null || elementStyle[prop] === props.lastStyle[prop]) {
+        elementStyle[prop] = props.orgStyle[prop];
+      }
+    });
   }
 
+  const orgSize = getBBox(element);
+  // https://www.w3.org/TR/css-transforms-1/#transformable-element
+  if (window.getComputedStyle(element, '').display === 'inline') {
+    elementStyle.display = 'inline-block';
+  }
   elementStyle[cssPropTransform] = 'translate(0, 0)';
   // Get document offset.
-  const newBBox = getBBox(element),
-    offset = props.htmlOffset =
-      {left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0}; // avoid `-0`
+  let newBBox = getBBox(element);
+  const offset = props.htmlOffset =
+    {left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0}; // avoid `-0`
 
   // Restore position
   elementStyle[cssPropTransform] =
     `translate(${curPosition.left + offset.left}px, ${curPosition.top + offset.top}px)`;
+  // Restore size
+  ['width', 'height'].forEach(prop => {
+    if (newBBox[prop] !== orgSize[prop]) {
+      // Ignore `box-sizing`
+      elementStyle[prop] = orgSize[prop] + 'px';
+      newBBox = getBBox(element);
+      if (newBBox[prop] !== orgSize[prop]) { // Retry
+        elementStyle[prop] = orgSize[prop] - (newBBox[prop] - orgSize[prop]) + 'px';
+      }
+    }
+    props.lastStyle[prop] = elementStyle[prop];
+  });
 }
 
 // [LEFTTOP]
