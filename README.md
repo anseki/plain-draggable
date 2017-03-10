@@ -8,16 +8,17 @@ The simple and high performance library to allow HTML/SVG element to be dragged.
 
 [![ss-01](ss-01.png)](https://anseki.github.io/plain-draggable/)
 
-Features:
+## Features
 
 - Accept HTML/SVG element as an element that comes to be draggable.
 - Restrict the draggable area.
 - Snap the draggable element to other elements, points, lines, consecutive points (i.e. grid) or something.
-- Use `requestAnimationFrame` for high performance.
+- Use `requestAnimationFrame` API, `translate` and `will-change` CSS if possible, for high performance.  
+![ss-02](ss-02.png)
 - Provide only basic methods, easy and simple usage.
 - No dependency.
 - Single file.
-- Supports modern browsers.
+- Support modern browsers.
 
 ## Usage
 
@@ -33,17 +34,26 @@ This is simplest case:
 draggable = new PlainDraggable(element);
 ```
 
-Now, the `element` can be moved by mouse-dragging operation.
+Now, the `element` can be moved by mouse-dragging operation.  
+The `element` might be a `<div>`, `<span>`, `<circle>` or something.
+
+```html
+<p style="background-color: gray;">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut <span id="draggable" style="color: red;">labore</span> et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+```
+
+```js
+draggable = new PlainDraggable(document.getElementById('draggable'));
+```
 
 By default, the moving is restricted to inside of the `element`'s parent element.
 
 ```html
-<div class="gray">
+<div style="background-color: gray;">
   <div id="draggable">Drag This</div>
 </div>
 ```
 
-The `<div id="draggable">` can be moved within the gray box. (See [`containment`](#options-containment) option.)
+The `<div id="draggable">` above can be moved within the gray box. (See [`containment`](#options-containment) option.)
 
 You can specify a "Grid" that the draggable element snaps to.
 
@@ -61,7 +71,15 @@ draggable = new PlainDraggable(element[, options])
 
 The `element` argument is a HTML or SVG element that will be a draggable element. Any element that has a bounding-box is accepted. Other elements such as `<g>` can not be specified.
 
-The `options` argument is an Object that can have properties as [options](#options). You can also change the options by [`setOptions`](#setoptions) method or [properties](#properties) of the PlainDraggable instance.
+The `options` argument is an Object that can have properties as [options](#options) (and [`leftTop`](#lefttop-option) option). You can also change the options by [`setOptions`](#setoptions) method or [properties](#properties) of the PlainDraggable instance.
+
+### `leftTop` option
+
+By default, PlainDraggable tries to move the draggable element by using the `translate` CSS transform function.  
+If `true` is specified for `leftTop` option of the constructor, it uses the `left` and `top` CSS properties instead. You may use this to make it synchronize with the layout of something.
+
+Note that the `left` and `top` CSS properties may be performance degradation.  
+Also, this is an option for constructor, that is, you can not change this after.
 
 ## Methods
 
@@ -126,7 +144,7 @@ The default is the draggable element itself, and all of the draggable element ca
 *Type:* number or boolean  
 *Default:* `9000`
 
-A `z-index` CSS property that is applied to the draggable element when it is being dragged. It is restored when the dragging finished.  
+A [`z-index`](https://developer.mozilla.org/en-US/docs/Web/CSS/z-index) CSS property that is applied to the draggable element when it is being dragged. It is restored when the dragging finished.  
 If `false` is specified, it is not changed.
 
 ### <a name="options-left_top"></a>`left`/`top`
