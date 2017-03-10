@@ -85,17 +85,9 @@ Object.defineProperty(exports, "__esModule", {
  * Licensed under the MIT license.
  */
 
-// *** Currently, this code except `export` is not ES2015. ***
-
 var MSPF = 1000 / 60,
     // ms/frame (FPS: 60)
 KEEP_LOOP = 500,
-    requestAnim = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
-  setTimeout(callback, MSPF);
-},
-    cancelAnim = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame || function (requestID) {
-  clearTimeout(requestID);
-},
 
 
 /**
@@ -105,12 +97,38 @@ KEEP_LOOP = 500,
  */
 
 /** @type {task[]} */
-tasks = [],
-    requestID,
+tasks = [];
+
+var requestAnim = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
+  return setTimeout(callback, MSPF);
+},
+    cancelAnim = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame || function (requestID) {
+  return clearTimeout(requestID);
+},
+    requestID = void 0,
     lastFrameTime = Date.now();
 
+// [DEBUG]
+var requestAnimSave = requestAnim,
+    cancelAnimSave = cancelAnim;
+window.AnimEventByTimer = function (byTimer) {
+  if (byTimer) {
+    requestAnim = function requestAnim(callback) {
+      return setTimeout(callback, MSPF);
+    };
+    cancelAnim = function cancelAnim(requestID) {
+      return clearTimeout(requestID);
+    };
+  } else {
+    requestAnim = requestAnimSave;
+    cancelAnim = cancelAnimSave;
+  }
+};
+// [/DEBUG]
+
 function step() {
-  var called, next;
+  var called = void 0,
+      next = void 0;
 
   if (requestID) {
     cancelAnim.call(window, requestID);
@@ -155,7 +173,7 @@ var AnimEvent = {
    * @returns {(function|null)} - A wrapped event listener.
    */
   add: function add(listener) {
-    var task;
+    var task = void 0;
     if (indexOfTasks(listener) === -1) {
       tasks.push(task = { listener: listener });
       return function (event) {
@@ -170,7 +188,7 @@ var AnimEvent = {
   },
 
   remove: function remove(listener) {
-    var iRemove;
+    var iRemove = void 0;
     if ((iRemove = indexOfTasks(listener)) > -1) {
       tasks.splice(iRemove, 1);
       if (!tasks.length && requestID) {

@@ -1,6 +1,6 @@
 {
   "name": "plain-draggable",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "title": "PlainDraggable",
   "description": "The simple and high performance library to allow HTML/SVG element to be dragged.",
   "keywords": [
@@ -18,7 +18,7 @@
   "main": "plain-draggable.min.js",
   "jsnext:main": "./src/plain-draggable.js",
   "devDependencies": {
-    "anim-event": "0.0.8",
+    "anim-event": "1.0.3",
     "babel-core": "^6.23.1",
     "babel-loader": "^6.4.0",
     "babel-plugin-add-module-exports": "^0.2.1",
