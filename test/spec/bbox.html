@@ -44,7 +44,9 @@
     <div id="elm8" style="width: 300px; height: 30px;">elm8</div>
   </div>
 
-  <div style="height: 50px; position: relative;">
+  <!-- `margin` of target moves the parent element, and that margin is removed. It can't get the moving. -->
+  <!-- So, this parent is not moved by border. -->
+  <div style="box-sizing: border-box; height: 50px; position: relative; border: 1px solid red;">
     <div id="elm9" style="width: 300px; height: 30px; margin: 21px;">elm9</div>
   </div>
 

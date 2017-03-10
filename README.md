@@ -38,7 +38,7 @@ Now, the `element` can be moved by mouse-dragging operation.
 The `element` might be a `<div>`, `<span>`, `<circle>` or something.
 
 ```html
-<p style="background-color: gray;">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut <span id="draggable" style="color: red;">labore</span> et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+<p style="background-color: gainsboro;">Lorem ipsum dolor sit amet, consectetur <span id="draggable" style="background-color: lightskyblue;">adipiscing</span> elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
 ```
 
 ```js

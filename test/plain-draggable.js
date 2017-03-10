@@ -994,7 +994,7 @@ function initTranslate(props) {
       elementStyle = props.elementStyle,
       curPosition = getBBox(element),
       // Get BBox before change style.
-  RESTORE_PROPS = ['display', 'width', 'height'];
+  RESTORE_PROPS = ['display', 'marginTop', 'marginBottom', 'width', 'height'];
   RESTORE_PROPS.unshift(cssPropTransform);
 
   if (!props.orgStyle) {
@@ -1012,10 +1012,17 @@ function initTranslate(props) {
     });
   }
 
-  var orgSize = getBBox(element);
+  var orgSize = getBBox(element),
+      cmpStyle = window.getComputedStyle(element, '');
   // https://www.w3.org/TR/css-transforms-1/#transformable-element
-  if (window.getComputedStyle(element, '').display === 'inline') {
+  if (cmpStyle.display === 'inline') {
     elementStyle.display = 'inline-block';
+    ['Top', 'Bottom'].forEach(function (dirProp) {
+      var padding = parseFloat(cmpStyle['padding' + dirProp]);
+      // paddingTop/Bottom make padding but don't make space -> negative margin in inline-block
+      // marginTop/Bottom don't work in inline element -> `0` in inline-block
+      elementStyle['margin' + dirProp] = padding ? '-' + padding + 'px' : '0';
+    });
   }
   elementStyle[cssPropTransform] = 'translate(0, 0)';
   // Get document offset.
@@ -1050,7 +1057,7 @@ function initLeftTop(props) {
       elementStyle = props.elementStyle,
       curPosition = getBBox(element),
       // Get BBox before change style.
-  RESTORE_PROPS = ['position', 'margin', 'width', 'height'];
+  RESTORE_PROPS = ['position', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 'width', 'height'];
 
   if (!props.orgStyle) {
     props.orgStyle = RESTORE_PROPS.reduce(function (orgStyle, prop) {
