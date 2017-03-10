@@ -1,5 +1,5 @@
 /* line 5, ex.scss */
-.ex-060-anim, #ex-110-draggable.swing {
+.ex-060-anim, #ex-110-draggable.swing > div {
   -webkit-tap-highlight-color: transparent;
   transform: translateZ(0);
   box-shadow: 0 0 1px transparent;
@@ -242,10 +242,10 @@
 
 /* line 209, ex.scss */
 .ex-060-anim {
-  -moz-transition-property: left, top;
-  -o-transition-property: left, top;
-  -webkit-transition-property: left, top;
-  transition-property: left, top;
+  -moz-transition-property: -moz-transform;
+  -o-transition-property: -o-transform;
+  -webkit-transition-property: -webkit-transform;
+  transition-property: transform;
   -moz-transition-duration: 0.2s;
   -o-transition-duration: 0.2s;
   -webkit-transition-duration: 0.2s;
@@ -276,23 +276,21 @@
 }
 /* line 236, ex.scss */
 #ex-110-draggable > div {
-  height: 32px;
+  width: 78px;
+  height: 78px;
 }
-
-/* line 239, ex.scss */
-#ex-110-draggable.cat {
+/* line 241, ex.scss */
+#ex-110-draggable.cat > div {
   background-image: url("../img/cat-0.png");
   background-repeat: no-repeat;
   background-position: center top;
 }
-
-/* line 245, ex.scss */
-#ex-110-draggable.lift {
+/* line 247, ex.scss */
+#ex-110-draggable.lift > div {
   background-image: url("../img/cat-1.png");
 }
-
-/* line 249, ex.scss */
-#ex-110-draggable.swing {
+/* line 251, ex.scss */
+#ex-110-draggable.swing > div {
   -moz-animation-name: ex-110-draggable-swing;
   -webkit-animation-name: ex-110-draggable-swing;
   animation-name: ex-110-draggable-swing;
@@ -312,6 +310,10 @@
   -ms-transform-origin: center 5%;
   -webkit-transform-origin: center 5%;
   transform-origin: center 5%;
+}
+/* line 261, ex.scss */
+#ex-110-draggable > div > div {
+  height: 32px;
 }
 
 @-moz-keyframes ex-110-draggable-swing {
@@ -348,21 +350,21 @@
     transform: rotate(-15deg);
   }
 }
-/* line 266, ex.scss */
+/* line 271, ex.scss */
 #ex-120-stage {
   position: relative;
 }
 
-/* line 270, ex.scss */
+/* line 275, ex.scss */
 #ex-120-point {
   left: 160px;
   top: 64px;
 }
-/* line 274, ex.scss */
+/* line 279, ex.scss */
 #ex-120-point div {
   position: absolute;
 }
-/* line 275, ex.scss */
+/* line 280, ex.scss */
 #ex-120-point > div {
   right: 0;
   bottom: 100%;
@@ -370,17 +372,17 @@
   margin-right: 5px;
   margin-bottom: 5px;
 }
-/* line 282, ex.scss */
+/* line 287, ex.scss */
 #ex-120-point > div > div {
   right: 0;
   bottom: 100%;
 }
 
-/* line 289, ex.scss */
+/* line 294, ex.scss */
 #ex-120-line {
   left: 360px;
 }
-/* line 292, ex.scss */
+/* line 297, ex.scss */
 #ex-120-line div {
   position: absolute;
   right: 5px;
@@ -388,7 +390,7 @@
   white-space: nowrap;
 }
 
-/* line 300, ex.scss */
+/* line 305, ex.scss */
 #ex-120-rect {
   position: absolute;
   left: 520px;
@@ -396,7 +398,7 @@
   width: 164px;
   height: 54px;
 }
-/* line 307, ex.scss */
+/* line 312, ex.scss */
 #ex-120-rect div {
   position: absolute;
   top: -1px;
@@ -406,12 +408,12 @@
   border: 2px solid #24c4f1;
 }
 
-/* line 319, ex.scss */
+/* line 324, ex.scss */
 #ex-180-stage {
   position: relative;
 }
 
-/* line 323, ex.scss */
+/* line 328, ex.scss */
 #ex-180-grid {
   position: absolute;
   left: 0;
@@ -421,22 +423,22 @@
   background-image: url("../img/grid-line-h-32.png");
 }
 
-/* line 334, ex.scss */
+/* line 339, ex.scss */
 #ex-190-stage {
   position: relative;
 }
 
-/* line 338, ex.scss */
+/* line 343, ex.scss */
 #ex-190-point1,
 #ex-190-point2 {
   top: 64px;
 }
-/* line 342, ex.scss */
+/* line 347, ex.scss */
 #ex-190-point1 div,
 #ex-190-point2 div {
   position: absolute;
 }
-/* line 343, ex.scss */
+/* line 348, ex.scss */
 #ex-190-point1 > div,
 #ex-190-point2 > div {
   right: 0;
@@ -445,29 +447,29 @@
   margin-right: 5px;
   margin-bottom: 5px;
 }
-/* line 350, ex.scss */
+/* line 355, ex.scss */
 #ex-190-point1 > div > div,
 #ex-190-point2 > div > div {
   right: 20px;
   bottom: 100%;
 }
 
-/* line 357, ex.scss */
+/* line 362, ex.scss */
 #ex-190-point1 {
   left: 260px;
 }
 
-/* line 358, ex.scss */
+/* line 363, ex.scss */
 #ex-190-point2 {
   left: 520px;
 }
 
-/* line 362, ex.scss */
+/* line 367, ex.scss */
 #ex-200-stage {
   position: relative;
 }
 
-/* line 368, ex.scss */
+/* line 373, ex.scss */
 #ex-200-line1 div,
 #ex-200-line2 div {
   position: absolute;
@@ -476,31 +478,31 @@
   white-space: nowrap;
 }
 
-/* line 376, ex.scss */
+/* line 381, ex.scss */
 #ex-200-line1 {
   left: 260px;
 }
 
-/* line 377, ex.scss */
+/* line 382, ex.scss */
 #ex-200-line2 {
   left: 520px;
 }
 
-/* line 381, ex.scss */
+/* line 386, ex.scss */
 #ex-210-stage {
   position: relative;
 }
 
-/* line 385, ex.scss */
+/* line 390, ex.scss */
 #ex-210-point1 {
   left: 260px;
   top: 64px;
 }
-/* line 389, ex.scss */
+/* line 394, ex.scss */
 #ex-210-point1 div {
   position: absolute;
 }
-/* line 390, ex.scss */
+/* line 395, ex.scss */
 #ex-210-point1 > div {
   right: 0;
   bottom: 100%;
@@ -508,17 +510,17 @@
   margin-right: 5px;
   margin-bottom: 5px;
 }
-/* line 397, ex.scss */
+/* line 402, ex.scss */
 #ex-210-point1 > div > div {
   right: 20px;
   bottom: 100%;
 }
 
-/* line 404, ex.scss */
+/* line 409, ex.scss */
 #ex-210-line2 {
   left: 520px;
 }
-/* line 406, ex.scss */
+/* line 411, ex.scss */
 #ex-210-line2 div {
   position: absolute;
   right: 5px;
@@ -526,12 +528,17 @@
   white-space: nowrap;
 }
 
-/* line 416, ex.scss */
+/* line 419, ex.scss */
+#ex-210-draggable {
+  background-color: rgba(205, 92, 92, 0.6);
+}
+
+/* line 425, ex.scss */
 #ex-220-stage {
   position: relative;
 }
 
-/* line 420, ex.scss */
+/* line 429, ex.scss */
 #ex-220-rect1 {
   position: absolute;
   left: 160px;
@@ -539,7 +546,7 @@
   width: 164px;
   height: 54px;
 }
-/* line 427, ex.scss */
+/* line 436, ex.scss */
 #ex-220-rect1 div {
   position: absolute;
   top: -1px;
@@ -549,7 +556,7 @@
   border: 2px solid #24c4f1;
 }
 
-/* line 437, ex.scss */
+/* line 446, ex.scss */
 #ex-220-rect2 {
   position: absolute;
   left: 460px;
@@ -557,7 +564,7 @@
   width: 120px;
   height: 40px;
 }
-/* line 444, ex.scss */
+/* line 453, ex.scss */
 #ex-220-rect2 div {
   position: absolute;
   top: -1px;

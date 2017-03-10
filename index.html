@@ -47,17 +47,17 @@ window.addEventListener('load', function() {
 <!-- ================ /ex -->
 <!-- /include "ex-010.html" -->
 
-<p>Features:</p>
+<h2 id="features">Features</h2>
 
 <ul>
 <li>Accept HTML/SVG element as an element that comes to be draggable.</li>
 <li>Restrict the draggable area.</li>
 <li>Snap the draggable element to other elements, points, lines, consecutive points (i.e. grid) or something.</li>
-<li>Use <code>requestAnimationFrame</code> for high performance.</li>
+<li>Use <code>requestAnimationFrame</code> API, <code>translate</code> and <code>will-change</code> CSS if possible, for high performance.<br><img src="img/ss-02.png" style="max-width: 100%;" alt="ss-02"></li>
 <li>Provide only basic methods, easy and simple usage.</li>
 <li>No dependency.</li>
 <li>Single file.</li>
-<li>Supports modern browsers.</li>
+<li>Support modern browsers.</li>
 </ul>
 
 <!-- include "ex-020.html" -->
@@ -384,10 +384,15 @@ window.addEventListener('load', function() {
   var target = document.getElementById('ex-060-draggable'),
     bBox = target.getBoundingClientRect(),
     port = document.getElementById('ex-060-port'),
-    snapped, inAnim = false, PORT_X = '40px', PORT_Y = '64px', DURATION = 0.2;
+    portPosition = port.getBoundingClientRect(),
+    snapped, inAnim = false, DURATION = 0.2;
 
   port.style.width = bBox.width + 'px';
   port.style.height = bBox.height + 'px';
+  portPosition = {
+    left: portPosition.left + window.pageXOffset,
+    top: portPosition.top + window.pageYOffset
+  };
 
   function animMode(toOn) {
     if (toOn !== inAnim) {
@@ -404,8 +409,8 @@ window.addEventListener('load', function() {
     onDragEnd: function() {
       if (!snapped) {
         animMode(true);
-        target.style.left = PORT_X;
-        target.style.top = PORT_Y;
+        this.left = portPosition.left;
+        this.top = portPosition.top;
       }
     }
   });
@@ -434,10 +439,31 @@ window.addEventListener('load', function() {
 <p>This is simplest case:</p>
 <div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PlainDraggable</span><span class="p">(</span><span class="nx">element</span><span class="p">);</span>
 </code></pre></div>
-<p>Now, the <code>element</code> can be moved by mouse-dragging operation.</p>
+<p>Now, the <code>element</code> can be moved by mouse-dragging operation.<br>The <code>element</code> might be a <code>&lt;div&gt;</code>, <code>&lt;span&gt;</code>, <code>&lt;circle&gt;</code> or something.</p>
+
+<!-- include "ex-085.html" -->
+<!-- ================ ex -->
+<!-- By Jekyll -->
+<div class="highlight"><pre style="white-space: normal;"><code class="language-html" data-lang="html"><span class="nt">&lt;p</span> <span class="na">style=</span><span class="s">&quot;background-color: #d4d4d4;&quot;</span><span class="nt">&gt;</span>Lorem ipsum dolor sit amet, consectetur<br><span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">&quot;draggable&quot;</span> <span class="na">style=</span><span class="s">&quot;background-color: lightskyblue;&quot;</span><span class="nt">&gt;</span>adipiscing<span class="nt">&lt;/span&gt;</span> elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.<span class="nt">&lt;/p&gt;</span>
+</code></pre></div><div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PlainDraggable</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;draggable&#39;</span><span class="p">));</span>
+</code></pre></div>
+<!-- /By Jekyll -->
+
+<p style="background-color: #d4d4d4;">Lorem ipsum dolor sit amet, consectetur <span id="ex-085-draggable" style="background-color: lightskyblue;">adipiscing</span> elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  new PlainDraggable(document.getElementById('ex-085-draggable')); // eslint-disable-line no-new
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-085.html" -->
 
 <p>By default, the moving is restricted to inside of the <code>element</code>&#39;s parent element.</p>
-<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;gray&quot;</span><span class="nt">&gt;</span>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;div</span> <span class="na">style=</span><span class="s">&quot;background-color: gray;&quot;</span><span class="nt">&gt;</span>
   <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;draggable&quot;</span><span class="nt">&gt;</span>Drag This<span class="nt">&lt;/div&gt;</span>
 <span class="nt">&lt;/div&gt;</span>
 </code></pre></div>
@@ -492,7 +518,13 @@ window.addEventListener('load', function() {
 </code></pre></div>
 <p>The <code>element</code> argument is a HTML or SVG element that will be a draggable element. Any element that has a bounding-box is accepted. Other elements such as <code>&lt;g&gt;</code> can not be specified.</p>
 
-<p>The <code>options</code> argument is an Object that can have properties as <a href="#options">options</a>. You can also change the options by <a href="#setoptions"><code>setOptions</code></a> method or <a href="#properties">properties</a> of the PlainDraggable instance.</p>
+<p>The <code>options</code> argument is an Object that can have properties as <a href="#options">options</a> (and <a href="#lefttop-option"><code>leftTop</code></a> option). You can also change the options by <a href="#setoptions"><code>setOptions</code></a> method or <a href="#properties">properties</a> of the PlainDraggable instance.</p>
+
+<h3 id="lefttop-option"><code>leftTop</code> option</h3>
+
+<p>By default, PlainDraggable tries to move the draggable element by using the <code>translate</code> CSS transform function.<br>If <code>true</code> is specified for <code>leftTop</code> option of the constructor, it uses the <code>left</code> and <code>top</code> CSS properties instead. You may use this to make it synchronize with the layout of something.</p>
+
+<p>Note that the <code>left</code> and <code>top</code> CSS properties may be performance degradation.<br>Also, this is an option for constructor, that is, you can not change this after.</p>
 
 <h2 id="methods">Methods</h2>
 
@@ -574,9 +606,9 @@ window.addEventListener('load', function() {
 
 <p><em>Type:</em> number or boolean<br><em>Default:</em> <code>9000</code></p>
 
-<p>A <code>z-index</code> CSS property that is applied to the draggable element when it is being dragged. It is restored when the dragging finished.<br>If <code>false</code> is specified, it is not changed.</p>
+<p>A <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/z-index"><code>z-index</code></a> CSS property that is applied to the draggable element when it is being dragged. It is restored when the dragging finished.<br>If <code>false</code> is specified, it is not changed.</p>
 
-<h3 id="options-left_top"><code>left</code>/<code>top</code></h3>
+<h3 id="options-left_top"><code>left</code> / <code>top</code></h3>
 
 <p><em>Type:</em> number or <code>undefined</code><br><em>Default:</em> <code>undefined</code></p>
 
@@ -593,7 +625,7 @@ window.addEventListener('load', function() {
 
 <p>In the function, <code>this</code> refers to the current PlainDraggable instance.</p>
 
-<p>An Object that has <code>left</code> and <code>top</code> properties as new position is passed to the function. These are numbers that were calculated the same as <a href="#options-left_top"><code>left</code>/<code>top</code></a> options.<br>It is new position that the draggable element is about to go to. Therefore it might differ from a position of a mouse pointer. And also, you can change these properties.</p>
+<p>An Object that has <code>left</code> and <code>top</code> properties as new position is passed to the function. These are numbers that were calculated the same as <a href="#options-left_top"><code>left</code> / <code>top</code></a> options.<br>It is new position that the draggable element is about to go to. Therefore it might differ from a position of a mouse pointer. And also, you can change these properties.</p>
 
 <p>For example:</p>
 <div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span><span class="p">.</span><span class="nx">onDrag</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">newPosition</span><span class="p">)</span> <span class="p">{</span>
@@ -674,7 +706,7 @@ window.addEventListener('load', function() {
 <li><a href="#options-snap"><code>snap</code></a></li>
 <li><a href="#options-handle"><code>handle</code></a></li>
 <li><a href="#options-zIndex"><code>zIndex</code></a></li>
-<li><a href="#options-left_top"><code>left</code>/<code>top</code></a></li>
+<li><a href="#options-left_top"><code>left</code> / <code>top</code></a></li>
 <li><a href="#options-ondrag"><code>onDrag</code></a></li>
 <li><a href="#options-onmove"><code>onMove</code></a></li>
 <li><a href="#options-onmovestart"><code>onMoveStart</code></a></li>
@@ -688,7 +720,7 @@ window.addEventListener('load', function() {
 </code></pre></div>
 <p>You can use <a href="#setoptions"><code>setOptions</code></a> method instead to set multiple options.</p>
 
-<h3 id="plaindraggabledraggablecursor/plaindraggabledraggingcursor"><code>PlainDraggable.draggableCursor</code>/<code>PlainDraggable.draggingCursor</code></h3>
+<h3 id="plaindraggabledraggablecursor-/-plaindraggabledraggingcursor"><code>PlainDraggable.draggableCursor</code> / <code>PlainDraggable.draggingCursor</code></h3>
 
 <p><strong>Static Property</strong></p>
 
@@ -705,7 +737,7 @@ window.addEventListener('load', function() {
 
 <p>If <code>false</code> is specified, it is not changed.<br>If <code>false</code> is specified for both <code>PlainDraggable.draggableCursor</code> and <code>PlainDraggable.draggingCursor</code>, PlainDraggable does nothing to a <code>cursor</code> CSS property.</p>
 
-<h3 id="plaindraggabledraggableclass/plaindraggabledraggingclass/plaindraggablemovingclass"><code>PlainDraggable.draggableClass</code>/<code>PlainDraggable.draggingClass</code>/<code>PlainDraggable.movingClass</code></h3>
+<h3 id="plaindraggabledraggableclass-/-plaindraggabledraggingclass-/-plaindraggablemovingclass"><code>PlainDraggable.draggableClass</code> / <code>PlainDraggable.draggingClass</code> / <code>PlainDraggable.movingClass</code></h3>
 
 <p><strong>Static Property</strong></p>
 
@@ -727,7 +759,7 @@ window.addEventListener('load', function() {
 <!-- include "ex-110.html" -->
 <!-- ================ ex -->
 <div id="ex-110-stage" class="stage-s">
-  <div id="ex-110-draggable"><div></div></div>
+  <div id="ex-110-draggable"><div><div></div></div></div>
 </div>
 
 <script>
@@ -739,7 +771,7 @@ window.addEventListener('load', function() {
   PlainDraggable.movingClass = 'swing';
 
   new PlainDraggable(document.getElementById('ex-110-draggable'), // eslint-disable-line no-new
-    {handle: document.querySelector('#ex-110-draggable>div')});
+    {handle: document.querySelector('#ex-110-draggable>div>div')});
 
 });
 </script>
@@ -759,7 +791,7 @@ window.addEventListener('load', function() {
 
 <p>Also, it is relative to a &quot;base&quot;.</p>
 
-<p>The <code>left</code>/<code>top</code>/<code>right</code>/<code>bottom</code> indicate distance between the left or top edge of the base and the left or top side of the rectangle. Note that <code>right</code>/<code>bottom</code> also indicate distance from the left or top edge of the base, not from the right or bottom edge.<br>The <code>x</code> is an alias for <code>left</code>, and the <code>y</code> is an alias for <code>top</code>.<br>The <code>width</code>/<code>height</code> indicate a size of the rectangle. The <code>width</code> is required if <code>right</code> is not specified, and the <code>height</code> is required if <code>bottom</code> is not specified.</p>
+<p>The <code>left</code> / <code>top</code> / <code>right</code> / <code>bottom</code> indicate distance between the left or top edge of the base and the left or top side of the rectangle. Note that <code>right</code> / <code>bottom</code> also indicate distance from the left or top edge of the base, not from the right or bottom edge.<br>The <code>x</code> is an alias for <code>left</code>, and the <code>y</code> is an alias for <code>top</code>.<br>The <code>width</code> / <code>height</code> indicate a size of the rectangle. The <code>width</code> is required if <code>right</code> is not specified, and the <code>height</code> is required if <code>bottom</code> is not specified.</p>
 
 <p>All values are a number as pixels or string as percentage (e.g. <code>&#39;30%&#39;</code>).<br>The &quot;base&quot; determines the origin of coordinates, and the number of pixels of <code>100%</code>.</p>
 
