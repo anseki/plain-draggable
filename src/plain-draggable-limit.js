@@ -35,7 +35,7 @@ let insId = 0,
   activeItem, hasMoved, pointerOffset, body,
   // CSS property/value
   cssValueDraggableCursor, cssValueDraggingCursor, cssOrgValueBodyCursor,
-  cssPropUserSelect, cssOrgValueBodyUserSelect,
+  cssPropTransform, cssPropUserSelect, cssOrgValueBodyUserSelect,
   // Try to set `cursor` property.
   cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
   cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'],
@@ -218,7 +218,7 @@ window.resolvePPBBox = resolvePPBBox; // [DEBUG/]
 
 /**
  * @param {Element} element - A target element.
- * @param {boolean} [getPaddingBox] - Get padding-box instead of border-box as bounding-box.
+ * @param {?boolean} getPaddingBox - Get padding-box instead of border-box as bounding-box.
  * @returns {BBox} - A bounding-box of `element`.
  */
 function getBBox(element, getPaddingBox) {
@@ -244,14 +244,14 @@ window.getBBox = getBBox; // [DEBUG/]
 /**
  * Optimize an element for animation.
  * @param {Element} element - A target element.
- * @param {boolean} [isSvg] - Initialize for SVGElement if `true`.
+ * @param {?boolean} gpuTrigger - Initialize for SVGElement if `true`.
  * @returns {Element} - A target element.
  */
-function initAnim(element, isSvg) {
+function initAnim(element, gpuTrigger) {
   const style = element.style;
   style.webkitTapHighlightColor = 'transparent';
-  if (!isSvg) { style[CSSPrefix.getName('transform')] = 'translateZ(0)'; }
   style[CSSPrefix.getName('boxShadow')] = '0 0 1px transparent';
+  if (gpuTrigger && cssPropTransform) { style[cssPropTransform] = 'translateZ(0)'; }
   return element;
 }
 
@@ -280,26 +280,22 @@ function setDraggingCursor(element) {
 
 
 /**
- * Move HTMLElement.
+ * Move by `translate`.
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
  * @returns {boolean} - `true` if it was moved.
  */
-function moveHtml(props, position) {
-  const elementBBox = props.elementBBox,
-    elementStyle = props.elementStyle,
-    offset = props.htmlOffset;
-  let moved = false;
-  if (position.left !== elementBBox.left) {
-    elementStyle.left = position.left + offset.left + 'px';
-    moved = true;
+function moveTranslate(props, position) {
+  const elementBBox = props.elementBBox;
+  if (position.left !== elementBBox.left || position.top !== elementBBox.top) {
+    const offset = props.htmlOffset;
+    props.elementStyle[cssPropTransform] =
+      `translate(${position.left + offset.left}px, ${position.top + offset.top}px)`;
+    return true;
   }
-  if (position.top !== elementBBox.top) {
-    elementStyle.top = position.top + offset.top + 'px';
-    moved = true;
-  }
-  return moved;
+  return false;
 }
+
 
 
 /**
@@ -344,55 +340,33 @@ function move(props, position, cbCheck) {
 }
 
 /**
- * Initialize HTMLElement, and get `offset` that is used by `moveHtml`.
+ * Initialize HTMLElement for `translate`, and get `offset` that is used by `moveTranslate`.
  * @param {props} props - `props` of instance.
  * @returns {void}
  */
-function initHtml(props) {
+function initTranslate(props) {
   const element = props.element,
     elementStyle = props.elementStyle,
-    curPosition = getBBox(element), // Get BBox before change style.
-    RESTORE_PROPS = ['position', 'margin', 'width', 'height'];
+    curPosition = getBBox(element); // Get BBox before change style.
 
   if (!props.orgStyle) {
-    props.orgStyle = RESTORE_PROPS.reduce((orgStyle, prop) => {
-      orgStyle[prop] = elementStyle[prop] || '';
-      return orgStyle;
-    }, {});
-    props.lastStyle = {};
+    props.orgStyle = {};
+    props.orgStyle[cssPropTransform] = elementStyle[cssPropTransform] || '';
   } else {
-    RESTORE_PROPS.forEach(prop => {
-      // Skip this if it seems user changed it. (Perfect check is impossible.)
-      if (props.lastStyle[prop] == null || elementStyle[prop] === props.lastStyle[prop]) {
-        elementStyle[prop] = props.orgStyle[prop];
-      }
-    });
+    elementStyle[cssPropTransform] = props.orgStyle[cssPropTransform];
   }
 
-  const orgSize = getBBox(element);
-  elementStyle.position = 'absolute';
-  elementStyle.left = elementStyle.top = elementStyle.margin = '0';
+  elementStyle[cssPropTransform] = 'translate(0, 0)';
   // Get document offset.
-  let newBBox = getBBox(element);
-  const offset = props.htmlOffset =
-    {left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0}; // avoid `-0`
+  const newBBox = getBBox(element),
+    offset = props.htmlOffset =
+      {left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0}; // avoid `-0`
 
   // Restore position
-  elementStyle.left = curPosition.left + offset.left + 'px';
-  elementStyle.top = curPosition.top + offset.top + 'px';
-  // Restore size
-  ['width', 'height'].forEach(prop => {
-    if (newBBox[prop] !== orgSize[prop]) {
-      // Ignore `box-sizing`
-      elementStyle[prop] = orgSize[prop] + 'px';
-      newBBox = getBBox(element);
-      if (newBBox[prop] !== orgSize[prop]) { // Retry
-        elementStyle[prop] = orgSize[prop] - (newBBox[prop] - orgSize[prop]) + 'px';
-      }
-    }
-    props.lastStyle[prop] = elementStyle[prop];
-  });
+  elementStyle[cssPropTransform] =
+    `translate(${curPosition.left + offset.left}px, ${curPosition.top + offset.top}px)`;
 }
+
 
 
 /**
@@ -585,8 +559,20 @@ class PlainDraggable {
       throw new Error('Invalid options.');
     }
 
+    let gpuTrigger = true;
+      const cssPropWillChange = CSSPrefix.getName('willChange');
+      if (cssPropWillChange) { gpuTrigger = false; }
 
-    props.element = initAnim(element);
+      if (!options.leftTop && cssPropTransform) { // translate
+        if (cssPropWillChange) { element.style[cssPropWillChange] = 'transform'; }
+        props.initElm = initTranslate;
+        props.moveElm = moveTranslate;
+
+      } else { // left and top
+        throw new Error('`transform` is not supported.');
+      }
+
+    props.element = initAnim(element, gpuTrigger);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) { mClassList(element).add(draggableClass); }
@@ -594,9 +580,6 @@ class PlainDraggable {
     props.handleMousedown = event => { mousedown(props, event); };
     props.handleScroll = AnimEvent.add(() => { initBBox(props); });
     props.scrollElements = [];
-
-      props.initElm = initHtml;
-      props.moveElm = moveHtml;
 
     // Default options
     if (!options.containment) {
@@ -792,6 +775,7 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
 {
   let resizing = false;
   function initDoc() {
+    cssPropTransform = CSSPrefix.getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
     if ((cssPropUserSelect = CSSPrefix.getName('userSelect'))) {
       cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];

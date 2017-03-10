@@ -85,17 +85,9 @@ Object.defineProperty(exports, "__esModule", {
  * Licensed under the MIT license.
  */
 
-// *** Currently, this code except `export` is not ES2015. ***
-
 var MSPF = 1000 / 60,
     // ms/frame (FPS: 60)
 KEEP_LOOP = 500,
-    requestAnim = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
-  setTimeout(callback, MSPF);
-},
-    cancelAnim = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame || function (requestID) {
-  clearTimeout(requestID);
-},
 
 
 /**
@@ -105,12 +97,38 @@ KEEP_LOOP = 500,
  */
 
 /** @type {task[]} */
-tasks = [],
-    requestID,
+tasks = [];
+
+var requestAnim = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
+  return setTimeout(callback, MSPF);
+},
+    cancelAnim = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame || function (requestID) {
+  return clearTimeout(requestID);
+},
+    requestID = void 0,
     lastFrameTime = Date.now();
 
+// [DEBUG]
+var requestAnimSave = requestAnim,
+    cancelAnimSave = cancelAnim;
+window.AnimEventByTimer = function (byTimer) {
+  if (byTimer) {
+    requestAnim = function requestAnim(callback) {
+      return setTimeout(callback, MSPF);
+    };
+    cancelAnim = function cancelAnim(requestID) {
+      return clearTimeout(requestID);
+    };
+  } else {
+    requestAnim = requestAnimSave;
+    cancelAnim = cancelAnimSave;
+  }
+};
+// [/DEBUG]
+
 function step() {
-  var called, next;
+  var called = void 0,
+      next = void 0;
 
   if (requestID) {
     cancelAnim.call(window, requestID);
@@ -155,7 +173,7 @@ var AnimEvent = {
    * @returns {(function|null)} - A wrapped event listener.
    */
   add: function add(listener) {
-    var task;
+    var task = void 0;
     if (indexOfTasks(listener) === -1) {
       tasks.push(task = { listener: listener });
       return function (event) {
@@ -170,7 +188,7 @@ var AnimEvent = {
   },
 
   remove: function remove(listener) {
-    var iRemove;
+    var iRemove = void 0;
     if ((iRemove = indexOfTasks(listener)) > -1) {
       tasks.splice(iRemove, 1);
       if (!tasks.length && requestID) {
@@ -554,6 +572,7 @@ var insId = 0,
 cssValueDraggableCursor = void 0,
     cssValueDraggingCursor = void 0,
     cssOrgValueBodyCursor = void 0,
+    cssPropTransform = void 0,
     cssPropUserSelect = void 0,
     cssOrgValueBodyUserSelect = void 0,
 
@@ -748,7 +767,7 @@ window.resolvePPBBox = resolvePPBBox; // [DEBUG/]
 
 /**
  * @param {Element} element - A target element.
- * @param {boolean} [getPaddingBox] - Get padding-box instead of border-box as bounding-box.
+ * @param {?boolean} getPaddingBox - Get padding-box instead of border-box as bounding-box.
  * @returns {BBox} - A bounding-box of `element`.
  */
 function getBBox(element, getPaddingBox) {
@@ -774,16 +793,16 @@ window.getBBox = getBBox; // [DEBUG/]
 /**
  * Optimize an element for animation.
  * @param {Element} element - A target element.
- * @param {boolean} [isSvg] - Initialize for SVGElement if `true`.
+ * @param {?boolean} gpuTrigger - Initialize for SVGElement if `true`.
  * @returns {Element} - A target element.
  */
-function initAnim(element, isSvg) {
+function initAnim(element, gpuTrigger) {
   var style = element.style;
   style.webkitTapHighlightColor = 'transparent';
-  if (!isSvg) {
-    style[_cssprefix2.default.getName('transform')] = 'translateZ(0)';
-  }
   style[_cssprefix2.default.getName('boxShadow')] = '0 0 1px transparent';
+  if (gpuTrigger && cssPropTransform) {
+    style[cssPropTransform] = 'translateZ(0)';
+  }
   return element;
 }
 
@@ -817,25 +836,19 @@ function setDraggingCursor(element) {
 }
 
 /**
- * Move HTMLElement.
+ * Move by `translate`.
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
  * @returns {boolean} - `true` if it was moved.
  */
-function moveHtml(props, position) {
-  var elementBBox = props.elementBBox,
-      elementStyle = props.elementStyle,
-      offset = props.htmlOffset;
-  var moved = false;
-  if (position.left !== elementBBox.left) {
-    elementStyle.left = position.left + offset.left + 'px';
-    moved = true;
+function moveTranslate(props, position) {
+  var elementBBox = props.elementBBox;
+  if (position.left !== elementBBox.left || position.top !== elementBBox.top) {
+    var offset = props.htmlOffset;
+    props.elementStyle[cssPropTransform] = 'translate(' + (position.left + offset.left) + 'px, ' + (position.top + offset.top) + 'px)';
+    return true;
   }
-  if (position.top !== elementBBox.top) {
-    elementStyle.top = position.top + offset.top + 'px';
-    moved = true;
-  }
-  return moved;
+  return false;
 }
 
 /**
@@ -885,55 +898,29 @@ function move(props, position, cbCheck) {
 }
 
 /**
- * Initialize HTMLElement, and get `offset` that is used by `moveHtml`.
+ * Initialize HTMLElement for `translate`, and get `offset` that is used by `moveTranslate`.
  * @param {props} props - `props` of instance.
  * @returns {void}
  */
-function initHtml(props) {
+function initTranslate(props) {
   var element = props.element,
       elementStyle = props.elementStyle,
-      curPosition = getBBox(element),
-      // Get BBox before change style.
-  RESTORE_PROPS = ['position', 'margin', 'width', 'height'];
+      curPosition = getBBox(element); // Get BBox before change style.
 
   if (!props.orgStyle) {
-    props.orgStyle = RESTORE_PROPS.reduce(function (orgStyle, prop) {
-      orgStyle[prop] = elementStyle[prop] || '';
-      return orgStyle;
-    }, {});
-    props.lastStyle = {};
+    props.orgStyle = {};
+    props.orgStyle[cssPropTransform] = elementStyle[cssPropTransform] || '';
   } else {
-    RESTORE_PROPS.forEach(function (prop) {
-      // Skip this if it seems user changed it. (Perfect check is impossible.)
-      if (props.lastStyle[prop] == null || elementStyle[prop] === props.lastStyle[prop]) {
-        elementStyle[prop] = props.orgStyle[prop];
-      }
-    });
+    elementStyle[cssPropTransform] = props.orgStyle[cssPropTransform];
   }
 
-  var orgSize = getBBox(element);
-  elementStyle.position = 'absolute';
-  elementStyle.left = elementStyle.top = elementStyle.margin = '0';
+  elementStyle[cssPropTransform] = 'translate(0, 0)';
   // Get document offset.
-  var newBBox = getBBox(element);
-  var offset = props.htmlOffset = { left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0 }; // avoid `-0`
+  var newBBox = getBBox(element),
+      offset = props.htmlOffset = { left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0 }; // avoid `-0`
 
   // Restore position
-  elementStyle.left = curPosition.left + offset.left + 'px';
-  elementStyle.top = curPosition.top + offset.top + 'px';
-  // Restore size
-  ['width', 'height'].forEach(function (prop) {
-    if (newBBox[prop] !== orgSize[prop]) {
-      // Ignore `box-sizing`
-      elementStyle[prop] = orgSize[prop] + 'px';
-      newBBox = getBBox(element);
-      if (newBBox[prop] !== orgSize[prop]) {
-        // Retry
-        elementStyle[prop] = orgSize[prop] - (newBBox[prop] - orgSize[prop]) + 'px';
-      }
-    }
-    props.lastStyle[prop] = elementStyle[prop];
-  });
+  elementStyle[cssPropTransform] = 'translate(' + (curPosition.left + offset.left) + 'px, ' + (curPosition.top + offset.top) + 'px)';
 }
 
 /**
@@ -1158,7 +1145,25 @@ var PlainDraggable = function () {
       throw new Error('Invalid options.');
     }
 
-    props.element = initAnim(element);
+    var gpuTrigger = true;
+    var cssPropWillChange = _cssprefix2.default.getName('willChange');
+    if (cssPropWillChange) {
+      gpuTrigger = false;
+    }
+
+    if (!options.leftTop && cssPropTransform) {
+      // translate
+      if (cssPropWillChange) {
+        element.style[cssPropWillChange] = 'transform';
+      }
+      props.initElm = initTranslate;
+      props.moveElm = moveTranslate;
+    } else {
+      // left and top
+      throw new Error('`transform` is not supported.');
+    }
+
+    props.element = initAnim(element, gpuTrigger);
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) {
@@ -1172,9 +1177,6 @@ var PlainDraggable = function () {
       initBBox(props);
     });
     props.scrollElements = [];
-
-    props.initElm = initHtml;
-    props.moveElm = moveHtml;
 
     // Default options
     if (!options.containment) {
@@ -1460,6 +1462,7 @@ document.addEventListener('mouseup', function () {
 
 {
   var initDoc = function initDoc() {
+    cssPropTransform = _cssprefix2.default.getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
     if (cssPropUserSelect = _cssprefix2.default.getName('userSelect')) {
       cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];

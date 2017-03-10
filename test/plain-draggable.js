@@ -894,6 +894,7 @@ function moveTranslate(props, position) {
   return false;
 }
 
+// [LEFTTOP]
 /**
  * Move by `left` and `top`.
  * @param {props} props - `props` of instance.
@@ -915,6 +916,7 @@ function moveLeftTop(props, position) {
   }
   return moved;
 }
+// [/LEFTTOP]
 
 // [SVG]
 /**
@@ -1008,6 +1010,7 @@ function initTranslate(props) {
   elementStyle[cssPropTransform] = 'translate(' + (curPosition.left + offset.left) + 'px, ' + (curPosition.top + offset.top) + 'px)';
 }
 
+// [LEFTTOP]
 /**
  * Initialize HTMLElement for `left` and `top`, and get `offset` that is used by `moveLeftTop`.
  * @param {props} props - `props` of instance.
@@ -1059,6 +1062,7 @@ function initLeftTop(props) {
     props.lastStyle[prop] = elementStyle[prop];
   });
 }
+// [/LEFTTOP]
 
 // [SVG]
 /**
@@ -1814,12 +1818,16 @@ var PlainDraggable = function () {
         props.moveElm = moveTranslate;
       } else {
         // left and top
+        // [LEFTTOP]
         if (cssPropWillChange) {
           element.style[cssPropWillChange] = 'left, top';
         }
         props.initElm = initLeftTop;
         props.moveElm = moveLeftTop;
-        // throw new Error('`transform` is not supported.');
+        // [/LEFTTOP]
+        /* [LEFTTOP/]
+        throw new Error('`transform` is not supported.');
+        [LEFTTOP/] */
       }
     } // [SVG/]
 

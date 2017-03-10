@@ -22,7 +22,7 @@ const webpack = require('webpack'),
   ].map(packageName => require.resolve(packageName) // Get package root path
     .replace(new RegExp(`^(.*[/\\\\]node_modules[/\\\\]${packageName}[/\\\\]).*$`), '$1')),
 
-  LIMIT_TAGS = ['SNAP', 'SVG'],
+  LIMIT_TAGS = ['SNAP', 'SVG', 'LEFTTOP'],
 
   BABEL_RULE = {
     loader: 'babel-loader',
