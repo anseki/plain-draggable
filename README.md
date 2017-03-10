@@ -37,14 +37,6 @@ draggable = new PlainDraggable(element);
 Now, the `element` can be moved by mouse-dragging operation.  
 The `element` might be a `<div>`, `<span>`, `<circle>` or something.
 
-```html
-<p style="background-color: gainsboro;">Lorem ipsum dolor sit amet, consectetur <span id="draggable" style="background-color: lightskyblue;">adipiscing</span> elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-```
-
-```js
-draggable = new PlainDraggable(document.getElementById('draggable'));
-```
-
 By default, the moving is restricted to inside of the `element`'s parent element.
 
 ```html
@@ -53,7 +45,7 @@ By default, the moving is restricted to inside of the `element`'s parent element
 </div>
 ```
 
-The `<div id="draggable">` above can be moved within the gray box. (See [`containment`](#options-containment) option.)
+The `<div id="draggable">` can be moved within the gray box. (See [`containment`](#options-containment) option.)
 
 You can specify a "Grid" that the draggable element snaps to.
 
@@ -147,7 +139,7 @@ The default is the draggable element itself, and all of the draggable element ca
 A [`z-index`](https://developer.mozilla.org/en-US/docs/Web/CSS/z-index) CSS property that is applied to the draggable element when it is being dragged. It is restored when the dragging finished.  
 If `false` is specified, it is not changed.
 
-### <a name="options-left_top"></a>`left`/`top`
+### <a name="options-left_top"></a>`left` / `top`
 
 *Type:* number or `undefined`  
 *Default:* `undefined`
@@ -171,7 +163,7 @@ It is called even if the draggable element is not moved because [`containment`](
 
 In the function, `this` refers to the current PlainDraggable instance.
 
-An Object that has `left` and `top` properties as new position is passed to the function. These are numbers that were calculated the same as [`left`/`top`](#options-left_top) options.  
+An Object that has `left` and `top` properties as new position is passed to the function. These are numbers that were calculated the same as [`left` / `top`](#options-left_top) options.  
 It is new position that the draggable element is about to go to. Therefore it might differ from a position of a mouse pointer. And also, you can change these properties.
 
 For example:
@@ -269,7 +261,7 @@ Properties with the same name as each option to get or set following options:
 - [`snap`](#options-snap)
 - [`handle`](#options-handle)
 - [`zIndex`](#options-zIndex)
-- [`left`/`top`](#options-left_top)
+- [`left` / `top`](#options-left_top)
 - [`onDrag`](#options-ondrag)
 - [`onMove`](#options-onmove)
 - [`onMoveStart`](#options-onmovestart)
@@ -285,7 +277,7 @@ draggable.left += 10;
 
 You can use [`setOptions`](#setoptions) method instead to set multiple options.
 
-### `PlainDraggable.draggableCursor`/`PlainDraggable.draggingCursor`
+### `PlainDraggable.draggableCursor` / `PlainDraggable.draggingCursor`
 
 **Static Property**
 
@@ -304,7 +296,7 @@ Note that the allowed values of the `cursor` CSS property depend on each web bro
 If `false` is specified, it is not changed.  
 If `false` is specified for both `PlainDraggable.draggableCursor` and `PlainDraggable.draggingCursor`, PlainDraggable does nothing to a `cursor` CSS property.
 
-### `PlainDraggable.draggableClass`/`PlainDraggable.draggingClass`/`PlainDraggable.movingClass`
+### `PlainDraggable.draggableClass` / `PlainDraggable.draggingClass` / `PlainDraggable.movingClass`
 
 **Static Property**
 
@@ -339,9 +331,9 @@ It has following properties:
 
 Also, it is relative to a "base".
 
-The `left`/`top`/`right`/`bottom` indicate distance between the left or top edge of the base and the left or top side of the rectangle. Note that `right`/`bottom` also indicate distance from the left or top edge of the base, not from the right or bottom edge.  
+The `left` / `top` / `right` / `bottom` indicate distance between the left or top edge of the base and the left or top side of the rectangle. Note that `right` / `bottom` also indicate distance from the left or top edge of the base, not from the right or bottom edge.  
 The `x` is an alias for `left`, and the `y` is an alias for `top`.  
-The `width`/`height` indicate a size of the rectangle. The `width` is required if `right` is not specified, and the `height` is required if `bottom` is not specified.
+The `width` / `height` indicate a size of the rectangle. The `width` is required if `right` is not specified, and the `height` is required if `bottom` is not specified.
 
 All values are a number as pixels or string as percentage (e.g. `'30%'`).  
 The "base" determines the origin of coordinates, and the number of pixels of `100%`.

@@ -905,22 +905,58 @@ function move(props, position, cbCheck) {
 function initTranslate(props) {
   var element = props.element,
       elementStyle = props.elementStyle,
-      curPosition = getBBox(element); // Get BBox before change style.
+      curPosition = getBBox(element),
+      // Get BBox before change style.
+  RESTORE_PROPS = ['display', 'marginTop', 'marginBottom', 'width', 'height'];
+  RESTORE_PROPS.unshift(cssPropTransform);
 
   if (!props.orgStyle) {
-    props.orgStyle = {};
-    props.orgStyle[cssPropTransform] = elementStyle[cssPropTransform] || '';
+    props.orgStyle = RESTORE_PROPS.reduce(function (orgStyle, prop) {
+      orgStyle[prop] = elementStyle[prop] || '';
+      return orgStyle;
+    }, {});
+    props.lastStyle = {};
   } else {
-    elementStyle[cssPropTransform] = props.orgStyle[cssPropTransform];
+    RESTORE_PROPS.forEach(function (prop) {
+      // Skip this if it seems user changed it. (it can't check perfectly.)
+      if (props.lastStyle[prop] == null || elementStyle[prop] === props.lastStyle[prop]) {
+        elementStyle[prop] = props.orgStyle[prop];
+      }
+    });
   }
 
+  var orgSize = getBBox(element),
+      cmpStyle = window.getComputedStyle(element, '');
+  // https://www.w3.org/TR/css-transforms-1/#transformable-element
+  if (cmpStyle.display === 'inline') {
+    elementStyle.display = 'inline-block';
+    ['Top', 'Bottom'].forEach(function (dirProp) {
+      var padding = parseFloat(cmpStyle['padding' + dirProp]);
+      // paddingTop/Bottom make padding but don't make space -> negative margin in inline-block
+      // marginTop/Bottom don't work in inline element -> `0` in inline-block
+      elementStyle['margin' + dirProp] = padding ? '-' + padding + 'px' : '0';
+    });
+  }
   elementStyle[cssPropTransform] = 'translate(0, 0)';
   // Get document offset.
-  var newBBox = getBBox(element),
-      offset = props.htmlOffset = { left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0 }; // avoid `-0`
+  var newBBox = getBBox(element);
+  var offset = props.htmlOffset = { left: newBBox.left ? -newBBox.left : 0, top: newBBox.top ? -newBBox.top : 0 }; // avoid `-0`
 
   // Restore position
   elementStyle[cssPropTransform] = 'translate(' + (curPosition.left + offset.left) + 'px, ' + (curPosition.top + offset.top) + 'px)';
+  // Restore size
+  ['width', 'height'].forEach(function (prop) {
+    if (newBBox[prop] !== orgSize[prop]) {
+      // Ignore `box-sizing`
+      elementStyle[prop] = orgSize[prop] + 'px';
+      newBBox = getBBox(element);
+      if (newBBox[prop] !== orgSize[prop]) {
+        // Retry
+        elementStyle[prop] = orgSize[prop] - (newBBox[prop] - orgSize[prop]) + 'px';
+      }
+    }
+    props.lastStyle[prop] = elementStyle[prop];
+  });
 }
 
 /**
