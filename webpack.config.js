@@ -2,18 +2,9 @@
 
 'use strict';
 
-const webpack = require('webpack'),
-  path = require('path'),
-  PKG = require('./package'),
-
-  BUILD = process.env.NODE_ENV === 'production',
-  LIMIT = process.env.EDITION === 'limit',
-  SRC = process.env.SRC === 'yes',
-
-  SRC_PATH = path.resolve(__dirname, 'src'),
-  ENTRY_PATH = path.resolve(SRC_PATH, 'plain-draggable.js'),
-  BUILD_PATH = BUILD ? __dirname : path.resolve(__dirname, 'test'),
-  BUILD_FILE = 'plain-draggable' + (LIMIT ? '-limit' : '') + (BUILD ? '.min.js' : '.js'),
+const
+  BASE_NAME = 'plain-draggable',
+  OBJECT_NAME = 'PlainDraggable',
 
   IMPORTED_PACKAGES_PATH = [
     'cssprefix',
@@ -23,6 +14,19 @@ const webpack = require('webpack'),
     .replace(new RegExp(`^(.*[/\\\\]node_modules[/\\\\]${packageName}[/\\\\]).*$`), '$1')),
 
   LIMIT_TAGS = ['SNAP', 'SVG', 'LEFTTOP'],
+
+  webpack = require('webpack'),
+  path = require('path'),
+  PKG = require('./package'),
+
+  BUILD = process.env.NODE_ENV === 'production',
+  LIMIT = process.env.EDITION === 'limit',
+  SRC = process.env.SRC === 'yes',
+
+  SRC_PATH = path.resolve(__dirname, 'src'),
+  ENTRY_PATH = path.resolve(SRC_PATH, `${BASE_NAME}.js`),
+  BUILD_PATH = BUILD ? __dirname : path.resolve(__dirname, 'test'),
+  BUILD_FILE = `${BASE_NAME}${LIMIT ? '-limit' : ''}${BUILD ? '.min.js' : '.js'}`,
 
   BABEL_RULE = {
     loader: 'babel-loader',
@@ -60,7 +64,7 @@ module.exports = {
   output: {
     path: BUILD_PATH,
     filename: BUILD_FILE,
-    library: 'PlainDraggable',
+    library: OBJECT_NAME,
     libraryTarget: 'var'
   },
   resolve: {mainFields: ['jsnext:main', 'browser', 'module', 'main']},
