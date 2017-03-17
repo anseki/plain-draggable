@@ -17,8 +17,8 @@ const
 
   webpack = require('webpack'),
   path = require('path'),
-  PKG = require('./package'),
   preProc = require('pre-proc'),
+  PKG = require('./package'),
 
   BUILD = process.env.NODE_ENV === 'production',
   LIMIT = process.env.EDITION === 'limit',
