@@ -18,6 +18,7 @@ const
   webpack = require('webpack'),
   path = require('path'),
   PKG = require('./package'),
+  preProc = require('pre-proc'),
 
   BUILD = process.env.NODE_ENV === 'production',
   LIMIT = process.env.EDITION === 'limit',
@@ -26,7 +27,7 @@ const
   SRC_PATH = path.resolve(__dirname, 'src'),
   ENTRY_PATH = path.resolve(SRC_PATH, `${BASE_NAME}.js`),
   BUILD_PATH = BUILD ? __dirname : path.resolve(__dirname, 'test'),
-  BUILD_FILE = `${BASE_NAME}${LIMIT ? '-limit' : ''}${BUILD ? '.min.js' : '.js'}`,
+  BUILD_FILE = `${BASE_NAME}${LIMIT ? '-limit' : ''}${BUILD ? '.min' : ''}.js`,
 
   BABEL_RULE = {
     loader: 'babel-loader',
@@ -35,27 +36,6 @@ const
       plugins: ['add-module-exports']
     }
   };
-
-/**
- * @param {(string|string[])} tag - A tag or an array of tags that are removed.
- * @param {string} content - A content that is processed.
- * @param {string} srcPath - A full path to the source file.
- * @param {(string|RegExp|Array)} pathTest - The content is changed when any test passed.
- *     A string which must be at the start of it, a RegExp which tests it or an array of these.
- * @returns {string} - A content that might have been changed.
- */
-function preProc(tag, content, srcPath, pathTest) {
-  if (srcPath && pathTest &&
-      !(Array.isArray(pathTest) ? pathTest : [pathTest]).some(test =>
-        test instanceof RegExp ? test.test(srcPath) : srcPath.indexOf(test) === 0)) {
-    return content;
-  }
-  content = content ? content + '' : '';
-  return (Array.isArray(tag) ? tag : [tag]).reduce((content, tag) => content
-    .replace(new RegExp(`[^\\n]*\\[${tag}/\\][^\\n]*\\n?`, 'g'), '')
-    .replace(new RegExp(`/\\*\\s*\\[${tag}\\]\\s*\\*/[\\s\\S]*?/\\*\\s*\\[/${tag}\\]\\s*\\*/`, 'g'), '')
-    .replace(new RegExp(`[^\\n]*\\[${tag}\\][\\s\\S]*?\\[/${tag}\\][^\\n]*\\n?`, 'g'), ''), content);
-}
 
 if (!LIMIT && SRC) { throw new Error('This options break source file.'); }
 
@@ -81,7 +61,7 @@ module.exports = {
             options: {
               procedure: function(content) {
                 if (LIMIT) {
-                  content = preProc(LIMIT_TAGS, content, this.resourcePath, SRC_PATH);
+                  content = preProc.removeTag(LIMIT_TAGS, content, this.resourcePath, SRC_PATH);
                   if (!BUILD && SRC && this.resourcePath === ENTRY_PATH) {
                     // Save the source code of limited function, to check.
                     const destPath = path.resolve(SRC_PATH, BUILD_FILE);
@@ -90,7 +70,7 @@ module.exports = {
                   }
                 }
                 return BUILD ?
-                  preProc('DEBUG', content, this.resourcePath, IMPORTED_PACKAGES_PATH.concat(SRC_PATH)) :
+                  preProc.removeTag('DEBUG', content, this.resourcePath, IMPORTED_PACKAGES_PATH.concat(SRC_PATH)) :
                   content;
               }
             }

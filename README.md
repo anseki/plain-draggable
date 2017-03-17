@@ -8,7 +8,7 @@ The simple and high performance library to allow HTML/SVG element to be dragged.
 
 [![ss-01](ss-01.png)](https://anseki.github.io/plain-draggable/)
 
-## Features
+**Features:**
 
 - Accept HTML/SVG element as an element that comes to be draggable.
 - Restrict the draggable area.
