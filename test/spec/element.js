@@ -13,8 +13,6 @@ describe('element', function() {
       pageDone = done;
 
       cssPropTransform = window.CSSPrefix.getName('transform');
-      // for Jasmine bug, https://github.com/jasmine/jasmine/pull/1275
-      self.Error = window.Error;
 
       beforeDone();
     });

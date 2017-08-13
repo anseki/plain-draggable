@@ -22,18 +22,18 @@ const
   EXT_DIR = path.resolve(__dirname, '../../test-ext');
 
 log4js.configure({
-  appenders: [
-    {
+  appenders: {
+    out: {
       type: 'console',
       layout: {
         type: 'pattern',
         pattern: '%[[%r]%] %m' // Super simple format
       }
     }
-  ]
+  },
+  categories: {default: {appenders: ['out'], level: 'info'}}
 });
 let logger = log4js.getLogger('node-static-alias');
-logger.setLevel(log4js.levels.INFO);
 
 http.createServer((request, response) => {
   request.addListener('end', () => {
