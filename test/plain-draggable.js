@@ -7,9 +7,9 @@ var PlainDraggable =
 /******/ 	function __webpack_require__(moduleId) {
 /******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
+/******/ 		if(installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
-/******/
+/******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
@@ -33,9 +33,6 @@ var PlainDraggable =
 /******/
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// identity function for calling harmony imports with the correct context
-/******/ 	__webpack_require__.i = function(value) { return value; };
 /******/
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
@@ -64,449 +61,11 @@ var PlainDraggable =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-/*
- * AnimEvent
- * https://github.com/anseki/anim-event
- *
- * Copyright (c) 2017 anseki
- * Licensed under the MIT license.
- */
-
-var MSPF = 1000 / 60,
-    // ms/frame (FPS: 60)
-KEEP_LOOP = 500,
-
-
-/**
- * @typedef {Object} task
- * @property {Event} event
- * @property {function} listener
- */
-
-/** @type {task[]} */
-tasks = [];
-
-var requestAnim = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
-  return setTimeout(callback, MSPF);
-},
-    cancelAnim = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame || function (requestID) {
-  return clearTimeout(requestID);
-},
-    requestID = void 0,
-    lastFrameTime = Date.now();
-
-// [DEBUG]
-var requestAnimSave = requestAnim,
-    cancelAnimSave = cancelAnim;
-window.AnimEventByTimer = function (byTimer) {
-  if (byTimer) {
-    requestAnim = function requestAnim(callback) {
-      return setTimeout(callback, MSPF);
-    };
-    cancelAnim = function cancelAnim(requestID) {
-      return clearTimeout(requestID);
-    };
-  } else {
-    requestAnim = requestAnimSave;
-    cancelAnim = cancelAnimSave;
-  }
-};
-// [/DEBUG]
-
-function step() {
-  var called = void 0,
-      next = void 0;
-
-  if (requestID) {
-    cancelAnim.call(window, requestID);
-    requestID = null;
-  }
-
-  tasks.forEach(function (task) {
-    if (task.event) {
-      task.listener(task.event);
-      task.event = null;
-      called = true;
-    }
-  });
-
-  if (called) {
-    lastFrameTime = Date.now();
-    next = true;
-  } else if (Date.now() - lastFrameTime < KEEP_LOOP) {
-    // Go on for a while
-    next = true;
-  }
-  if (next) {
-    requestID = requestAnim.call(window, step);
-  }
-}
-
-function indexOfTasks(listener) {
-  var index = -1;
-  tasks.some(function (task, i) {
-    if (task.listener === listener) {
-      index = i;
-      return true;
-    }
-    return false;
-  });
-  return index;
-}
-
-var AnimEvent = {
-  /**
-   * @param {function} listener - An event listener.
-   * @returns {(function|null)} - A wrapped event listener.
-   */
-  add: function add(listener) {
-    var task = void 0;
-    if (indexOfTasks(listener) === -1) {
-      tasks.push(task = { listener: listener });
-      return function (event) {
-        task.event = event;
-        if (!requestID) {
-          step();
-        }
-      };
-    } else {
-      return null;
-    }
-  },
-
-  remove: function remove(listener) {
-    var iRemove = void 0;
-    if ((iRemove = indexOfTasks(listener)) > -1) {
-      tasks.splice(iRemove, 1);
-      if (!tasks.length && requestID) {
-        cancelAnim.call(window, requestID);
-        requestID = null;
-      }
-    }
-  }
-};
-
-exports.default = AnimEvent;
-module.exports = exports["default"];
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-/*
- * CSSPrefix
- * https://github.com/anseki/cssprefix
- *
- * Copyright (c) 2017 anseki
- * Licensed under the MIT license.
- */
-
-function ucf(text) {
-  return text.substr(0, 1).toUpperCase() + text.substr(1);
-}
-
-var PREFIXES = ['webkit', 'ms', 'moz', 'o'],
-    NAME_PREFIXES = PREFIXES.reduce(function (prefixes, prefix) {
-  prefixes.push(prefix);
-  prefixes.push(ucf(prefix));
-  return prefixes;
-}, []),
-    VALUE_PREFIXES = PREFIXES.map(function (prefix) {
-  return '-' + prefix + '-';
-}),
-
-
-/**
- * Get sample CSSStyleDeclaration.
- * @returns {CSSStyleDeclaration}
- */
-getDeclaration = function () {
-  var declaration = void 0;
-  return function () {
-    return declaration = declaration || document.createElement('div').style;
-  };
-}(),
-
-
-/**
- * Normalize name.
- * @param {} propName - A name that is normalized.
- * @returns {string} - A normalized name.
- */
-normalizeName = function () {
-  var rePrefixedName = new RegExp('^(?:' + PREFIXES.join('|') + ')(.)', 'i'),
-      reUc = /[A-Z]/;
-  return function (propName) {
-    return (propName = (propName + '').replace(/\s/g, '').replace(/-([\da-z])/gi, function (str, p1) {
-      return p1.toUpperCase();
-    }) // camelCase
-    // 'ms' and 'Ms' are found by rePrefixedName 'i' option
-    .replace(rePrefixedName, function (str, p1) {
-      return reUc.test(p1) ? p1.toLowerCase() : str;
-    }) // Remove prefix
-    ).toLowerCase() === 'float' ? 'cssFloat' : propName;
-  }; // For old CSSOM
-}(),
-
-
-/**
- * Normalize value.
- * @param {} propValue - A value that is normalized.
- * @returns {string} - A normalized value.
- */
-normalizeValue = function () {
-  var rePrefixedValue = new RegExp('^(?:' + VALUE_PREFIXES.join('|') + ')', 'i');
-  return function (propValue) {
-    return (propValue + '').replace(/\s/g, '').replace(rePrefixedValue, '');
-  };
-}(),
-
-
-/**
- * Polyfill for `CSS.supports`.
- * @param {string} propName - A name.
- * @param {string} propValue - A value.
- * @returns {boolean} - `true` if given pair is accepted.
- */
-cssSupports = function () {
-  // return window.CSS && window.CSS.supports || ((propName, propValue) => {
-  // `CSS.supports` doesn't find prefixed property.
-  return function (propName, propValue) {
-    var declaration = getDeclaration();
-    // In some browsers, `declaration[prop] = value` updates any property.
-    propName = propName.replace(/[A-Z]/g, function (str) {
-      return '-' + str.toLowerCase();
-    }); // kebab-case
-    declaration.setProperty(propName, propValue);
-    return declaration.getPropertyValue(propName) === propValue;
-  };
-}(),
-    propNames = {},
-    propValues = {}; // Cache
-
-// [DEBUG]
-window.normalizeName = normalizeName;
-window.normalizeValue = normalizeValue;
-window.cssSupports = cssSupports;
-// [/DEBUG]
-
-function getName(propName) {
-  propName = normalizeName(propName);
-  if (propName && propNames[propName] == null) {
-    window.getNameDone = 'get'; // [DEBUG/]
-    var declaration = getDeclaration();
-
-    if (declaration[propName] != null) {
-      // Original
-      propNames[propName] = propName;
-    } else {
-      // Try with prefixes
-      var ucfName = ucf(propName);
-      if (!NAME_PREFIXES.some(function (prefix) {
-        var prefixed = prefix + ucfName;
-        if (declaration[prefixed] != null) {
-          propNames[propName] = prefixed;
-          return true;
-        }
-        return false;
-      })) {
-        propNames[propName] = false;
-      }
-    }
-  }
-  return propNames[propName] || void 0;
-}
-
-function getValue(propName, propValue) {
-  var res = void 0;
-
-  if (!(propName = getName(propName))) {
-    return res;
-  } // Invalid property
-
-  propValues[propName] = propValues[propName] || {};
-  (Array.isArray(propValue) ? propValue : [propValue]).some(function (propValue) {
-    propValue = normalizeValue(propValue);
-    (window.getValueDone = window.getValueDone || []).push(propValue); // [DEBUG/]
-
-    if (propValues[propName][propValue] != null) {
-      // Cache
-      if (propValues[propName][propValue] !== false) {
-        res = propValues[propName][propValue];
-        return true;
-      } else {
-        return false; // Continue to next value
-      }
-    }
-    window.getValueDone.push('get'); // [DEBUG/]
-
-    if (cssSupports(propName, propValue)) {
-      // Original
-      res = propValues[propName][propValue] = propValue;
-      return true;
-    }
-
-    if (VALUE_PREFIXES.some(function (prefix) {
-      // Try with prefixes
-      var prefixed = prefix + propValue;
-      if (cssSupports(propName, prefixed)) {
-        res = propValues[propName][propValue] = prefixed;
-        return true;
-      }
-      return false;
-    })) {
-      return true;
-    }
-
-    propValues[propName][propValue] = false;
-    return false; // Continue to next value
-  });
-
-  return typeof res === 'string' ? res : void 0; // It might be empty string.
-}
-
-var CSSPrefix = {
-  getName: getName,
-  getValue: getValue
-};
-
-exports.default = CSSPrefix;
-module.exports = exports['default'];
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-/*
- * mClassList
- * https://github.com/anseki/m-class-list
- *
- * Copyright (c) 2017 anseki
- * Licensed under the MIT license.
- */
-
-function normalize(token) {
-  return (token + '').trim();
-} // Not `||`
-function applyList(list, element) {
-  element.setAttribute('class', list.join(' '));
-}
-
-function _add(list, element, tokens) {
-  if (tokens.filter(function (token) {
-    if (!(token = normalize(token)) || list.indexOf(token) !== -1) {
-      return false;
-    }
-    list.push(token);
-    return true;
-  }).length) {
-    applyList(list, element);
-  }
-}
-
-function _remove(list, element, tokens) {
-  if (tokens.filter(function (token) {
-    var i = void 0;
-    if (!(token = normalize(token)) || (i = list.indexOf(token)) === -1) {
-      return false;
-    }
-    list.splice(i, 1);
-    return true;
-  }).length) {
-    applyList(list, element);
-  }
-}
-
-function _toggle(list, element, token, force) {
-  var i = list.indexOf(token = normalize(token));
-  if (i !== -1) {
-    if (force) {
-      return true;
-    }
-    list.splice(i, 1);
-    applyList(list, element);
-    return false;
-  } else {
-    if (force === false) {
-      return false;
-    }
-    list.push(token);
-    applyList(list, element);
-    return true;
-  }
-}
-
-function _replace(list, element, token, newToken) {
-  var i = void 0;
-  if (!(token = normalize(token)) || !(newToken = normalize(newToken)) || token === newToken || (i = list.indexOf(token)) === -1) {
-    return;
-  }
-  list.splice(i, 1);
-  if (list.indexOf(newToken) === -1) {
-    list.push(newToken);
-  }
-  applyList(list, element);
-}
-
-function mClassList(element) {
-  return !mClassList.ignoreNative && element.classList || function () {
-    var list = (element.getAttribute('class') || '').trim().split(/\s+/).filter(function (token) {
-      return !!token;
-    });
-    return {
-      length: list.length,
-      item: function item(i) {
-        return list[i];
-      },
-      contains: function contains(token) {
-        return list.indexOf(normalize(token)) !== -1;
-      },
-      add: function add() {
-        _add(list, element, Array.prototype.slice.call(arguments));
-      },
-      remove: function remove() {
-        _remove(list, element, Array.prototype.slice.call(arguments));
-      },
-      toggle: function toggle(token, force) {
-        return _toggle(list, element, token, force);
-      },
-      replace: function replace(token, newToken) {
-        return _replace(list, element, token, newToken);
-      }
-    };
-  }();
-}
-
-exports.default = mClassList;
-module.exports = exports['default'];
-
-/***/ }),
-/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -530,11 +89,11 @@ var _cssprefix = __webpack_require__(1);
 
 var _cssprefix2 = _interopRequireDefault(_cssprefix);
 
-var _animEvent = __webpack_require__(0);
+var _animEvent = __webpack_require__(2);
 
 var _animEvent2 = _interopRequireDefault(_animEvent);
 
-var _mClassList = __webpack_require__(2);
+var _mClassList = __webpack_require__(3);
 
 var _mClassList2 = _interopRequireDefault(_mClassList);
 
@@ -1680,8 +1239,8 @@ function _setOptions(props, newOptions) {
           expandedParsedSnapTargets.push({ xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yStart }, // Top
           { xStart: parsedXY.xStart, xEnd: parsedXY.xEnd, y: parsedXY.yEnd }, // Bottom
           { x: parsedXY.xStart, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd }, // Left
-          { x: parsedXY.xEnd, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd } // Right
-          );
+          { x: parsedXY.xEnd, yStart: parsedXY.yStart, yEnd: parsedXY.yEnd // Right
+          });
         } else {
           expandedParsedSnapTargets.push(parsedXY);
         }
@@ -2244,6 +1803,444 @@ PlainDraggable.limit = true;
 [SNAP/] */
 
 exports.default = PlainDraggable;
+module.exports = exports['default'];
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/*
+ * CSSPrefix
+ * https://github.com/anseki/cssprefix
+ *
+ * Copyright (c) 2017 anseki
+ * Licensed under the MIT license.
+ */
+
+function ucf(text) {
+  return text.substr(0, 1).toUpperCase() + text.substr(1);
+}
+
+var PREFIXES = ['webkit', 'ms', 'moz', 'o'],
+    NAME_PREFIXES = PREFIXES.reduce(function (prefixes, prefix) {
+  prefixes.push(prefix);
+  prefixes.push(ucf(prefix));
+  return prefixes;
+}, []),
+    VALUE_PREFIXES = PREFIXES.map(function (prefix) {
+  return '-' + prefix + '-';
+}),
+
+
+/**
+ * Get sample CSSStyleDeclaration.
+ * @returns {CSSStyleDeclaration}
+ */
+getDeclaration = function () {
+  var declaration = void 0;
+  return function () {
+    return declaration = declaration || document.createElement('div').style;
+  };
+}(),
+
+
+/**
+ * Normalize name.
+ * @param {} propName - A name that is normalized.
+ * @returns {string} - A normalized name.
+ */
+normalizeName = function () {
+  var rePrefixedName = new RegExp('^(?:' + PREFIXES.join('|') + ')(.)', 'i'),
+      reUc = /[A-Z]/;
+  return function (propName) {
+    return (propName = (propName + '').replace(/\s/g, '').replace(/-([\da-z])/gi, function (str, p1) {
+      return p1.toUpperCase();
+    }) // camelCase
+    // 'ms' and 'Ms' are found by rePrefixedName 'i' option
+    .replace(rePrefixedName, function (str, p1) {
+      return reUc.test(p1) ? p1.toLowerCase() : str;
+    }) // Remove prefix
+    ).toLowerCase() === 'float' ? 'cssFloat' : propName;
+  }; // For old CSSOM
+}(),
+
+
+/**
+ * Normalize value.
+ * @param {} propValue - A value that is normalized.
+ * @returns {string} - A normalized value.
+ */
+normalizeValue = function () {
+  var rePrefixedValue = new RegExp('^(?:' + VALUE_PREFIXES.join('|') + ')', 'i');
+  return function (propValue) {
+    return (propValue + '').replace(/\s/g, '').replace(rePrefixedValue, '');
+  };
+}(),
+
+
+/**
+ * Polyfill for `CSS.supports`.
+ * @param {string} propName - A name.
+ * @param {string} propValue - A value.
+ * @returns {boolean} - `true` if given pair is accepted.
+ */
+cssSupports = function () {
+  // return window.CSS && window.CSS.supports || ((propName, propValue) => {
+  // `CSS.supports` doesn't find prefixed property.
+  return function (propName, propValue) {
+    var declaration = getDeclaration();
+    // In some browsers, `declaration[prop] = value` updates any property.
+    propName = propName.replace(/[A-Z]/g, function (str) {
+      return '-' + str.toLowerCase();
+    }); // kebab-case
+    declaration.setProperty(propName, propValue);
+    return declaration.getPropertyValue(propName) === propValue;
+  };
+}(),
+    propNames = {},
+    propValues = {}; // Cache
+
+// [DEBUG]
+window.normalizeName = normalizeName;
+window.normalizeValue = normalizeValue;
+window.cssSupports = cssSupports;
+// [/DEBUG]
+
+function getName(propName) {
+  propName = normalizeName(propName);
+  if (propName && propNames[propName] == null) {
+    window.getNameDone = 'get'; // [DEBUG/]
+    var declaration = getDeclaration();
+
+    if (declaration[propName] != null) {
+      // Original
+      propNames[propName] = propName;
+    } else {
+      // Try with prefixes
+      var ucfName = ucf(propName);
+      if (!NAME_PREFIXES.some(function (prefix) {
+        var prefixed = prefix + ucfName;
+        if (declaration[prefixed] != null) {
+          propNames[propName] = prefixed;
+          return true;
+        }
+        return false;
+      })) {
+        propNames[propName] = false;
+      }
+    }
+  }
+  return propNames[propName] || void 0;
+}
+
+function getValue(propName, propValue) {
+  var res = void 0;
+
+  if (!(propName = getName(propName))) {
+    return res;
+  } // Invalid property
+
+  propValues[propName] = propValues[propName] || {};
+  (Array.isArray(propValue) ? propValue : [propValue]).some(function (propValue) {
+    propValue = normalizeValue(propValue);
+    (window.getValueDone = window.getValueDone || []).push(propValue); // [DEBUG/]
+
+    if (propValues[propName][propValue] != null) {
+      // Cache
+      if (propValues[propName][propValue] !== false) {
+        res = propValues[propName][propValue];
+        return true;
+      } else {
+        return false; // Continue to next value
+      }
+    }
+    window.getValueDone.push('get'); // [DEBUG/]
+
+    if (cssSupports(propName, propValue)) {
+      // Original
+      res = propValues[propName][propValue] = propValue;
+      return true;
+    }
+
+    if (VALUE_PREFIXES.some(function (prefix) {
+      // Try with prefixes
+      var prefixed = prefix + propValue;
+      if (cssSupports(propName, prefixed)) {
+        res = propValues[propName][propValue] = prefixed;
+        return true;
+      }
+      return false;
+    })) {
+      return true;
+    }
+
+    propValues[propName][propValue] = false;
+    return false; // Continue to next value
+  });
+
+  return typeof res === 'string' ? res : void 0; // It might be empty string.
+}
+
+var CSSPrefix = {
+  getName: getName,
+  getValue: getValue
+};
+
+exports.default = CSSPrefix;
+module.exports = exports['default'];
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/*
+ * AnimEvent
+ * https://github.com/anseki/anim-event
+ *
+ * Copyright (c) 2017 anseki
+ * Licensed under the MIT license.
+ */
+
+var MSPF = 1000 / 60,
+    // ms/frame (FPS: 60)
+KEEP_LOOP = 500,
+
+
+/**
+ * @typedef {Object} task
+ * @property {Event} event
+ * @property {function} listener
+ */
+
+/** @type {task[]} */
+tasks = [];
+
+var requestAnim = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
+  return setTimeout(callback, MSPF);
+},
+    cancelAnim = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame || function (requestID) {
+  return clearTimeout(requestID);
+},
+    requestID = void 0,
+    lastFrameTime = Date.now();
+
+// [DEBUG]
+var requestAnimSave = requestAnim,
+    cancelAnimSave = cancelAnim;
+window.AnimEventByTimer = function (byTimer) {
+  if (byTimer) {
+    requestAnim = function requestAnim(callback) {
+      return setTimeout(callback, MSPF);
+    };
+    cancelAnim = function cancelAnim(requestID) {
+      return clearTimeout(requestID);
+    };
+  } else {
+    requestAnim = requestAnimSave;
+    cancelAnim = cancelAnimSave;
+  }
+};
+// [/DEBUG]
+
+function step() {
+  var called = void 0,
+      next = void 0;
+
+  if (requestID) {
+    cancelAnim.call(window, requestID);
+    requestID = null;
+  }
+
+  tasks.forEach(function (task) {
+    if (task.event) {
+      task.listener(task.event);
+      task.event = null;
+      called = true;
+    }
+  });
+
+  if (called) {
+    lastFrameTime = Date.now();
+    next = true;
+  } else if (Date.now() - lastFrameTime < KEEP_LOOP) {
+    // Go on for a while
+    next = true;
+  }
+  if (next) {
+    requestID = requestAnim.call(window, step);
+  }
+}
+
+function indexOfTasks(listener) {
+  var index = -1;
+  tasks.some(function (task, i) {
+    if (task.listener === listener) {
+      index = i;
+      return true;
+    }
+    return false;
+  });
+  return index;
+}
+
+var AnimEvent = {
+  /**
+   * @param {function} listener - An event listener.
+   * @returns {(function|null)} - A wrapped event listener.
+   */
+  add: function add(listener) {
+    var task = void 0;
+    if (indexOfTasks(listener) === -1) {
+      tasks.push(task = { listener: listener });
+      return function (event) {
+        task.event = event;
+        if (!requestID) {
+          step();
+        }
+      };
+    } else {
+      return null;
+    }
+  },
+
+  remove: function remove(listener) {
+    var iRemove = void 0;
+    if ((iRemove = indexOfTasks(listener)) > -1) {
+      tasks.splice(iRemove, 1);
+      if (!tasks.length && requestID) {
+        cancelAnim.call(window, requestID);
+        requestID = null;
+      }
+    }
+  }
+};
+
+exports.default = AnimEvent;
+module.exports = exports["default"];
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/*
+ * mClassList
+ * https://github.com/anseki/m-class-list
+ *
+ * Copyright (c) 2017 anseki
+ * Licensed under the MIT license.
+ */
+
+function normalize(token) {
+  return (token + '').trim();
+} // Not `||`
+function applyList(list, element) {
+  element.setAttribute('class', list.join(' '));
+}
+
+function _add(list, element, tokens) {
+  if (tokens.filter(function (token) {
+    if (!(token = normalize(token)) || list.indexOf(token) !== -1) {
+      return false;
+    }
+    list.push(token);
+    return true;
+  }).length) {
+    applyList(list, element);
+  }
+}
+
+function _remove(list, element, tokens) {
+  if (tokens.filter(function (token) {
+    var i = void 0;
+    if (!(token = normalize(token)) || (i = list.indexOf(token)) === -1) {
+      return false;
+    }
+    list.splice(i, 1);
+    return true;
+  }).length) {
+    applyList(list, element);
+  }
+}
+
+function _toggle(list, element, token, force) {
+  var i = list.indexOf(token = normalize(token));
+  if (i !== -1) {
+    if (force) {
+      return true;
+    }
+    list.splice(i, 1);
+    applyList(list, element);
+    return false;
+  } else {
+    if (force === false) {
+      return false;
+    }
+    list.push(token);
+    applyList(list, element);
+    return true;
+  }
+}
+
+function _replace(list, element, token, newToken) {
+  var i = void 0;
+  if (!(token = normalize(token)) || !(newToken = normalize(newToken)) || token === newToken || (i = list.indexOf(token)) === -1) {
+    return;
+  }
+  list.splice(i, 1);
+  if (list.indexOf(newToken) === -1) {
+    list.push(newToken);
+  }
+  applyList(list, element);
+}
+
+function mClassList(element) {
+  return !mClassList.ignoreNative && element.classList || function () {
+    var list = (element.getAttribute('class') || '').trim().split(/\s+/).filter(function (token) {
+      return !!token;
+    });
+    return {
+      length: list.length,
+      item: function item(i) {
+        return list[i];
+      },
+      contains: function contains(token) {
+        return list.indexOf(normalize(token)) !== -1;
+      },
+      add: function add() {
+        _add(list, element, Array.prototype.slice.call(arguments));
+      },
+      remove: function remove() {
+        _remove(list, element, Array.prototype.slice.call(arguments));
+      },
+      toggle: function toggle(token, force) {
+        return _toggle(list, element, token, force);
+      },
+      replace: function replace(token, newToken) {
+        return _replace(list, element, token, newToken);
+      }
+    };
+  }();
+}
+
+exports.default = mClassList;
 module.exports = exports['default'];
 
 /***/ })
