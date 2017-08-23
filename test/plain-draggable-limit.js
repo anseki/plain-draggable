@@ -732,6 +732,7 @@ var PlainDraggable = function () {
     Object.defineProperty(this, '_id', { value: ++insId });
     props._id = this._id;
     insProps[this._id] = props;
+    props.initArguments = Array.prototype.slice.call(arguments); // [DEBUG/]
 
     if (!isElement(element) || element === body) {
       throw new Error('This element is not accepted.');
@@ -1073,7 +1074,14 @@ document.addEventListener('mouseup', function () {
       }
       resizing = true;
       Object.keys(insProps).forEach(function (id) {
-        initBBox(insProps[id]);
+        if (insProps[id].initElm) {
+          // Easy checking for constructed item without errors.
+          initBBox(insProps[id]);
+        }
+        // eslint-disable-next-line brace-style
+        else {
+            console.log('instance may have an error:');console.log(insProps[id]);
+          } // [DEBUG/]
       });
       resizing = false;
     }), true);

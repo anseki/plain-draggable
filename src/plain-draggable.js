@@ -1161,6 +1161,7 @@ class PlainDraggable {
     Object.defineProperty(this, '_id', {value: ++insId});
     props._id = this._id;
     insProps[this._id] = props;
+    props.initArguments = Array.prototype.slice.call(arguments); // [DEBUG/]
 
     if (!isElement(element) || element === body) { throw new Error('This element is not accepted.'); }
     if (!options) {
@@ -1458,7 +1459,13 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
         return;
       }
       resizing = true;
-      Object.keys(insProps).forEach(id => { initBBox(insProps[id]); });
+      Object.keys(insProps).forEach(id => {
+        if (insProps[id].initElm) { // Easy checking for instance without errors.
+          initBBox(insProps[id]);
+        }
+        // eslint-disable-next-line brace-style
+        else { console.log('instance may have an error:'); console.log(insProps[id]); } // [DEBUG/]
+      });
       resizing = false;
     }), true);
   }
