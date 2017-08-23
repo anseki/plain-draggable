@@ -1175,7 +1175,11 @@ class PlainDraggable {
     // SVGElement which is not root view
     if (element instanceof SVGElement && (ownerSvg = element.ownerSVGElement)) {
       // It means `instanceof SVGLocatable` (many browsers don't have SVGLocatable)
-      if (!element.getBBox) { throw new Error('This element is not accepted.'); }
+      if (!element.getBBox) { throw new Error('This element is not accepted. (SVGLocatable)'); }
+      // Trident bug, SVGSVGElement doesn't have SVGAnimatedTransformList?
+      if (!element.transform) {
+        throw new Error('This element is not accepted. (SVGAnimatedTransformList)');
+      }
       // Trident bug, returned value must be used (That is not given value).
       props.svgTransform = element.transform.baseVal.appendItem(ownerSvg.createSVGTransform());
       props.svgPoint = ownerSvg.createSVGPoint();

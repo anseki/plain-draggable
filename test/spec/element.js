@@ -4,7 +4,8 @@ describe('element', function() {
 
   var LIMIT = self.top.LIMIT;
   var window, document, pageDone,
-    cssPropTransform;
+    cssPropTransform,
+    IS_TRIDENT = !!top.document.uniqueID; // use `top` to get native window
 
   beforeAll(function(beforeDone) {
     loadPage('spec/element.html', function(pageWindow, pageDocument, pageBody, done) {
@@ -15,7 +16,7 @@ describe('element', function() {
       cssPropTransform = window.CSSPrefix.getName('transform');
 
       beforeDone();
-    });
+    },'tmp');
   });
 
   afterAll(function() {
@@ -70,14 +71,24 @@ describe('element', function() {
     expect(props.orgStyle == null).toBe(true);
   });
 
-  it('accepts SVGElement (nested SVG) that is not root view as SVG element', function() {
-    if (LIMIT) { return; }
-    var draggable = new window.PlainDraggable(document.getElementById('svg2')),
-      props = window.insProps[draggable._id];
+  if (IS_TRIDENT) {
+    it('does not accept SVGSVGElement that has no `transform` (Trident bug)', function() {
+      if (LIMIT) { return; }
+      expect(function() {
+        var draggable = new window.PlainDraggable(document.getElementById('svg2'));
+        console.log(draggable); // dummy
+      }).toThrowError(window.Error, 'This element is not accepted. (SVGAnimatedTransformList)');
+    });
+  } else {
+    it('accepts SVGElement (nested SVG) that is not root view as SVG element', function() {
+      if (LIMIT) { return; }
+      var draggable = new window.PlainDraggable(document.getElementById('svg2')),
+        props = window.insProps[draggable._id];
 
-    expect(props.svgPoint != null).toBe(true); // Has SVG info
-    expect(props.orgStyle == null).toBe(true);
-  });
+      expect(props.svgPoint != null).toBe(true); // Has SVG info
+      expect(props.orgStyle == null).toBe(true);
+    });
+  }
 
   it('accepts SVGElement (nested rect) that is not root view as SVG element', function() {
     if (LIMIT) { return; }
