@@ -9,6 +9,7 @@
 import CSSPrefix from 'cssprefix';
 import AnimEvent from 'anim-event';
 import mClassList from 'm-class-list';
+mClassList.ignoreNative = true;
 
 const
   ZINDEX = 9000,
