@@ -825,7 +825,7 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
       }
       resizing = true;
       Object.keys(insProps).forEach(id => {
-        if (insProps[id].initElm) { // Easy checking for constructed item without errors.
+        if (insProps[id].initElm) { // Easy checking for instance without errors.
           initBBox(insProps[id]);
         }
         // eslint-disable-next-line brace-style

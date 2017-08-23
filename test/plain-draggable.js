@@ -1787,7 +1787,7 @@ document.addEventListener('mouseup', function () {
       resizing = true;
       Object.keys(insProps).forEach(function (id) {
         if (insProps[id].initElm) {
-          // Easy checking for constructed item without errors.
+          // Easy checking for instance without errors.
           initBBox(insProps[id]);
         }
         // eslint-disable-next-line brace-style
