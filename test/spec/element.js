@@ -5,7 +5,9 @@ describe('element', function() {
   var LIMIT = self.top.LIMIT;
   var window, document, pageDone,
     cssPropTransform,
-    IS_TRIDENT = !!top.document.uniqueID; // use `top` to get native window
+    IS_TRIDENT = !!top.document.uniqueID, // use `top` to get native window
+    IS_EDGE = '-ms-scroll-limit' in top.document.documentElement.style &&
+      '-ms-ime-align' in top.document.documentElement.style && !top.navigator.msPointerEnabled;
 
   beforeAll(function(beforeDone) {
     loadPage('spec/element.html', function(pageWindow, pageDocument, pageBody, done) {
@@ -16,7 +18,7 @@ describe('element', function() {
       cssPropTransform = window.CSSPrefix.getName('transform');
 
       beforeDone();
-    },'tmp');
+    });
   });
 
   afterAll(function() {
@@ -71,8 +73,8 @@ describe('element', function() {
     expect(props.orgStyle == null).toBe(true);
   });
 
-  if (IS_TRIDENT) {
-    it('does not accept SVGSVGElement that has no `transform` (Trident bug)', function() {
+  if (IS_TRIDENT || IS_EDGE) {
+    it('does not accept SVGSVGElement that has no `transform` (Trident and Edge bug)', function() {
       if (LIMIT) { return; }
       expect(function() {
         var draggable = new window.PlainDraggable(document.getElementById('svg2'));
