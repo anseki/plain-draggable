@@ -1391,7 +1391,7 @@ var PlainDraggable = function () {
       if (!element.getBBox) {
         throw new Error('This element is not accepted. (SVGLocatable)');
       }
-      // Trident bug, SVGSVGElement doesn't have SVGAnimatedTransformList?
+      // Trident and Edge bug, SVGSVGElement doesn't have SVGAnimatedTransformList?
       if (!element.transform) {
         throw new Error('This element is not accepted. (SVGAnimatedTransformList)');
       }
