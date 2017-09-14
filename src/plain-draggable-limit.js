@@ -1,4 +1,8 @@
 /*
+  DON'T MANUALLY EDIT THIS FILE; run `npm run dev-limit` instead.
+*/
+
+/*
  * PlainDraggable
  * https://anseki.github.io/plain-draggable/
  *
