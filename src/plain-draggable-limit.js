@@ -437,8 +437,9 @@ function dragEnd(props) {
 
   if (props.options.zIndex !== false) { props.elementStyle.zIndex = props.orgZIndex; }
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = cssOrgValueBodyUserSelect; }
-  if (movingClass) { mClassList(props.element).remove(movingClass); }
-  if (draggingClass) { mClassList(props.element).remove(draggingClass); }
+  const classList = mClassList(props.element);
+  if (movingClass) { classList.remove(movingClass); }
+  if (draggingClass) { classList.remove(draggingClass); }
 
   activeItem = null;
   if (props.onDragEnd) { props.onDragEnd(); }
@@ -754,8 +755,9 @@ class PlainDraggable {
       Object.keys(insProps).forEach(id => {
         const props = insProps[id];
         if (!props.disabled) {
-          if (draggableClass) { mClassList(props.element).remove(draggableClass); }
-          if (value) { mClassList(props.element).add(value); }
+          const classList = mClassList(props.element);
+          if (draggableClass) { classList.remove(draggableClass); }
+          if (value) { classList.add(value); }
         }
       });
       draggableClass = value;
@@ -769,8 +771,9 @@ class PlainDraggable {
     value = value ? (value + '') : void 0;
     if (value !== draggingClass) {
       if (activeItem) {
-        if (draggingClass) { mClassList(activeItem.element).remove(draggingClass); }
-        if (value) { mClassList(activeItem.element).add(value); }
+        const classList = mClassList(activeItem.element);
+        if (draggingClass) { classList.remove(draggingClass); }
+        if (value) { classList.add(value); }
       }
       draggingClass = value;
     }
@@ -783,8 +786,9 @@ class PlainDraggable {
     value = value ? (value + '') : void 0;
     if (value !== movingClass) {
       if (activeItem && hasMoved) {
-        if (movingClass) { mClassList(activeItem.element).remove(movingClass); }
-        if (value) { mClassList(activeItem.element).add(value); }
+        const classList = mClassList(activeItem.element);
+        if (movingClass) { classList.remove(movingClass); }
+        if (value) { classList.add(value); }
       }
       movingClass = value;
     }

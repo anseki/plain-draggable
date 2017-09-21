@@ -938,11 +938,12 @@ function dragEnd(props) {
   if (cssPropUserSelect) {
     body.style[cssPropUserSelect] = cssOrgValueBodyUserSelect;
   }
+  var classList = (0, _mClassList2.default)(props.element);
   if (movingClass) {
-    (0, _mClassList2.default)(props.element).remove(movingClass);
+    classList.remove(movingClass);
   }
   if (draggingClass) {
-    (0, _mClassList2.default)(props.element).remove(draggingClass);
+    classList.remove(draggingClass);
   }
 
   activeItem = null;
@@ -1661,11 +1662,12 @@ var PlainDraggable = function () {
         Object.keys(insProps).forEach(function (id) {
           var props = insProps[id];
           if (!props.disabled) {
+            var classList = (0, _mClassList2.default)(props.element);
             if (draggableClass) {
-              (0, _mClassList2.default)(props.element).remove(draggableClass);
+              classList.remove(draggableClass);
             }
             if (value) {
-              (0, _mClassList2.default)(props.element).add(value);
+              classList.add(value);
             }
           }
         });
@@ -1681,11 +1683,12 @@ var PlainDraggable = function () {
       value = value ? value + '' : void 0;
       if (value !== draggingClass) {
         if (activeItem) {
+          var classList = (0, _mClassList2.default)(activeItem.element);
           if (draggingClass) {
-            (0, _mClassList2.default)(activeItem.element).remove(draggingClass);
+            classList.remove(draggingClass);
           }
           if (value) {
-            (0, _mClassList2.default)(activeItem.element).add(value);
+            classList.add(value);
           }
         }
         draggingClass = value;
@@ -1700,11 +1703,12 @@ var PlainDraggable = function () {
       value = value ? value + '' : void 0;
       if (value !== movingClass) {
         if (activeItem && hasMoved) {
+          var classList = (0, _mClassList2.default)(activeItem.element);
           if (movingClass) {
-            (0, _mClassList2.default)(activeItem.element).remove(movingClass);
+            classList.remove(movingClass);
           }
           if (value) {
-            (0, _mClassList2.default)(activeItem.element).add(value);
+            classList.add(value);
           }
         }
         movingClass = value;
@@ -2229,8 +2233,8 @@ function mClassList(element) {
   return !mClassList.ignoreNative && element.classList || function () {
     var list = (element.getAttribute('class') || '').trim().split(/\s+/).filter(function (token) {
       return !!token;
-    });
-    return {
+    }),
+        ins = {
       length: list.length,
       item: function item(i) {
         return list[i];
@@ -2240,19 +2244,24 @@ function mClassList(element) {
       },
       add: function add() {
         _add(list, element, Array.prototype.slice.call(arguments));
+        return mClassList.methodChain ? ins : void 0;
       },
       remove: function remove() {
         _remove(list, element, Array.prototype.slice.call(arguments));
+        return mClassList.methodChain ? ins : void 0;
       },
       toggle: function toggle(token, force) {
         return _toggle(list, element, token, force);
       },
       replace: function replace(token, newToken) {
-        return _replace(list, element, token, newToken);
+        _replace(list, element, token, newToken);
+        return mClassList.methodChain ? ins : void 0;
       }
     };
+    return ins;
   }();
 }
+mClassList.methodChain = true;
 
 exports.default = mClassList;
 module.exports = exports['default'];
