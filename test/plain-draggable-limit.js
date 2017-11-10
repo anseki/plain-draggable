@@ -170,7 +170,7 @@ function hasChanged(a, b) {
 
 /**
  * @param {Element} element - A target element.
- * @returns {boolean} - `true` if connected element.
+ * @returns {boolean} `true` if connected element.
  */
 function isElement(element) {
   return !!(element && element.nodeType === Node.ELEMENT_NODE &&
@@ -194,7 +194,7 @@ window.isElement = isElement; // [DEBUG/]
 
 /**
  * @param {Object} bBox - A target object.
- * @returns {(BBox|null)} - A normalized `BBox`, or null if `bBox` is invalid.
+ * @returns {(BBox|null)} A normalized `BBox`, or null if `bBox` is invalid.
  */
 function validBBox(bBox) {
   if (!isObject(bBox)) {
@@ -265,7 +265,7 @@ function resolvePPValue(ppValue, baseOrigin, baseSize) {
 
 /**
  * @param {Object} bBox - A target object.
- * @returns {(PPBBox|null)} - A normalized `PPBBox`, or null if `bBox` is invalid.
+ * @returns {(PPBBox|null)} A normalized `PPBBox`, or null if `bBox` is invalid.
  */
 function validPPBBox(bBox) {
   if (!isObject(bBox)) {
@@ -329,7 +329,7 @@ window.resolvePPBBox = resolvePPBBox; // [DEBUG/]
 /**
  * @param {Element} element - A target element.
  * @param {?boolean} getPaddingBox - Get padding-box instead of border-box as bounding-box.
- * @returns {BBox} - A bounding-box of `element`.
+ * @returns {BBox} A bounding-box of `element`.
  */
 function getBBox(element, getPaddingBox) {
   var rect = element.getBoundingClientRect(),
@@ -355,7 +355,7 @@ window.getBBox = getBBox; // [DEBUG/]
  * Optimize an element for animation.
  * @param {Element} element - A target element.
  * @param {?boolean} gpuTrigger - Initialize for SVGElement if `true`.
- * @returns {Element} - A target element.
+ * @returns {Element} A target element.
  */
 function initAnim(element, gpuTrigger) {
   var style = element.style;
@@ -400,7 +400,7 @@ function setDraggingCursor(element) {
  * Move by `translate`.
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
- * @returns {boolean} - `true` if it was moved.
+ * @returns {boolean} `true` if it was moved.
  */
 function moveTranslate(props, position) {
   var elementBBox = props.elementBBox;
@@ -417,7 +417,7 @@ function moveTranslate(props, position) {
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
  * @param {function} [cbCheck] - Callback that is called with valid position, cancel moving if it returns `false`.
- * @returns {boolean} - `true` if it was moved.
+ * @returns {boolean} `true` if it was moved.
  */
 function move(props, position, cbCheck) {
   var elementBBox = props.elementBBox;
@@ -791,7 +791,7 @@ var PlainDraggable = function () {
 
   /**
    * @param {Object} options - New options.
-   * @returns {PlainDraggable} - Current instance itself.
+   * @returns {PlainDraggable} Current instance itself.
    */
 
 
@@ -1157,7 +1157,7 @@ getDeclaration = function () {
 /**
  * Normalize name.
  * @param {} propName - A name that is normalized.
- * @returns {string} - A normalized name.
+ * @returns {string} A normalized name.
  */
 normalizeName = function () {
   var rePrefixedName = new RegExp('^(?:' + PREFIXES.join('|') + ')(.)', 'i'),
@@ -1178,7 +1178,7 @@ normalizeName = function () {
 /**
  * Normalize value.
  * @param {} propValue - A value that is normalized.
- * @returns {string} - A normalized value.
+ * @returns {string} A normalized value.
  */
 normalizeValue = function () {
   var rePrefixedValue = new RegExp('^(?:' + VALUE_PREFIXES.join('|') + ')', 'i');
@@ -1192,7 +1192,7 @@ normalizeValue = function () {
  * Polyfill for `CSS.supports`.
  * @param {string} propName - A name.
  * @param {string} propValue - A value.
- * @returns {boolean} - `true` if given pair is accepted.
+ * @returns {boolean} `true` if given pair is accepted.
  */
 cssSupports = function () {
   // return window.CSS && window.CSS.supports || ((propName, propValue) => {
@@ -1402,7 +1402,7 @@ function indexOfTasks(listener) {
 var AnimEvent = {
   /**
    * @param {function} listener - An event listener.
-   * @returns {(function|null)} - A wrapped event listener.
+   * @returns {(function|null)} A wrapped event listener.
    */
   add: function add(listener) {
     var task = void 0;

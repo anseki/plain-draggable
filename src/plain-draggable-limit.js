@@ -79,7 +79,7 @@ function hasChanged(a, b) {
 
 /**
  * @param {Element} element - A target element.
- * @returns {boolean} - `true` if connected element.
+ * @returns {boolean} `true` if connected element.
  */
 function isElement(element) {
   return !!(element &&
@@ -105,7 +105,7 @@ window.isElement = isElement; // [DEBUG/]
 
 /**
  * @param {Object} bBox - A target object.
- * @returns {(BBox|null)} - A normalized `BBox`, or null if `bBox` is invalid.
+ * @returns {(BBox|null)} A normalized `BBox`, or null if `bBox` is invalid.
  */
 function validBBox(bBox) {
   if (!isObject(bBox)) { return null; }
@@ -168,7 +168,7 @@ function resolvePPValue(ppValue, baseOrigin, baseSize) {
 
 /**
  * @param {Object} bBox - A target object.
- * @returns {(PPBBox|null)} - A normalized `PPBBox`, or null if `bBox` is invalid.
+ * @returns {(PPBBox|null)} A normalized `PPBBox`, or null if `bBox` is invalid.
  */
 function validPPBBox(bBox) {
   if (!isObject(bBox)) { return null; }
@@ -224,7 +224,7 @@ window.resolvePPBBox = resolvePPBBox; // [DEBUG/]
 /**
  * @param {Element} element - A target element.
  * @param {?boolean} getPaddingBox - Get padding-box instead of border-box as bounding-box.
- * @returns {BBox} - A bounding-box of `element`.
+ * @returns {BBox} A bounding-box of `element`.
  */
 function getBBox(element, getPaddingBox) {
   const rect = element.getBoundingClientRect(),
@@ -250,7 +250,7 @@ window.getBBox = getBBox; // [DEBUG/]
  * Optimize an element for animation.
  * @param {Element} element - A target element.
  * @param {?boolean} gpuTrigger - Initialize for SVGElement if `true`.
- * @returns {Element} - A target element.
+ * @returns {Element} A target element.
  */
 function initAnim(element, gpuTrigger) {
   const style = element.style;
@@ -288,7 +288,7 @@ function setDraggingCursor(element) {
  * Move by `translate`.
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
- * @returns {boolean} - `true` if it was moved.
+ * @returns {boolean} `true` if it was moved.
  */
 function moveTranslate(props, position) {
   const elementBBox = props.elementBBox;
@@ -308,7 +308,7 @@ function moveTranslate(props, position) {
  * @param {props} props - `props` of instance.
  * @param {{left: number, top: number}} position - New position.
  * @param {function} [cbCheck] - Callback that is called with valid position, cancel moving if it returns `false`.
- * @returns {boolean} - `true` if it was moved.
+ * @returns {boolean} `true` if it was moved.
  */
 function move(props, position, cbCheck) {
   const elementBBox = props.elementBBox;
@@ -634,7 +634,7 @@ class PlainDraggable {
 
   /**
    * @param {Object} options - New options.
-   * @returns {PlainDraggable} - Current instance itself.
+   * @returns {PlainDraggable} Current instance itself.
    */
   setOptions(options) {
     if (isObject(options)) {
