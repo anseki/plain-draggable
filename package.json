@@ -40,7 +40,7 @@
     "build": "cross-env NODE_ENV=production webpack",
     "dev": "webpack --display-modules",
     "build-limit": "cross-env EDITION=limit NODE_ENV=production webpack",
-    "dev-limit": "cross-env EDITION=limit SRC=yes webpack --display-modules",
+    "dev-limit": "cross-env EDITION=limit webpack --display-modules",
     "test": "node ./test/httpd"
   },
   "homepage": "https://anseki.github.io/plain-draggable/",

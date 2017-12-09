@@ -1,5 +1,5 @@
 /*
-  DON'T MANUALLY EDIT THIS FILE; run `npm run dev-limit` instead.
+    DON'T MANUALLY EDIT THIS FILE
 */
 
 /*
@@ -48,10 +48,6 @@ let insId = 0,
   draggableClass = 'plain-draggable',
   draggingClass = 'plain-draggable-dragging', movingClass = 'plain-draggable-moving';
 
-// [DEBUG]
-window.insProps = insProps;
-window.IS_WEBKIT = IS_WEBKIT;
-// [/DEBUG]
 
 function copyTree(obj) {
   return !obj ? obj :
@@ -88,7 +84,6 @@ function isElement(element) {
     typeof element.getBoundingClientRect === 'function' &&
     !(element.compareDocumentPosition(document) & Node.DOCUMENT_POSITION_DISCONNECTED));
 }
-window.isElement = isElement; // [DEBUG/]
 
 /**
  * An object that simulates `DOMRect` to indicate a bounding-box.
@@ -129,7 +124,6 @@ function validBBox(bBox) {
   } else { return null; }
   return bBox;
 }
-window.validBBox = validBBox; // [DEBUG/]
 
 /**
  * A value that is Pixels or Ratio
@@ -149,12 +143,10 @@ function validPPValue(value) {
   return isFinite(value) ? {value: value, isRatio: false} :
     typeof value === 'string' ? string2PPValue(value.replace(/\s/g, '')) : null;
 }
-window.validPPValue = validPPValue; // [DEBUG/]
 
 function ppValue2OptionValue(ppValue) {
   return ppValue.isRatio ? `${ppValue.value * 100}%` : ppValue.value;
 }
-window.ppValue2OptionValue = ppValue2OptionValue; // [DEBUG/]
 
 function resolvePPValue(ppValue, baseOrigin, baseSize) {
   return typeof ppValue === 'number' ? ppValue :
@@ -196,7 +188,6 @@ function validPPBBox(bBox) {
   } else { return null; }
   return bBox;
 }
-window.validPPBBox = validPPBBox; // [DEBUG/]
 
 function ppBBox2OptionObject(ppBBox) {
   return Object.keys(ppBBox).reduce((obj, prop) => {
@@ -204,7 +195,6 @@ function ppBBox2OptionObject(ppBBox) {
     return obj;
   }, {});
 }
-window.ppBBox2OptionObject = ppBBox2OptionObject; // [DEBUG/]
 
 // PPBBox -> BBox
 function resolvePPBBox(ppBBox, baseBBox) {
@@ -219,7 +209,6 @@ function resolvePPBBox(ppBBox, baseBBox) {
     return bBox;
   }, {}));
 }
-window.resolvePPBBox = resolvePPBBox; // [DEBUG/]
 
 /**
  * @param {Element} element - A target element.
@@ -244,7 +233,6 @@ function getBBox(element, getPaddingBox) {
   }
   return validBBox(bBox);
 }
-window.getBBox = getBBox; // [DEBUG/]
 
 /**
  * Optimize an element for animation.
@@ -428,7 +416,6 @@ function initBBox(props) {
   // Adjust position
   move(props, {left: elementBBox.left, top: elementBBox.top});
 
-  window.initBBoxDone = true; // [DEBUG/]
 }
 
 function dragEnd(props) {
@@ -591,7 +578,6 @@ class PlainDraggable {
     Object.defineProperty(this, '_id', {value: ++insId});
     props._id = this._id;
     insProps[this._id] = props;
-    props.initArguments = Array.prototype.slice.call(arguments); // [DEBUG/]
 
     if (!isElement(element) || element === body) { throw new Error('This element is not accepted.'); }
     if (!options) {
@@ -828,7 +814,6 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
     // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
     window.addEventListener('resize', AnimEvent.add(() => {
       if (resizing) {
-        console.log('`resize` event listener is already running.'); // [DEBUG/]
         return;
       }
       resizing = true;
@@ -837,7 +822,6 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
           initBBox(insProps[id]);
         }
         // eslint-disable-next-line brace-style
-        else { console.log('instance may have an error:'); console.log(insProps[id]); } // [DEBUG/]
       });
       resizing = false;
     }), true);
