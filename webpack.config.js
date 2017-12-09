@@ -38,7 +38,7 @@ module.exports = {
   devtool: BUILD ? false : 'source-map',
   plugins: BUILD ? [
     new webpack.optimize.UglifyJsPlugin({compress: {warnings: true}}),
-    new webpack.BannerPlugin({raw: true,
-      banner: `/*! ${PKG.title || PKG.name} v${PKG.version} (c) ${PKG.author.name} ${PKG.homepage} */`})
+    new webpack.BannerPlugin(
+      `${PKG.title || PKG.name} v${PKG.version} (c) ${PKG.author.name} ${PKG.homepage}`)
   ] : []
 };
