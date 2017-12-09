@@ -17,7 +17,7 @@ const
 
   LIMIT_TAGS = ['SNAP', 'SVG', 'LEFTTOP'],
   BASE_NAME = 'plain-draggable',
-  ENTRY_PATH = path.resolve(SRC_PATH, `${BASE_NAME}.js`);
+  OWN_PATH = path.resolve(SRC_PATH, `${BASE_NAME}.js`);
 
 module.exports = [
   {
@@ -35,7 +35,7 @@ module.exports = [
           procedure: function(content) {
             const preProc = require('pre-proc');
             if (LIMIT) { content = preProc.removeTag(LIMIT_TAGS, content); }
-            if (this.resourcePath === ENTRY_PATH) {
+            if (this.resourcePath === OWN_PATH && this.options.entry === OWN_PATH) {
               // Save the source code after preProc has been applied.
               const destPath = path.resolve(SRC_PATH,
                 `${BASE_NAME}${LIMIT ? '-limit' : ''}.proc.js`);
