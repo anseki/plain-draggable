@@ -1157,7 +1157,7 @@ getDeclaration = function () {
 /**
  * Normalize name.
  * @param {} propName - A name that is normalized.
- * @returns {string} - A normalized name.
+ * @returns {string} A normalized name.
  */
 normalizeName = function () {
   var rePrefixedName = new RegExp('^(?:' + PREFIXES.join('|') + ')(.)', 'i'),
@@ -1178,7 +1178,7 @@ normalizeName = function () {
 /**
  * Normalize value.
  * @param {} propValue - A value that is normalized.
- * @returns {string} - A normalized value.
+ * @returns {string} A normalized value.
  */
 normalizeValue = function () {
   var rePrefixedValue = new RegExp('^(?:' + VALUE_PREFIXES.join('|') + ')', 'i');
@@ -1192,7 +1192,7 @@ normalizeValue = function () {
  * Polyfill for `CSS.supports`.
  * @param {string} propName - A name.
  * @param {string} propValue - A value.
- * @returns {boolean} - `true` if given pair is accepted.
+ * @returns {boolean} `true` if given pair is accepted.
  */
 cssSupports = function () {
   // return window.CSS && window.CSS.supports || ((propName, propValue) => {
@@ -1402,7 +1402,7 @@ function indexOfTasks(listener) {
 var AnimEvent = {
   /**
    * @param {function} listener - An event listener.
-   * @returns {(function|null)} - A wrapped event listener.
+   * @returns {(function|null)} A wrapped event listener.
    */
   add: function add(listener) {
     var task = void 0;
@@ -1452,10 +1452,15 @@ Object.defineProperty(exports, "__esModule", {
  * Licensed under the MIT license.
  */
 
+var hookApply = void 0; // [DEBUG/]
+
 function normalize(token) {
   return (token + '').trim();
 } // Not `||`
 function applyList(list, element) {
+  if (hookApply) {
+    hookApply(list, element);
+  } // [DEBUG/]
   element.setAttribute('class', list.join(' '));
 }
 
@@ -1547,7 +1552,12 @@ function mClassList(element) {
     return ins;
   }();
 }
+
 mClassList.methodChain = true;
+
+mClassList.hookApply = function (fnc) {
+  hookApply = typeof fnc === 'function' ? fnc : null;
+}; // [DEBUG/]
 
 exports.default = mClassList;
 module.exports = exports['default'];
