@@ -360,7 +360,15 @@ window.getBBox = getBBox; // [DEBUG/]
 function initAnim(element, gpuTrigger) {
   var style = element.style;
   style.webkitTapHighlightColor = 'transparent';
-  style[_cssprefix2.default.getName('boxShadow')] = '0 0 1px transparent';
+
+  // Only when it has no shadow
+  var cssPropBoxShadow = _cssprefix2.default.getName('boxShadow'),
+      boxShadow = window.getComputedStyle(element, '')[cssPropBoxShadow];
+  if (!boxShadow) {
+    // `none` will deliberately disable the shadow, maybe -> Don't change
+    style[cssPropBoxShadow] = '0 0 1px transparent';
+  }
+
   if (gpuTrigger && cssPropTransform) {
     style[cssPropTransform] = 'translateZ(0)';
   }
