@@ -391,8 +391,7 @@ function initAnim(element, gpuTrigger) {
   // Only when it has no shadow
   var cssPropBoxShadow = _cssprefix2.default.getName('boxShadow'),
       boxShadow = window.getComputedStyle(element, '')[cssPropBoxShadow];
-  if (!boxShadow) {
-    // `none` will deliberately disable the shadow, maybe -> Don't change
+  if (!boxShadow || boxShadow === 'none') {
     style[cssPropBoxShadow] = '0 0 1px transparent';
   }
 

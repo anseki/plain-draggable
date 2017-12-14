@@ -101,4 +101,54 @@ describe('element', function() {
     expect(props.orgStyle == null).toBe(true);
   });
 
+  it('sets shadow to optimize it only when it has no shadow', function() {
+    var INIT_SHADOW = '1px', // Keyword from initAnim(), the value might be formatted by browser
+      cssPropBoxShadow = window.CSSPrefix.getName('boxShadow'),
+      elm = document.getElementById('elm1'),
+      draggable = new window.PlainDraggable(elm), // eslint-disable-line no-unused-vars
+      cmpValue;
+
+    // elm1 may has been already set by other tests
+    expect(elm.style[cssPropBoxShadow].indexOf(INIT_SHADOW)).not.toBe(-1);
+
+    elm = document.getElementById('elm-shadow-by-id');
+    cmpValue = window.getComputedStyle(elm, '')[cssPropBoxShadow];
+    expect(elm.style[cssPropBoxShadow]).toBe('');
+    expect(cmpValue).not.toBe('');
+    expect(cmpValue).not.toBe('none');
+    expect(cmpValue.indexOf(INIT_SHADOW)).toBe(-1);
+    expect(cmpValue.indexOf('5px')).not.toBe(-1);
+    draggable = new window.PlainDraggable(elm); // Setup
+    // Not changed
+    cmpValue = window.getComputedStyle(elm, '')[cssPropBoxShadow];
+    expect(elm.style[cssPropBoxShadow]).toBe('');
+    expect(cmpValue).not.toBe('');
+    expect(cmpValue).not.toBe('none');
+    expect(cmpValue.indexOf(INIT_SHADOW)).toBe(-1);
+    expect(cmpValue.indexOf('5px')).not.toBe(-1);
+
+    // Has no shadow yet
+    elm = document.getElementById('elm-shadow-by-style');
+    cmpValue = window.getComputedStyle(elm, '')[cssPropBoxShadow];
+    expect(elm.style[cssPropBoxShadow]).toBe('');
+    expect(cmpValue).toBe('none');
+    draggable = new window.PlainDraggable(elm); // Setup
+    // Changed
+    expect(elm.style[cssPropBoxShadow].indexOf(INIT_SHADOW)).not.toBe(-1);
+
+    // Set to style
+    elm.style[cssPropBoxShadow] = '3px 5px 10px 3px rgba(0, 0, 0, 0.3)';
+    cmpValue = window.getComputedStyle(elm, '')[cssPropBoxShadow];
+    expect(elm.style[cssPropBoxShadow].indexOf(INIT_SHADOW)).toBe(-1);
+    expect(elm.style[cssPropBoxShadow].indexOf('5px')).not.toBe(-1);
+    expect(cmpValue.indexOf(INIT_SHADOW)).toBe(-1);
+    expect(cmpValue.indexOf('5px')).not.toBe(-1);
+    draggable = new window.PlainDraggable(elm); // Setup
+    // Not changed
+    expect(elm.style[cssPropBoxShadow].indexOf(INIT_SHADOW)).toBe(-1);
+    expect(elm.style[cssPropBoxShadow].indexOf('5px')).not.toBe(-1);
+    expect(cmpValue.indexOf(INIT_SHADOW)).toBe(-1);
+    expect(cmpValue.indexOf('5px')).not.toBe(-1);
+  });
+
 });
