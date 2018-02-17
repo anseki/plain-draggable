@@ -18,6 +18,15 @@
   "main": "plain-draggable.min.js",
   "module": "./src/plain-draggable.js",
   "jsnext:main": "./src/plain-draggable.js",
+  "files": [
+    "plain-draggable.min.js",
+    "plain-draggable-limit.min.js",
+    "src/*.js",
+    "!src/*.proc.*",
+    "webpack.config.rules.js",
+    "bower.json",
+    "LICENSE-MIT"
+  ],
   "devDependencies": {
     "anim-event": "^1.0.11",
     "babel-core": "^6.26.0",
