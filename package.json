@@ -34,7 +34,7 @@
     "babel-plugin-add-module-exports": "^0.2.1",
     "babel-preset-es2015": "^6.24.1",
     "cross-env": "^5.1.3",
-    "cssprefix": "^2.0.10",
+    "cssprefix": "^2.0.11",
     "jasmine-core": "^2.99.1",
     "log4js": "^2.5.3",
     "m-class-list": "^1.1.4",
@@ -43,7 +43,7 @@
     "pre-proc-loader": "^1.0.9",
     "skeleton-loader": "^1.1.5",
     "stats-filelist": "^1.0.1",
-    "test-page-loader": "^1.0.6",
+    "test-page-loader": "^1.0.7",
     "webpack": "^3.11.0"
   },
   "scripts": {
