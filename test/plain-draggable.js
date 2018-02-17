@@ -81,7 +81,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                                                                                                                                                                                                                                                                                * PlainDraggable
                                                                                                                                                                                                                                                                                * https://anseki.github.io/plain-draggable/
                                                                                                                                                                                                                                                                                *
-                                                                                                                                                                                                                                                                               * Copyright (c) 2017 anseki
+                                                                                                                                                                                                                                                                               * Copyright (c) 2018 anseki
                                                                                                                                                                                                                                                                                * Licensed under the MIT license.
                                                                                                                                                                                                                                                                                */
 
@@ -1844,7 +1844,7 @@ Object.defineProperty(exports, "__esModule", {
  * CSSPrefix
  * https://github.com/anseki/cssprefix
  *
- * Copyright (c) 2017 anseki
+ * Copyright (c) 2018 anseki
  * Licensed under the MIT license.
  */
 
@@ -2034,7 +2034,7 @@ Object.defineProperty(exports, "__esModule", {
  * AnimEvent
  * https://github.com/anseki/anim-event
  *
- * Copyright (c) 2017 anseki
+ * Copyright (c) 2018 anseki
  * Licensed under the MIT license.
  */
 
@@ -2169,19 +2169,14 @@ Object.defineProperty(exports, "__esModule", {
  * mClassList
  * https://github.com/anseki/m-class-list
  *
- * Copyright (c) 2017 anseki
+ * Copyright (c) 2018 anseki
  * Licensed under the MIT license.
  */
-
-var hookApply = void 0; // [DEBUG/]
 
 function normalize(token) {
   return (token + '').trim();
 } // Not `||`
 function applyList(list, element) {
-  if (hookApply) {
-    hookApply(list, element);
-  } // [DEBUG/]
   element.setAttribute('class', list.join(' '));
 }
 
@@ -2275,10 +2270,6 @@ function mClassList(element) {
 }
 
 mClassList.methodChain = true;
-
-mClassList.hookApply = function (fnc) {
-  hookApply = typeof fnc === 'function' ? fnc : null;
-}; // [DEBUG/]
 
 exports.default = mClassList;
 module.exports = exports['default'];
