@@ -32,7 +32,7 @@ module.exports = {
     library: OBJECT_NAME,
     libraryTarget: 'var'
   },
-  resolve: {mainFields: ['jsnext:main', 'browser', 'module', 'main']},
+  resolve: {mainFields: ['module', 'jsnext:main', 'browser', 'main']},
   module: {rules: RULES},
   devtool: BUILD ? false : 'source-map',
   plugins: BUILD ? [

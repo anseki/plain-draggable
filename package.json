@@ -16,6 +16,7 @@
     "requestanimationframe "
   ],
   "main": "plain-draggable.min.js",
+  "module": "./src/plain-draggable.js",
   "jsnext:main": "./src/plain-draggable.js",
   "devDependencies": {
     "anim-event": "^1.0.11",
