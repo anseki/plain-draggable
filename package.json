@@ -16,14 +16,10 @@
     "requestanimationframe "
   ],
   "main": "plain-draggable.min.js",
-  "module": "./src/plain-draggable.js",
-  "jsnext:main": "./src/plain-draggable.js",
+  "module": "plain-draggable.esm.js",
+  "jsnext:main": "plain-draggable.esm.js",
   "files": [
-    "plain-draggable.min.js",
-    "plain-draggable-limit.min.js",
-    "src/*.js",
-    "!src/*.proc.*",
-    "webpack.config.rules.js",
+    "plain-draggable?(-limit)?(-debug).@(min|esm).js",
     "bower.json",
     "LICENSE-MIT"
   ],
@@ -31,7 +27,6 @@
     "anim-event": "^1.0.12",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
-    "babel-plugin-add-module-exports": "^0.2.1",
     "babel-preset-es2015": "^6.24.1",
     "cross-env": "^5.1.3",
     "cssprefix": "^2.0.11",
@@ -47,10 +42,10 @@
     "webpack": "^3.11.0"
   },
   "scripts": {
-    "build": "cross-env NODE_ENV=production webpack",
-    "dev": "webpack --display-modules",
-    "build-limit": "cross-env EDITION=limit NODE_ENV=production webpack",
-    "dev-limit": "cross-env EDITION=limit webpack --display-modules",
+    "build": "cross-env NODE_ENV=production webpack --verbose",
+    "dev": "webpack --verbose",
+    "build-limit": "cross-env EDITION=limit NODE_ENV=production webpack --verbose",
+    "dev-limit": "cross-env EDITION=limit webpack --verbose",
     "test": "node ./test/httpd"
   },
   "homepage": "https://anseki.github.io/plain-draggable/",

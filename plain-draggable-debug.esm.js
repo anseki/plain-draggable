@@ -1,78 +1,7 @@
-var PlainDraggable =
-/******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, {
-/******/ 				configurable: false,
-/******/ 				enumerable: true,
-/******/ 				get: getter
-/******/ 			});
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
-/******/ })
-/************************************************************************/
-/******/ ([
-/* 0 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/* ================================================
+        DON'T MANUALLY EDIT THIS FILE
+================================================ */
 
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_cssprefix__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_anim_event__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_m_class_list__ = __webpack_require__(3);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -87,10 +16,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * Licensed under the MIT license.
  */
 
-
-
-
-__WEBPACK_IMPORTED_MODULE_2_m_class_list__["a" /* default */].ignoreNative = true;
+import CSSPrefix from 'cssprefix';
+import AnimEvent from 'anim-event';
+import mClassList from 'm-class-list';
+mClassList.ignoreNative = true;
 
 var ZINDEX = 9000,
 
@@ -378,7 +307,7 @@ function initAnim(element, gpuTrigger) {
   style.webkitTapHighlightColor = 'transparent';
 
   // Only when it has no shadow
-  var cssPropBoxShadow = __WEBPACK_IMPORTED_MODULE_0_cssprefix__["a" /* default */].getName('boxShadow'),
+  var cssPropBoxShadow = CSSPrefix.getName('boxShadow'),
       boxShadow = window.getComputedStyle(element, '')[cssPropBoxShadow];
   if (!boxShadow || boxShadow === 'none') {
     style[cssPropBoxShadow] = '0 0 1px transparent';
@@ -393,7 +322,7 @@ function initAnim(element, gpuTrigger) {
 function setDraggableCursor(element, orgCursor) {
   if (cssValueDraggableCursor == null) {
     if (cssWantedValueDraggableCursor !== false) {
-      cssValueDraggableCursor = __WEBPACK_IMPORTED_MODULE_0_cssprefix__["a" /* default */].getValue('cursor', cssWantedValueDraggableCursor);
+      cssValueDraggableCursor = CSSPrefix.getValue('cursor', cssWantedValueDraggableCursor);
     }
     // The wanted value was denied, or changing is not wanted.
     if (cssValueDraggableCursor == null) {
@@ -407,7 +336,7 @@ function setDraggableCursor(element, orgCursor) {
 function setDraggingCursor(element) {
   if (cssValueDraggingCursor == null) {
     if (cssWantedValueDraggingCursor !== false) {
-      cssValueDraggingCursor = __WEBPACK_IMPORTED_MODULE_0_cssprefix__["a" /* default */].getValue('cursor', cssWantedValueDraggingCursor);
+      cssValueDraggingCursor = CSSPrefix.getValue('cursor', cssWantedValueDraggingCursor);
     }
     // The wanted value was denied, or changing is not wanted.
     if (cssValueDraggingCursor == null) {
@@ -934,7 +863,7 @@ function dragEnd(props) {
   if (cssPropUserSelect) {
     body.style[cssPropUserSelect] = cssOrgValueBodyUserSelect;
   }
-  var classList = Object(__WEBPACK_IMPORTED_MODULE_2_m_class_list__["a" /* default */])(props.element);
+  var classList = mClassList(props.element);
   if (movingClass) {
     classList.remove(movingClass);
   }
@@ -967,7 +896,7 @@ function mousedown(props, event) {
     body.style[cssPropUserSelect] = 'none';
   }
   if (draggingClass) {
-    Object(__WEBPACK_IMPORTED_MODULE_2_m_class_list__["a" /* default */])(props.element).add(draggingClass);
+    mClassList(props.element).add(draggingClass);
   }
 
   activeItem = props;
@@ -1403,7 +1332,7 @@ var PlainDraggable = function () {
       props.moveElm = moveSvg;
     } else {
       // [/SVG]
-      var cssPropWillChange = __WEBPACK_IMPORTED_MODULE_0_cssprefix__["a" /* default */].getName('willChange');
+      var cssPropWillChange = CSSPrefix.getName('willChange');
       if (cssPropWillChange) {
         gpuTrigger = false;
       }
@@ -1434,13 +1363,13 @@ var PlainDraggable = function () {
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) {
-      Object(__WEBPACK_IMPORTED_MODULE_2_m_class_list__["a" /* default */])(element).add(draggableClass);
+      mClassList(element).add(draggableClass);
     }
     // Prepare removable event listeners for each instance.
     props.handleMousedown = function (event) {
       mousedown(props, event);
     };
-    props.handleScroll = __WEBPACK_IMPORTED_MODULE_1_anim_event__["a" /* default */].add(function () {
+    props.handleScroll = AnimEvent.add(function () {
       initBBox(props);
     });
     props.scrollElements = [];
@@ -1495,7 +1424,7 @@ var PlainDraggable = function () {
             props.options.handle.style[cssPropUserSelect] = props.orgUserSelect;
           }
           if (draggableClass) {
-            Object(__WEBPACK_IMPORTED_MODULE_2_m_class_list__["a" /* default */])(props.element).remove(draggableClass);
+            mClassList(props.element).remove(draggableClass);
           }
         } else {
           setDraggableCursor(props.options.handle, props.orgCursor);
@@ -1503,7 +1432,7 @@ var PlainDraggable = function () {
             props.options.handle.style[cssPropUserSelect] = 'none';
           }
           if (draggableClass) {
-            Object(__WEBPACK_IMPORTED_MODULE_2_m_class_list__["a" /* default */])(props.element).add(draggableClass);
+            mClassList(props.element).add(draggableClass);
           }
         }
       }
@@ -1658,7 +1587,7 @@ var PlainDraggable = function () {
         Object.keys(insProps).forEach(function (id) {
           var props = insProps[id];
           if (!props.disabled) {
-            var classList = Object(__WEBPACK_IMPORTED_MODULE_2_m_class_list__["a" /* default */])(props.element);
+            var classList = mClassList(props.element);
             if (draggableClass) {
               classList.remove(draggableClass);
             }
@@ -1679,7 +1608,7 @@ var PlainDraggable = function () {
       value = value ? value + '' : void 0;
       if (value !== draggingClass) {
         if (activeItem) {
-          var classList = Object(__WEBPACK_IMPORTED_MODULE_2_m_class_list__["a" /* default */])(activeItem.element);
+          var classList = mClassList(activeItem.element);
           if (draggingClass) {
             classList.remove(draggingClass);
           }
@@ -1699,7 +1628,7 @@ var PlainDraggable = function () {
       value = value ? value + '' : void 0;
       if (value !== movingClass) {
         if (activeItem && hasMoved) {
-          var classList = Object(__WEBPACK_IMPORTED_MODULE_2_m_class_list__["a" /* default */])(activeItem.element);
+          var classList = mClassList(activeItem.element);
           if (movingClass) {
             classList.remove(movingClass);
           }
@@ -1715,7 +1644,7 @@ var PlainDraggable = function () {
   return PlainDraggable;
 }();
 
-document.addEventListener('mousemove', __WEBPACK_IMPORTED_MODULE_1_anim_event__["a" /* default */].add(function (event) {
+document.addEventListener('mousemove', AnimEvent.add(function (event) {
   if (activeItem && move(activeItem, {
     left: event.pageX + pointerOffset.left,
     top: event.pageY + pointerOffset.top
@@ -1751,7 +1680,7 @@ document.addEventListener('mousemove', __WEBPACK_IMPORTED_MODULE_1_anim_event__[
     if (!hasMoved) {
       hasMoved = true;
       if (movingClass) {
-        Object(__WEBPACK_IMPORTED_MODULE_2_m_class_list__["a" /* default */])(activeItem.element).add(movingClass);
+        mClassList(activeItem.element).add(movingClass);
       }
       if (activeItem.onMoveStart) {
         activeItem.onMoveStart();
@@ -1772,14 +1701,14 @@ document.addEventListener('mouseup', function () {
 
 {
   var initDoc = function initDoc() {
-    cssPropTransform = __WEBPACK_IMPORTED_MODULE_0_cssprefix__["a" /* default */].getName('transform');
+    cssPropTransform = CSSPrefix.getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
-    if (cssPropUserSelect = __WEBPACK_IMPORTED_MODULE_0_cssprefix__["a" /* default */].getName('userSelect')) {
+    if (cssPropUserSelect = CSSPrefix.getName('userSelect')) {
       cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
     }
 
     // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
-    window.addEventListener('resize', __WEBPACK_IMPORTED_MODULE_1_anim_event__["a" /* default */].add(function () {
+    window.addEventListener('resize', AnimEvent.add(function () {
       if (resizing) {
         console.log('`resize` event listener is already running.'); // [DEBUG/]
         return;
@@ -1816,420 +1745,4 @@ document.addEventListener('mouseup', function () {
 PlainDraggable.limit = true;
 [SNAP/] */
 
-/* harmony default export */ __webpack_exports__["default"] = (PlainDraggable);
-
-/***/ }),
-/* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/*================================================
-        DON'T MANUALLY EDIT THIS FILE
-================================================*/
-
-/*
- * CSSPrefix
- * https://github.com/anseki/cssprefix
- *
- * Copyright (c) 2018 anseki
- * Licensed under the MIT license.
- */
-
-function ucf(text) {
-  return text.substr(0, 1).toUpperCase() + text.substr(1);
-}
-
-var PREFIXES = ['webkit', 'ms', 'moz', 'o'],
-    NAME_PREFIXES = PREFIXES.reduce(function (prefixes, prefix) {
-  prefixes.push(prefix);
-  prefixes.push(ucf(prefix));
-  return prefixes;
-}, []),
-    VALUE_PREFIXES = PREFIXES.map(function (prefix) {
-  return '-' + prefix + '-';
-}),
-
-
-/**
- * Get sample CSSStyleDeclaration.
- * @returns {CSSStyleDeclaration}
- */
-getDeclaration = function () {
-  var declaration = void 0;
-  return function () {
-    return declaration = declaration || document.createElement('div').style;
-  };
-}(),
-
-
-/**
- * Normalize name.
- * @param {} propName - A name that is normalized.
- * @returns {string} A normalized name.
- */
-normalizeName = function () {
-  var rePrefixedName = new RegExp('^(?:' + PREFIXES.join('|') + ')(.)', 'i'),
-      reUc = /[A-Z]/;
-  return function (propName) {
-    return (propName = (propName + '').replace(/\s/g, '').replace(/-([\da-z])/gi, function (str, p1) {
-      return p1.toUpperCase();
-    }) // camelCase
-    // 'ms' and 'Ms' are found by rePrefixedName 'i' option
-    .replace(rePrefixedName, function (str, p1) {
-      return reUc.test(p1) ? p1.toLowerCase() : str;
-    }) // Remove prefix
-    ).toLowerCase() === 'float' ? 'cssFloat' : propName;
-  }; // For old CSSOM
-}(),
-
-
-/**
- * Normalize value.
- * @param {} propValue - A value that is normalized.
- * @returns {string} A normalized value.
- */
-normalizeValue = function () {
-  var rePrefixedValue = new RegExp('^(?:' + VALUE_PREFIXES.join('|') + ')', 'i');
-  return function (propValue) {
-    return (propValue + '').replace(/\s/g, '').replace(rePrefixedValue, '');
-  };
-}(),
-
-
-/**
- * Polyfill for `CSS.supports`.
- * @param {string} propName - A name.
- * @param {string} propValue - A value.
- * @returns {boolean} `true` if given pair is accepted.
- */
-cssSupports = function () {
-  // return window.CSS && window.CSS.supports || ((propName, propValue) => {
-  // `CSS.supports` doesn't find prefixed property.
-  return function (propName, propValue) {
-    var declaration = getDeclaration();
-    // In some browsers, `declaration[prop] = value` updates any property.
-    propName = propName.replace(/[A-Z]/g, function (str) {
-      return '-' + str.toLowerCase();
-    }); // kebab-case
-    declaration.setProperty(propName, propValue);
-    return declaration.getPropertyValue(propName) === propValue;
-  };
-}(),
-    propNames = {},
-    propValues = {}; // Cache
-
-
-function getName(propName) {
-  propName = normalizeName(propName);
-  if (propName && propNames[propName] == null) {
-    var declaration = getDeclaration();
-
-    if (declaration[propName] != null) {
-      // Original
-      propNames[propName] = propName;
-    } else {
-      // Try with prefixes
-      var ucfName = ucf(propName);
-      if (!NAME_PREFIXES.some(function (prefix) {
-        var prefixed = prefix + ucfName;
-        if (declaration[prefixed] != null) {
-          propNames[propName] = prefixed;
-          return true;
-        }
-        return false;
-      })) {
-        propNames[propName] = false;
-      }
-    }
-  }
-  return propNames[propName] || void 0;
-}
-
-function getValue(propName, propValue) {
-  var res = void 0;
-
-  if (!(propName = getName(propName))) {
-    return res;
-  } // Invalid property
-
-  propValues[propName] = propValues[propName] || {};
-  (Array.isArray(propValue) ? propValue : [propValue]).some(function (propValue) {
-    propValue = normalizeValue(propValue);
-
-    if (propValues[propName][propValue] != null) {
-      // Cache
-      if (propValues[propName][propValue] !== false) {
-        res = propValues[propName][propValue];
-        return true;
-      } else {
-        return false; // Continue to next value
-      }
-    }
-
-    if (cssSupports(propName, propValue)) {
-      // Original
-      res = propValues[propName][propValue] = propValue;
-      return true;
-    }
-
-    if (VALUE_PREFIXES.some(function (prefix) {
-      // Try with prefixes
-      var prefixed = prefix + propValue;
-      if (cssSupports(propName, prefixed)) {
-        res = propValues[propName][propValue] = prefixed;
-        return true;
-      }
-      return false;
-    })) {
-      return true;
-    }
-
-    propValues[propName][propValue] = false;
-    return false; // Continue to next value
-  });
-
-  return typeof res === 'string' ? res : void 0; // It might be empty string.
-}
-
-var CSSPrefix = {
-  getName: getName,
-  getValue: getValue
-};
-
-/* harmony default export */ __webpack_exports__["a"] = (CSSPrefix);
-
-/***/ }),
-/* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/*================================================
-        DON'T MANUALLY EDIT THIS FILE
-================================================*/
-
-/*
- * AnimEvent
- * https://github.com/anseki/anim-event
- *
- * Copyright (c) 2018 anseki
- * Licensed under the MIT license.
- */
-
-var MSPF = 1000 / 60,
-    // ms/frame (FPS: 60)
-KEEP_LOOP = 500,
-
-
-/**
- * @typedef {Object} task
- * @property {Event} event
- * @property {function} listener
- */
-
-/** @type {task[]} */
-tasks = [];
-
-var requestAnim = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
-  return setTimeout(callback, MSPF);
-},
-    cancelAnim = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame || function (requestID) {
-  return clearTimeout(requestID);
-},
-    requestID = void 0,
-    lastFrameTime = Date.now();
-
-function step() {
-  var called = void 0,
-      next = void 0;
-
-  if (requestID) {
-    cancelAnim.call(window, requestID);
-    requestID = null;
-  }
-
-  tasks.forEach(function (task) {
-    if (task.event) {
-      task.listener(task.event);
-      task.event = null;
-      called = true;
-    }
-  });
-
-  if (called) {
-    lastFrameTime = Date.now();
-    next = true;
-  } else if (Date.now() - lastFrameTime < KEEP_LOOP) {
-    // Go on for a while
-    next = true;
-  }
-  if (next) {
-    requestID = requestAnim.call(window, step);
-  }
-}
-
-function indexOfTasks(listener) {
-  var index = -1;
-  tasks.some(function (task, i) {
-    if (task.listener === listener) {
-      index = i;
-      return true;
-    }
-    return false;
-  });
-  return index;
-}
-
-var AnimEvent = {
-  /**
-   * @param {function} listener - An event listener.
-   * @returns {(function|null)} A wrapped event listener.
-   */
-  add: function add(listener) {
-    var task = void 0;
-    if (indexOfTasks(listener) === -1) {
-      tasks.push(task = { listener: listener });
-      return function (event) {
-        task.event = event;
-        if (!requestID) {
-          step();
-        }
-      };
-    } else {
-      return null;
-    }
-  },
-
-  remove: function remove(listener) {
-    var iRemove = void 0;
-    if ((iRemove = indexOfTasks(listener)) > -1) {
-      tasks.splice(iRemove, 1);
-      if (!tasks.length && requestID) {
-        cancelAnim.call(window, requestID);
-        requestID = null;
-      }
-    }
-  }
-};
-
-/* harmony default export */ __webpack_exports__["a"] = (AnimEvent);
-
-/***/ }),
-/* 3 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/*================================================
-        DON'T MANUALLY EDIT THIS FILE
-================================================*/
-
-/*
- * mClassList
- * https://github.com/anseki/m-class-list
- *
- * Copyright (c) 2018 anseki
- * Licensed under the MIT license.
- */
-
-function normalize(token) {
-  return (token + '').trim();
-} // Not `||`
-function applyList(list, element) {
-  element.setAttribute('class', list.join(' '));
-}
-
-function _add(list, element, tokens) {
-  if (tokens.filter(function (token) {
-    if (!(token = normalize(token)) || list.indexOf(token) !== -1) {
-      return false;
-    }
-    list.push(token);
-    return true;
-  }).length) {
-    applyList(list, element);
-  }
-}
-
-function _remove(list, element, tokens) {
-  if (tokens.filter(function (token) {
-    var i = void 0;
-    if (!(token = normalize(token)) || (i = list.indexOf(token)) === -1) {
-      return false;
-    }
-    list.splice(i, 1);
-    return true;
-  }).length) {
-    applyList(list, element);
-  }
-}
-
-function _toggle(list, element, token, force) {
-  var i = list.indexOf(token = normalize(token));
-  if (i !== -1) {
-    if (force) {
-      return true;
-    }
-    list.splice(i, 1);
-    applyList(list, element);
-    return false;
-  } else {
-    if (force === false) {
-      return false;
-    }
-    list.push(token);
-    applyList(list, element);
-    return true;
-  }
-}
-
-function _replace(list, element, token, newToken) {
-  var i = void 0;
-  if (!(token = normalize(token)) || !(newToken = normalize(newToken)) || token === newToken || (i = list.indexOf(token)) === -1) {
-    return;
-  }
-  list.splice(i, 1);
-  if (list.indexOf(newToken) === -1) {
-    list.push(newToken);
-  }
-  applyList(list, element);
-}
-
-function mClassList(element) {
-  return !mClassList.ignoreNative && element.classList || function () {
-    var list = (element.getAttribute('class') || '').trim().split(/\s+/).filter(function (token) {
-      return !!token;
-    }),
-        ins = {
-      length: list.length,
-      item: function item(i) {
-        return list[i];
-      },
-      contains: function contains(token) {
-        return list.indexOf(normalize(token)) !== -1;
-      },
-      add: function add() {
-        _add(list, element, Array.prototype.slice.call(arguments));
-        return mClassList.methodChain ? ins : void 0;
-      },
-      remove: function remove() {
-        _remove(list, element, Array.prototype.slice.call(arguments));
-        return mClassList.methodChain ? ins : void 0;
-      },
-      toggle: function toggle(token, force) {
-        return _toggle(list, element, token, force);
-      },
-      replace: function replace(token, newToken) {
-        _replace(list, element, token, newToken);
-        return mClassList.methodChain ? ins : void 0;
-      }
-    };
-    return ins;
-  }();
-}
-
-mClassList.methodChain = true;
-
-/* harmony default export */ __webpack_exports__["a"] = (mClassList);
-
-/***/ })
-/******/ ])["default"];
-//# sourceMappingURL=plain-draggable.js.map
+export default PlainDraggable;

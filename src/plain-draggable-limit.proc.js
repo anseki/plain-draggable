@@ -1,6 +1,6 @@
-/*
-    DON'T MANUALLY EDIT THIS FILE
-*/
+/* ================================================
+        DON'T MANUALLY EDIT THIS FILE
+================================================ */
 
 /*
  * PlainDraggable
