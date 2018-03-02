@@ -8,6 +8,11 @@
   <script src="/jasmine-core/lib/jasmine-core/jasmine.js"></script>
   <script src="/jasmine-core/lib/jasmine-core/jasmine-html.js"></script>
   <script src="/jasmine-core/lib/jasmine-core/boot.js"></script>
+  <script>
+// Override default `random` option
+var random = (new jasmine.QueryString({getWindowLocation: function() { return location; }})).getParam('random');
+if (random == null || random === '') { jasmine.getEnv().randomizeTests(false); }
+  </script>
 
   <script src="/test-page-loader/test-page-loader.js"></script>
 
