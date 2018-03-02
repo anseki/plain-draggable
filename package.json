@@ -20,8 +20,7 @@
   "jsnext:main": "plain-draggable.esm.js",
   "files": [
     "plain-draggable?(-limit)?(-debug).@(min|esm).js",
-    "bower.json",
-    "LICENSE-MIT"
+    "bower.json"
   ],
   "devDependencies": {
     "anim-event": "^1.0.13",
