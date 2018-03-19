@@ -16,10 +16,10 @@
     "requestanimationframe "
   ],
   "main": "plain-draggable.min.js",
-  "module": "plain-draggable.esm.js",
-  "jsnext:main": "plain-draggable.esm.js",
+  "module": "plain-draggable.mjs",
+  "jsnext:main": "plain-draggable.mjs",
   "files": [
-    "plain-draggable?(-limit)?(-debug).@(min|esm).js",
+    "plain-draggable?(-limit)?(-debug).@(min.js|mjs)",
     "bower.json"
   ],
   "devDependencies": {
@@ -38,7 +38,8 @@
     "skeleton-loader": "^1.1.5",
     "stats-filelist": "^1.0.1",
     "test-page-loader": "^1.0.7",
-    "webpack": "^4.1.1"
+    "webpack": "^4.1.1",
+    "webpack-cli": "^2.0.12"
   },
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack --verbose",
