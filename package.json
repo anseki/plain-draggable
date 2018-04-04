@@ -23,15 +23,15 @@
     "bower.json"
   ],
   "devDependencies": {
-    "anim-event": "^1.0.14",
+    "anim-event": "^1.0.15",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.4",
     "babel-preset-es2015": "^6.24.1",
     "cross-env": "^5.1.4",
-    "cssprefix": "^2.0.14",
+    "cssprefix": "^2.0.15",
     "jasmine-core": "^3.1.0",
     "log4js": "^2.5.3",
-    "m-class-list": "^1.1.7",
+    "m-class-list": "^1.1.8",
     "node-static-alias": "^1.0.0",
     "pre-proc": "^1.0.2",
     "pre-proc-loader": "^3.0.3",
