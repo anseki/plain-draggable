@@ -16,10 +16,10 @@
     "requestanimationframe "
   ],
   "main": "plain-draggable.min.js",
-  "module": "plain-draggable.mjs",
-  "jsnext:main": "plain-draggable.mjs",
+  "module": "plain-draggable.esm.js",
+  "jsnext:main": "plain-draggable.esm.js",
   "files": [
-    "plain-draggable?(-limit)?(-debug).@(min.js|mjs)",
+    "plain-draggable?(-limit)?(-debug).@(min.js|esm.js)",
     "bower.json"
   ],
   "devDependencies": {

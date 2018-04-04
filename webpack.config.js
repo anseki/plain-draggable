@@ -52,7 +52,7 @@ module.exports = {
               procedure(content) {
                 if (this.resourcePath === ENTRY_PATH) {
                   writeFile(
-                    path.join(ESM_DIR_PATH, `${BUILD_BASE_NAME}${BUILD_MODE ? '' : '-debug'}.mjs`),
+                    path.join(ESM_DIR_PATH, `${BUILD_BASE_NAME}${BUILD_MODE ? '' : '-debug'}.esm.js`),
                     content, 'ESM');
                 }
                 return content;
