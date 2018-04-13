@@ -42,21 +42,22 @@ http.createServer((request, response) => {
     (new staticAlias.Server(DOC_ROOT, {
       cache: false,
       headers: {'Cache-Control': 'no-cache, must-revalidate'},
-      alias: MODULE_PACKAGES.map(packageName => (
-        { // node_modules
-          match: new RegExp(`^/${packageName}/.+`),
-          serve: `${require.resolve(packageName).replace(
-            // Include `packageName` for nested `node_modules`
-            new RegExp(`^(.*[/\\\\]node_modules)[/\\\\]${packageName}[/\\\\].*$`), '$1')}<% reqPath %>`,
-          allowOutside: true
-        })).concat([
+      alias:
+        MODULE_PACKAGES.map(packageName =>
+          ({ // node_modules
+            match: new RegExp(`^/${packageName}/.+`),
+            serve: `${require.resolve(packageName).replace(
+              // Include `packageName` for nested `node_modules`
+              new RegExp(`^(.*[/\\\\]node_modules)[/\\\\]${packageName}[/\\\\].*$`), '$1')}<% reqPath %>`,
+            allowOutside: true
+          })
+        ).concat([
           // limited-function script
           {
             match: /^\/plain-draggable\.js$/,
-            serve: params => {
-              return /\bLIMIT=true\b/.test(params.cookie) ?
-                params.absPath.replace(/\.js$/, '-limit.js') : params.absPath;
-            }
+            serve: params =>
+              (/\bLIMIT=true\b/.test(params.cookie)
+                ? params.absPath.replace(/\.js$/, '-limit.js') : params.absPath)
           },
 
           // test-ext
@@ -73,10 +74,9 @@ http.createServer((request, response) => {
               fs.writeFileSync(indexPath,
                 `<html><head><meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"></head><body><ul>${
                   filelist.getSync(EXT_DIR, {
-                    filter: stats => /^[^\.].*\.html$/.test(stats.name),
+                    filter: stats => /^[^.].*\.html$/.test(stats.name),
                     listOf: 'fullPath'
-                  }).sort()
-                  .map(fullPath => { // abs URL for '/ext' (no trailing slash)
+                  }).sort().map(fullPath => { // abs URL for '/ext' (no trailing slash)
                     const htmlPath = `/ext/${path.relative(EXT_DIR, fullPath).replace(/\\/g, '/')}`;
                     return `<li><a href="${htmlPath}">${htmlPath}</a></li>`;
                   }).join('')
