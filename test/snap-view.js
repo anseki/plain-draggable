@@ -1,12 +1,14 @@
-/* eslint-env browser */
 /* exported snapView */
+/* eslint-env browser */
+/* eslint no-var: "off", prefer-arrow-callback: "off" */
 
 var snapView = (function() {
   'use strict';
 
-  var items = [], offset,
+  var items = [],
     isFinite = Number.isFinite ||
-      function(value) { return typeof value === 'number' && window.isFinite(value); };
+      function(value) { return typeof value === 'number' && window.isFinite(value); },
+    offset;
 
   function initOffset(element) {
     element.style.left = element.style.top = '0';
@@ -17,7 +19,8 @@ var snapView = (function() {
   function newItem(snapTarget, minLeft, maxLeft, minTop, maxTop) {
     var item = document.body.appendChild(document.createElement('div')),
       start = item.appendChild(document.createElement('div')),
-      itemStyle = item.style, startStyle = start.style;
+      itemStyle = item.style,
+      startStyle = start.style;
 
     if (snapTarget.x != null && snapTarget.y != null) { // Point
       item.className = 'snap-view-point';

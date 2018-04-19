@@ -21,7 +21,8 @@ const
   IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
 
   isObject = (() => {
-    const toString = {}.toString, fnToString = {}.hasOwnProperty.toString,
+    const toString = {}.toString,
+      fnToString = {}.hasOwnProperty.toString,
       objFnString = fnToString.call(Object);
     return obj => {
       let proto, constr;
@@ -46,7 +47,8 @@ let insId = 0,
   cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'],
   // class
   draggableClass = 'plain-draggable',
-  draggingClass = 'plain-draggable-dragging', movingClass = 'plain-draggable-moving';
+  draggingClass = 'plain-draggable-dragging',
+  movingClass = 'plain-draggable-moving';
 
 
 function copyTree(obj) {
@@ -64,12 +66,12 @@ function hasChanged(a, b) {
     (typeA = isObject(a) ? 'obj' : Array.isArray(a) ? 'array' : '') !==
       (isObject(b) ? 'obj' : Array.isArray(b) ? 'array' : '') ||
     (
-      typeA === 'obj' ?
-        hasChanged((keysA = Object.keys(a).sort()), Object.keys(b).sort()) ||
+      typeA === 'obj'
+        ? hasChanged((keysA = Object.keys(a).sort()), Object.keys(b).sort()) ||
           keysA.some(prop => hasChanged(a[prop], b[prop])) :
-      typeA === 'array' ?
-        a.length !== b.length || a.some((aVal, i) => hasChanged(aVal, b[i])) :
-      a !== b
+        typeA === 'array'
+          ? a.length !== b.length || a.some((aVal, i) => hasChanged(aVal, b[i])) :
+          a !== b
     );
 }
 
@@ -134,13 +136,13 @@ function validPPValue(value) {
 
   // Get PPValue from string (all `/s` were already removed)
   function string2PPValue(inString) {
-    const matches = /^(.+?)(\%)?$/.exec(inString);
+    const matches = /^(.+?)(%)?$/.exec(inString);
     let value, isRatio;
-    return matches && isFinite((value = parseFloat(matches[1]))) ?
-      {value: (isRatio = !!(matches[2] && value)) ? value / 100 : value, isRatio: isRatio} : null; // 0% -> 0
+    return matches && isFinite((value = parseFloat(matches[1])))
+      ? {value: (isRatio = !!(matches[2] && value)) ? value / 100 : value, isRatio} : null; // 0% -> 0
   }
 
-  return isFinite(value) ? {value: value, isRatio: false} :
+  return isFinite(value) ? {value, isRatio: false} :
     typeof value === 'string' ? string2PPValue(value.replace(/\s/g, '')) : null;
 }
 
@@ -415,7 +417,7 @@ function initBBox(props) {
     elementBBox = props.elementBBox = getBBox(props.element),
     containmentBBox = props.containmentBBox =
       props.containmentIsBBox ? (resolvePPBBox(props.options.containment, docBBox) || docBBox) :
-        getBBox(props.options.containment, true);
+      getBBox(props.options.containment, true);
   props.minLeft = containmentBBox.left;
   props.maxLeft = containmentBBox.right - elementBBox.width;
   props.minTop = containmentBBox.top;
@@ -477,15 +479,16 @@ function setOptions(props, newOptions) {
         props.scrollElements = [];
         window.removeEventListener('scroll', props.handleScroll, false);
         // Parse tree
-        let element = newOptions.containment, fixedElement;
+        let element = newOptions.containment,
+          fixedElement;
         while (element && element !== body) {
           if (element.nodeType === Node.ELEMENT_NODE) {
             const cmpStyle = window.getComputedStyle(element, '');
             // Scrollable element
             if (!(element instanceof SVGElement) && (
-                cmpStyle.overflow !== 'visible' || cmpStyle.overflowX !== 'visible' ||
+              cmpStyle.overflow !== 'visible' || cmpStyle.overflowX !== 'visible' ||
                 cmpStyle.overflowY !== 'visible' // `hidden` also is scrollable.
-                )) {
+            )) {
               element.addEventListener('scroll', props.handleScroll, false);
               props.scrollElements.push(element);
             }
@@ -594,17 +597,17 @@ class PlainDraggable {
     }
 
     let gpuTrigger = true;
-      const cssPropWillChange = CSSPrefix.getName('willChange');
-      if (cssPropWillChange) { gpuTrigger = false; }
+    const cssPropWillChange = CSSPrefix.getName('willChange');
+    if (cssPropWillChange) { gpuTrigger = false; }
 
-      if (!options.leftTop && cssPropTransform) { // translate
-        if (cssPropWillChange) { element.style[cssPropWillChange] = 'transform'; }
-        props.initElm = initTranslate;
-        props.moveElm = moveTranslate;
+    if (!options.leftTop && cssPropTransform) { // translate
+      if (cssPropWillChange) { element.style[cssPropWillChange] = 'transform'; }
+      props.initElm = initTranslate;
+      props.moveElm = moveTranslate;
 
-      } else { // left and top
-        throw new Error('`transform` is not supported.');
-      }
+    } else { // left and top
+      throw new Error('`transform` is not supported.');
+    }
 
     props.element = initAnim(element, gpuTrigger);
     props.elementStyle = element.style;
@@ -677,8 +680,8 @@ class PlainDraggable {
 
   get containment() {
     const props = insProps[this._id];
-    return props.containmentIsBBox ?
-      ppBBox2OptionObject(props.options.containment) : props.options.containment;
+    return props.containmentIsBBox
+      ? ppBBox2OptionObject(props.options.containment) : props.options.containment;
   }
   set containment(value) { setOptions(insProps[this._id], {containment: value}); }
 
@@ -827,8 +830,7 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
       Object.keys(insProps).forEach(id => {
         if (insProps[id].initElm) { // Easy checking for instance without errors.
           initBBox(insProps[id]);
-        }
-        // eslint-disable-next-line brace-style
+        } // eslint-disable-line brace-style
       });
       resizing = false;
     }), true);

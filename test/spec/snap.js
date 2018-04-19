@@ -1,4 +1,3 @@
-
 describe('snapTargets', function() {
   'use strict';
 
@@ -26,7 +25,8 @@ describe('snapTargets', function() {
   }
 
   function getPointTarget(x, y, gravityX, gravityY) {
-    var xy = {x: x, y: y}, gravity = {x: gravityX, y: gravityY};
+    var xy = {x: x, y: y},
+      gravity = {x: gravityX, y: gravityY};
     return ['x', 'y'].reduce(function(target, axis) {
       if (xy[axis] != null) {
         target[axis] = xy[axis];
@@ -42,7 +42,8 @@ describe('snapTargets', function() {
 
   // x/y : number or [start, end]
   function getLineTarget(x, y, gravity, elmSize) {
-    var xy = {x: x, y: y}, elmSizeAxis = {x: elmSize.width, y: elmSize.height};
+    var xy = {x: x, y: y},
+      elmSizeAxis = {x: elmSize.width, y: elmSize.height};
     return ['x', 'y'].reduce(function(target, axis) {
       var axisL = axis.toUpperCase();
       if (typeof xy[axis] === 'number') {
@@ -60,7 +61,8 @@ describe('snapTargets', function() {
   }
 
   function getBBoxTargets(left, top, width, height, gravity, elmWidth, elmHeight) {
-    var right = left + width, bottom = top + height,
+    var right = left + width,
+      bottom = top + height,
       elmRect = {width: elmWidth, height: elmHeight};
     return {
       inside: [
@@ -132,7 +134,8 @@ describe('snapTargets', function() {
   });
 
   it('Point', function(done) {
-    var parentBBox = window.getBBox(parent), share;
+    var parentBBox = window.getBBox(parent),
+      share;
 
     // Parse pixels
     draggable.snap = 300;
@@ -160,7 +163,7 @@ describe('snapTargets', function() {
     };
     expect(props.snapTargets).toEqual([
       getPointTarget(share.x, share.y, SNAP_GRAVITY, SNAP_GRAVITY),
-      getPointTarget(share.x, share.y, gravity, gravity),
+      getPointTarget(share.x, share.y, gravity, gravity)
     ]);
 
     // corner br
@@ -225,7 +228,8 @@ describe('snapTargets', function() {
     ]);
 
     // Outside containment (containment: 800 x 600)
-    var minLeft = SNAP_GRAVITY, minTop = SNAP_GRAVITY;
+    var minLeft = SNAP_GRAVITY,
+      minTop = SNAP_GRAVITY;
     draggable.snap = {x: minLeft + 1, y: minTop + 1};
     expect(props.snapTargets).toEqual([
       getPointTarget(
@@ -288,7 +292,8 @@ describe('snapTargets', function() {
   });
 
   it('Line', function(done) {
-    var parentBBox = window.getBBox(parent), share;
+    var parentBBox = window.getBBox(parent),
+      share;
 
     // Parse pixels, range
     draggable.snap = {x: {start: 100, end: 600}, y: 300};
@@ -353,7 +358,7 @@ describe('snapTargets', function() {
     };
     expect(props.snapTargets).toEqual([
       getLineTarget(share.x, share.y, SNAP_GRAVITY, elmRect),
-      getLineTarget(share.x, share.y, gravity, elmRect),
+      getLineTarget(share.x, share.y, gravity, elmRect)
     ]);
 
     // side start
@@ -456,7 +461,8 @@ describe('snapTargets', function() {
   });
 
   it('Step', function(done) {
-    var parentBBox = window.getBBox(parent), share;
+    var parentBBox = window.getBBox(parent),
+      share;
 
     // Parse pixels
     draggable.snap = {y: {step: 200}}; // x: [0, 100%] -> removed
@@ -525,7 +531,7 @@ describe('snapTargets', function() {
     expect(props.snapTargets).toEqual([
       getLineTarget(parentBBox.left + 300, null, 1, elmRect),
       getLineTarget(parentBBox.left + 302, null, 1, elmRect),
-      getLineTarget(parentBBox.left + 304, null, 1, elmRect),
+      getLineTarget(parentBBox.left + 304, null, 1, elmRect)
     ]);
     // Step < 2px -> remove
     draggable.snap = {x: {step: '0.24%', start: 300, end: 305}, side: 'start'}; // width: 800 -> 2px
@@ -570,7 +576,8 @@ describe('snapTargets', function() {
   });
 
   it('BBox', function(done) {
-    var targets, parentBBox = window.getBBox(parent),
+    var targets,
+      parentBBox = window.getBBox(parent),
       bBox = {
         left: 170,
         top: 160,

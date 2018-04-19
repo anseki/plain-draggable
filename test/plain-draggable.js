@@ -696,7 +696,7 @@ function validPPValue(value) {
 
   // Get PPValue from string (all `/s` were already removed)
   function string2PPValue(inString) {
-    var matches = /^(.+?)(\%)?$/.exec(inString);
+    var matches = /^(.+?)(%)?$/.exec(inString);
     var value = void 0,
         isRatio = void 0;
     return matches && isFinite(value = parseFloat(matches[1])) ? { value: (isRatio = !!(matches[2] && value)) ? value / 100 : value, isRatio: isRatio } : null; // 0% -> 0
@@ -1534,7 +1534,7 @@ function _setOptions(props, newOptions) {
       if (corner !== 'all') {
         var added = {},
             corners = corner.split(/\s/).reduce(function (corners, corner) {
-          corner = corner.trim().replace(/^(.).*?\-(.).*$/, '$1$2');
+          corner = corner.trim().replace(/^(.).*?-(.).*$/, '$1$2');
           if ((corner = corner === 'tl' || corner === 'lt' ? 'tl' : corner === 'tr' || corner === 'rt' ? 'tr' : corner === 'bl' || corner === 'lb' ? 'bl' : corner === 'br' || corner === 'rb' ? 'br' : null) && !added[corner]) {
             corners.push(corner);
             added[corner] = true;
@@ -1844,6 +1844,7 @@ var PlainDraggable = function () {
       props.moveElm = moveSvg;
     } else {
       // [/SVG]
+      /* eslint-disable indent */ /* [SVG/] */
       var cssPropWillChange = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('willChange');
       if (cssPropWillChange) {
         gpuTrigger = false;
@@ -1869,6 +1870,7 @@ var PlainDraggable = function () {
         throw new Error('`transform` is not supported.');
         [LEFTTOP/] */
       }
+      /* eslint-enable indent */ /* [SVG/] */
     } // [SVG/]
 
     props.element = initAnim(element, gpuTrigger);
@@ -2164,10 +2166,10 @@ document.addEventListener('mousemove', anim_event__WEBPACK_IMPORTED_MODULE_1__["
   // [SNAP]
   activeItem.snapTargets ? function (position) {
     // Snap
+    var iLen = activeItem.snapTargets.length;
     var snappedX = false,
         snappedY = false,
-        i = void 0,
-        iLen = activeItem.snapTargets.length;
+        i = void 0;
     for (i = 0; i < iLen && (!snappedX || !snappedY); i++) {
       var snapTarget = activeItem.snapTargets[i];
       if ((snapTarget.gravityXStart == null || position.left >= snapTarget.gravityXStart) && (snapTarget.gravityXEnd == null || position.left <= snapTarget.gravityXEnd) && (snapTarget.gravityYStart == null || position.top >= snapTarget.gravityYStart) && (snapTarget.gravityYEnd == null || position.top <= snapTarget.gravityYEnd)) {
@@ -2230,8 +2232,7 @@ document.addEventListener('mouseup', function () {
         if (insProps[id].initElm) {
           // Easy checking for instance without errors.
           initBBox(insProps[id]);
-        }
-        // eslint-disable-next-line brace-style
+        } // eslint-disable-line brace-style
         else {
             console.log('instance may have an error:');console.log(insProps[id]);
           } // [DEBUG/]

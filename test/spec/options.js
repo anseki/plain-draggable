@@ -1,4 +1,3 @@
-
 describe('setOptions()', function() {
   'use strict';
 
@@ -656,7 +655,8 @@ describe('setOptions()', function() {
     var share,
       target1 = {x: 8, y: 16, gravity: 17},
       target2 = {x: '30%'},
-      value1 = 64, value2 = '5%',
+      value1 = 64,
+      value2 = '5%',
       ppValuesTarget1 = {x: {value: target1.x, isRatio: false}, y: {value: target1.y, isRatio: false}},
       ppValuesTarget2 = {x: {value: 0.3, isRatio: true}},
       ppValue1 = {value: value1, isRatio: false},
@@ -711,7 +711,7 @@ describe('setOptions()', function() {
     expect(props.parsedSnapTargets).toEqual([
       merge(DEFAULT_PARSED_SNAP_TARGET, {
         x: ppValuesTarget1.x,
-        y: ppValuesTarget1.x  // Copy x
+        y: ppValuesTarget1.x // Copy x
       }),
       merge(ppValuesTarget2, DEFAULT_PARSED_SNAP_TARGET, {yStart: DEFAULT_START, yEnd: DEFAULT_END})
     ]);
@@ -814,7 +814,7 @@ describe('setOptions()', function() {
     expect(props.parsedSnapTargets).toEqual([
       merge(DEFAULT_PARSED_SNAP_TARGET, {
         x: ppValuesTarget1.x,
-        y: ppValuesTarget1.x  // Copy x
+        y: ppValuesTarget1.x // Copy x
       })
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
@@ -858,7 +858,7 @@ describe('setOptions()', function() {
     expect(props.parsedSnapTargets).toEqual([
       merge(DEFAULT_PARSED_SNAP_TARGET, {
         x: ppValuesTarget1.x,
-        y: ppValuesTarget1.x  // Copy x
+        y: ppValuesTarget1.x // Copy x
       })
     ]);
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
@@ -872,10 +872,14 @@ describe('setOptions()', function() {
 
   it('`snap` - inheritance', function(done) {
     if (LIMIT) { done(); return; }
-    var x1 = 8, x2 = 32, y1 = 16,
+    var x1 = 8,
+      x2 = 32,
+      y1 = 16,
       gravity1 = 64,
-      side1 = 'start', side2 = 'end',
-      edge1 = 'inside', edge2 = 'outside',
+      side1 = 'start',
+      side2 = 'end',
+      edge1 = 'inside',
+      edge2 = 'outside',
       snap = {
         center: true,
         edge: edge1,
@@ -993,7 +997,8 @@ describe('setOptions()', function() {
   it('should accept an PPBBox as `containment`', function(done) {
     var iframe = document.getElementById('iframe'),
       iWindow = iframe.contentWindow,
-      iDocument = iWindow.document, iBody = iDocument.body,
+      iDocument = iWindow.document,
+      iBody = iDocument.body,
       element, draggable, props,
       left, top, width, height;
 

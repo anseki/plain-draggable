@@ -1,4 +1,3 @@
-
 describe('BBox with leftTop option', function() {
   'use strict';
 
@@ -171,7 +170,8 @@ describe('BBox with leftTop option', function() {
 
   it('gets offset by document', function() {
     var iWindow = document.getElementById('iframe').contentWindow,
-      iDocument = iWindow.document, iBody = iDocument.body,
+      iDocument = iWindow.document,
+      iBody = iDocument.body,
       draggable, element;
 
     iDocument.getElementById('parent').style.position = 'relative';

@@ -1,0 +1,4 @@
+*.min.js
+*.esm.js
+test/plain-draggable-limit.js
+test/plain-draggable.js

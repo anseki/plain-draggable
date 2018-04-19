@@ -157,7 +157,7 @@ function validPPValue(value) {
 
   // Get PPValue from string (all `/s` were already removed)
   function string2PPValue(inString) {
-    var matches = /^(.+?)(\%)?$/.exec(inString);
+    var matches = /^(.+?)(%)?$/.exec(inString);
     var value = void 0,
         isRatio = void 0;
     return matches && isFinite(value = parseFloat(matches[1])) ? { value: (isRatio = !!(matches[2] && value)) ? value / 100 : value, isRatio: isRatio } : null; // 0% -> 0
@@ -1006,8 +1006,7 @@ document.addEventListener('mouseup', function () {
         if (insProps[id].initElm) {
           // Easy checking for instance without errors.
           initBBox(insProps[id]);
-        }
-        // eslint-disable-next-line brace-style
+        } // eslint-disable-line brace-style
         else {
             console.log('instance may have an error:');console.log(insProps[id]);
           } // [DEBUG/]

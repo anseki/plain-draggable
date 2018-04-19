@@ -1,4 +1,3 @@
-
 describe('cursor', function() {
   'use strict';
 
@@ -6,8 +5,10 @@ describe('cursor', function() {
     PlainDraggable,
     defaultDraggableCursor, defaultDraggingCursor,
     draggable = {default: [], byInline: []},
-    orgValue = {}, normalValue = {},
-    parentCursor = 'wait', classCursor = 'help';
+    orgValue = {},
+    normalValue = {},
+    parentCursor = 'wait',
+    classCursor = 'help';
 
   function getMouseEvent(type) {
     try {

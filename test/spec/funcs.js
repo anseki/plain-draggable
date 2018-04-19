@@ -1,4 +1,3 @@
-
 describe('functions', function() {
   'use strict';
 
@@ -24,7 +23,8 @@ describe('functions', function() {
   });
 
   it('isElement', function() {
-    var isElement = window.isElement, element;
+    var isElement = window.isElement,
+      element;
 
     expect(isElement(document.getElementById('elm1'))).toBe(true);
 
@@ -62,7 +62,8 @@ describe('functions', function() {
   });
 
   it('getBBox', function() {
-    var getBBox = window.getBBox, element;
+    var getBBox = window.getBBox,
+      element;
 
     element = document.getElementById('elm1');
     expect(getBBox(element))
