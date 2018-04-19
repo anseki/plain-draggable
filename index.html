@@ -40,7 +40,7 @@
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-010-draggable')); // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-010-draggable'));
 
 });
 </script>
@@ -110,7 +110,8 @@ window.addEventListener('load', function() {
     OFFSET = {x: 16, y: 16}, // between draggable element and path seg
     SLIDER_RANGE = 240 - 24, // $ex-020-slider-height - $ex-020-pointer-height
     SLIDER_OFFSET,
-    VIEW_WIDTH = 400, VIEW_HEIGHT = 240;
+    VIEW_WIDTH = 400,
+    VIEW_HEIGHT = 240;
 
   function update(rect, xySeg) {
     if (rect) {
@@ -186,7 +187,7 @@ window.addEventListener('load', function() {
   port.style.width = bBox.width + 'px';
   port.style.height = bBox.height + 'px';
 
-  new PlainDraggable(target, { // eslint-disable-line no-new
+  new PlainDraggable(target, {
     snap: [
       {x: 40, y: 64},
       {x: {end: 180}, y: 160},
@@ -245,7 +246,7 @@ window.addEventListener('load', function() {
     bottom: wall2BBox.bottom + window.pageYOffset
   };
 
-  new PlainDraggable(target, { // eslint-disable-line no-new
+  new PlainDraggable(target, {
     onDrag: function(moveTo) {
       var rect = this.rect;
       if (moveTo.left > wall1BBox.left && moveTo.left < wall1BBox.right && // Inside
@@ -328,7 +329,7 @@ window.addEventListener('load', function() {
     right: wallBBox.right + window.pageXOffset
   };
 
-  new PlainDraggable(target1, { // eslint-disable-line no-new
+  new PlainDraggable(target1, {
     onDrag: function(moveTo) {
       var rect = this.rect;
       if (moveTo.left < wallBBox.right && moveTo.top > wallBBox.top) { // Inside
@@ -344,7 +345,7 @@ window.addEventListener('load', function() {
     onDragEnd: function() { line.dash = false; }
   });
 
-  new PlainDraggable(target2, { // eslint-disable-line no-new
+  new PlainDraggable(target2, {
     onMove: function() { line.position(); },
     onMoveStart: function() { line.dash = {animation: true}; },
     onDragEnd: function() { line.dash = false; },
@@ -387,7 +388,9 @@ window.addEventListener('load', function() {
     bBox = target.getBoundingClientRect(),
     port = document.getElementById('ex-060-port'),
     portPosition = port.getBoundingClientRect(),
-    snapped, inAnim = false, DURATION = 0.2;
+    inAnim = false,
+    DURATION = 0.2,
+    snapped;
 
   port.style.width = bBox.width + 'px';
   port.style.height = bBox.height + 'px';
@@ -457,7 +460,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-085-draggable')); // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-085-draggable'));
 
 });
 </script>
@@ -481,7 +484,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-070-draggable')); // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-070-draggable'));
 
 });
 </script>
@@ -561,7 +564,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-090-draggable')); // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-090-draggable'));
 
 });
 </script>
@@ -596,7 +599,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-100-draggable'), // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-100-draggable'),
     {handle: document.querySelector('#ex-100-draggable .draggable')});
 
 });
@@ -772,7 +775,7 @@ window.addEventListener('load', function() {
   PlainDraggable.draggingClass = 'lift';
   PlainDraggable.movingClass = 'swing';
 
-  new PlainDraggable(document.getElementById('ex-110-draggable'), // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-110-draggable'),
     {handle: document.querySelector('#ex-110-draggable>div>div')});
 
 });
@@ -841,7 +844,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-120-draggable'), { // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-120-draggable'), {
     snap: [
       {x: 160, y: 64},
       {x: 360},
@@ -868,7 +871,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-130-draggable'), { // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-130-draggable'), {
     snap: 60
   });
 
@@ -899,7 +902,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-140-draggable'), { // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-140-draggable'), {
     snap: {x: 130}
   });
 
@@ -922,7 +925,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-150-draggable'), { // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-150-draggable'), {
     snap: {x: 130, y: {start: 5, end: '50%'}}
   });
 
@@ -974,7 +977,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-170-draggable'), { // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-170-draggable'), {
     snap: {y: {step: '25%'}}
   });
 
@@ -998,7 +1001,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-180-draggable'), { // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-180-draggable'), {
     snap: {x: {end: 300}, y: {step: '20%', end: '60%'}}
   });
 
@@ -1156,7 +1159,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-190-draggable'), { // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-190-draggable'), {
     snap: [
       {x: 260, y: 64, corner: 'br'},
       {x: 520, y: 64, corner: 'all'}
@@ -1200,7 +1203,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-200-draggable'), { // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-200-draggable'), {
     snap: [
       {x: 260, side: 'end'},
       {x: 520, side: 'both'}
@@ -1236,7 +1239,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-210-draggable'), { // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-210-draggable'), {
     snap: [
       {x: 260, y: 64, center: true},
       {x: 520, center: true}
@@ -1276,7 +1279,7 @@ window.addEventListener('load', function() {
 window.addEventListener('load', function() {
   'use strict';
 
-  new PlainDraggable(document.getElementById('ex-220-draggable'), { // eslint-disable-line no-new
+  new PlainDraggable(document.getElementById('ex-220-draggable'), {
     snap: [
       {boundingBox: {x: 160, y: 30, width: 164, height: 54}, edge: 'inside'},
       {boundingBox: {x: 460, y: 40, width: 120, height: 40}, edge: 'outside'}
