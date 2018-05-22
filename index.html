@@ -436,6 +436,76 @@ window.addEventListener('load', function() {
 <!-- ================ /ex -->
 <!-- /include "ex-060.html" -->
 
+<!-- include "ex-230.html" -->
+<!-- ================ ex -->
+<div class="cols2">
+  <div class="col">
+    <p>This is an example for sortable list. Drag these items to sort these.</p>
+  </div>
+  <div class="col">
+
+<div id="ex-230-stage">
+  <div class="ex-230-item draggable">ITEM-A</div>
+  <div class="ex-230-item draggable">ITEM-B</div>
+  <div class="ex-230-item draggable">ITEM-C</div>
+  <div class="ex-230-item draggable">ITEM-D</div>
+  <div class="ex-230-item draggable">ITEM-E</div>
+</div>
+
+  </div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  'use strict';
+
+  var elmItems = Array.prototype.slice.call(document.getElementsByClassName('ex-230-item')),
+    bBox = elmItems[0].getBoundingClientRect(),
+    itemH = bBox.height,
+    itemsTop = elmItems.map(function(v, i) { return bBox.top + window.pageYOffset + itemH * i; }),
+    items = [];
+
+  function sort(targetItem, top) {
+    var curIndex = items.indexOf(targetItem),
+      newIndex = itemsTop.indexOf(top);
+    if (newIndex !== curIndex) {
+      var newItems = [],
+        i = 0;
+      newItems[newIndex] = targetItem;
+      items.forEach(function(item) {
+        if (item !== targetItem) {
+          if (i === newIndex) { i++; }
+          newItems[i] = item;
+          i++;
+        }
+      });
+      items = newItems;
+
+      items.forEach(function(item, i) {
+        if (item !== targetItem) { item.top = itemsTop[i]; }
+      });
+    }
+  }
+
+  items = elmItems.map(function(elmItem) {
+    return new PlainDraggable(elmItem, {
+      snap: {
+        y: {step: itemH},
+        side: 'start'
+      },
+      onDrag: function(moveTo) {
+        if (!moveTo.snapped) { return false; }
+        sort(this, moveTo.top);
+        return true;
+      }
+    });
+  });
+
+});
+</script>
+<!-- ================ /ex -->
+<!-- /include "ex-230.html" -->
+
 <h2 id="usage">Usage</h2>
 
 <p>Load PlainDraggable into your web page.</p>

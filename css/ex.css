@@ -1,5 +1,5 @@
 /* line 5, ex.scss */
-.ex-060-anim, #ex-110-draggable.swing > div {
+.ex-060-anim, #ex-110-draggable.swing > div, .ex-230-item {
   -webkit-tap-highlight-color: transparent;
   transform: translateZ(0);
   box-shadow: 0 0 1px transparent;
@@ -572,4 +572,40 @@
   bottom: -1px;
   left: -1px;
   border: 2px solid #24c4f1;
+}
+
+/* line 465, ex.scss */
+#ex-230-stage {
+  width: 200px;
+  background-color: #d4d4d4;
+}
+
+/* line 470, ex.scss */
+.ex-230-item {
+  display: block;
+  background-color: transparent;
+  text-align: center;
+  background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4gPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAuNSIgeTE9IjAuMCIgeDI9IjAuNSIgeTI9IjEuMCI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2VlOTI5MiIvPjxzdG9wIG9mZnNldD0iMTAlIiBzdG9wLWNvbG9yPSIjY2Q1YzVjIi8+PHN0b3Agb2Zmc2V0PSI5MCUiIHN0b3AtY29sb3I9IiNjZDVjNWMiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiM5MjNiM2IiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyYWQpIiAvPjwvc3ZnPiA=');
+  background-size: 100%;
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #ee9292), color-stop(10%, #cd5c5c), color-stop(90%, #cd5c5c), color-stop(100%, #923b3b));
+  background-image: -moz-linear-gradient(#ee9292 0%, #cd5c5c 10%, #cd5c5c 90%, #923b3b 100%);
+  background-image: -webkit-linear-gradient(#ee9292 0%, #cd5c5c 10%, #cd5c5c 90%, #923b3b 100%);
+  background-image: linear-gradient(#ee9292 0%, #cd5c5c 10%, #cd5c5c 90%, #923b3b 100%);
+  position: relative;
+  -moz-transition-property: -moz-transform;
+  -o-transition-property: -o-transform;
+  -webkit-transition-property: -webkit-transform;
+  transition-property: transform;
+  -moz-transition-duration: 0.2s;
+  -o-transition-duration: 0.2s;
+  -webkit-transition-duration: 0.2s;
+  transition-duration: 0.2s;
+  -moz-transition-timing-function: ease-in;
+  -o-transition-timing-function: ease-in;
+  -webkit-transition-timing-function: ease-in;
+  transition-timing-function: ease-in;
+}
+/* line 482, ex.scss */
+.ex-230-item.plain-draggable-dragging {
+  color: #3bc9ff;
 }
