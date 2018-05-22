@@ -606,6 +606,6 @@
   transition-timing-function: ease-in;
 }
 /* line 482, ex.scss */
-.ex-230-item.plain-draggable-dragging {
+.ex-230-item.lift {
   color: #3bc9ff;
 }
