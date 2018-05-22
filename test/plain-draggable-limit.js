@@ -569,6 +569,7 @@ var insId = 0,
 cssValueDraggableCursor = void 0,
     cssValueDraggingCursor = void 0,
     cssOrgValueBodyCursor = void 0,
+    cssPropTransitionProperty = void 0,
     cssPropTransform = void 0,
     cssPropUserSelect = void 0,
     cssOrgValueBodyUserSelect = void 0,
@@ -941,6 +942,9 @@ function initTranslate(props) {
       elementStyle['margin' + dirProp] = padding ? '-' + padding + 'px' : '0';
     });
   }
+  // Reset `transition-property` every time because it might be changed frequently.
+  var orgTransitionProperty = elementStyle[cssPropTransitionProperty];
+  elementStyle[cssPropTransitionProperty] = 'none'; // To get position now
   elementStyle[cssPropTransform] = 'translate(0, 0)';
   // Get document offset.
   var newBBox = getBBox(element);
@@ -948,6 +952,8 @@ function initTranslate(props) {
 
   // Restore position
   elementStyle[cssPropTransform] = 'translate(' + (curPosition.left + offset.left) + 'px, ' + (curPosition.top + offset.top) + 'px)';
+  element.offsetWidth; /* force reflow */ // eslint-disable-line no-unused-expressions
+  elementStyle[cssPropTransitionProperty] = orgTransitionProperty;
   // Restore size
   ['width', 'height'].forEach(function (prop) {
     if (newBBox[prop] !== orgSize[prop]) {
@@ -1507,6 +1513,7 @@ document.addEventListener('mouseup', function () {
 
 {
   var initDoc = function initDoc() {
+    cssPropTransitionProperty = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('transitionProperty');
     cssPropTransform = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
     if (cssPropUserSelect = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('userSelect')) {

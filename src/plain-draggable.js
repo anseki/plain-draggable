@@ -48,7 +48,7 @@ let insId = 0,
   activeItem, hasMoved, pointerOffset, body,
   // CSS property/value
   cssValueDraggableCursor, cssValueDraggingCursor, cssOrgValueBodyCursor,
-  cssPropTransform, cssPropUserSelect, cssOrgValueBodyUserSelect,
+  cssPropTransitionProperty, cssPropTransform, cssPropUserSelect, cssOrgValueBodyUserSelect,
   // Try to set `cursor` property.
   cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'all-scroll', 'move'],
   cssWantedValueDraggingCursor = IS_WEBKIT ? 'move' : ['grabbing', 'move'],
@@ -468,6 +468,9 @@ function initTranslate(props) {
       elementStyle[`margin${dirProp}`] = padding ? `-${padding}px` : '0';
     });
   }
+  // Reset `transition-property` every time because it might be changed frequently.
+  const orgTransitionProperty = elementStyle[cssPropTransitionProperty];
+  elementStyle[cssPropTransitionProperty] = 'none'; // To get position now
   elementStyle[cssPropTransform] = 'translate(0, 0)';
   // Get document offset.
   let newBBox = getBBox(element);
@@ -477,6 +480,8 @@ function initTranslate(props) {
   // Restore position
   elementStyle[cssPropTransform] =
     `translate(${curPosition.left + offset.left}px, ${curPosition.top + offset.top}px)`;
+  element.offsetWidth; /* force reflow */ // eslint-disable-line no-unused-expressions
+  elementStyle[cssPropTransitionProperty] = orgTransitionProperty;
   // Restore size
   ['width', 'height'].forEach(prop => {
     if (newBBox[prop] !== orgSize[prop]) {
@@ -1481,6 +1486,7 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
 {
   let resizing = false;
   function initDoc() {
+    cssPropTransitionProperty = CSSPrefix.getName('transitionProperty');
     cssPropTransform = CSSPrefix.getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
     if ((cssPropUserSelect = CSSPrefix.getName('userSelect'))) {
