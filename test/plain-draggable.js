@@ -1443,35 +1443,6 @@ function _setOptions(props, newOptions) {
     if (isElement(newOptions.containment)) {
       // Specific element
       if (newOptions.containment !== options.containment) {
-        // Restore
-        props.scrollElements.forEach(function (element) {
-          element.removeEventListener('scroll', props.handleScroll, false);
-        });
-        props.scrollElements = [];
-        window.removeEventListener('scroll', props.handleScroll, false);
-        // Parse tree
-        var element = newOptions.containment,
-            fixedElement = void 0;
-        while (element && element !== body) {
-          if (element.nodeType === Node.ELEMENT_NODE) {
-            var cmpStyle = window.getComputedStyle(element, '');
-            // Scrollable element
-            if (!(element instanceof SVGElement) && (cmpStyle.overflow !== 'visible' || cmpStyle.overflowX !== 'visible' || cmpStyle.overflowY !== 'visible' // `hidden` also is scrollable.
-            )) {
-              element.addEventListener('scroll', props.handleScroll, false);
-              props.scrollElements.push(element);
-            }
-            // Element that is re-positioned (document based) when window scrolled.
-            if (cmpStyle.position === 'fixed') {
-              fixedElement = true;
-            }
-          }
-          element = element.parentNode;
-        }
-        if (fixedElement) {
-          window.addEventListener('scroll', props.handleScroll, false);
-        }
-
         options.containment = newOptions.containment;
         props.containmentIsBBox = false;
         needsInitBBox = true;
@@ -1895,10 +1866,6 @@ var PlainDraggable = function () {
     props.handleMousedown = function (event) {
       mousedown(props, event);
     };
-    props.handleScroll = anim_event__WEBPACK_IMPORTED_MODULE_1__["default"].add(function () {
-      initBBox(props);
-    });
-    props.scrollElements = [];
 
     // Default options
     if (!options.containment) {
@@ -2227,20 +2194,7 @@ document.addEventListener('mouseup', function () {
 
 {
   var initDoc = function initDoc() {
-    cssPropTransitionProperty = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('transitionProperty');
-    cssPropTransform = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('transform');
-    cssOrgValueBodyCursor = body.style.cursor;
-    if (cssPropUserSelect = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('userSelect')) {
-      cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
-    }
-
-    // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
-    window.addEventListener('resize', anim_event__WEBPACK_IMPORTED_MODULE_1__["default"].add(function () {
-      if (resizing) {
-        console.log('`resize` event listener is already running.'); // [DEBUG/]
-        return;
-      }
-      resizing = true;
+    function initAll() {
       Object.keys(insProps).forEach(function (id) {
         if (insProps[id].initElm) {
           // Easy checking for instance without errors.
@@ -2250,12 +2204,37 @@ document.addEventListener('mouseup', function () {
             console.log('instance may have an error:');console.log(insProps[id]);
           } // [DEBUG/]
       });
+    }
+
+    cssPropTransitionProperty = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('transitionProperty');
+    cssPropTransform = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('transform');
+    cssOrgValueBodyCursor = body.style.cursor;
+    if (cssPropUserSelect = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('userSelect')) {
+      cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
+    }
+
+    // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
+    var resizing = false,
+        scrolling = false;
+    window.addEventListener('resize', anim_event__WEBPACK_IMPORTED_MODULE_1__["default"].add(function () {
+      if (resizing) {
+        console.log('`resize` event listener is already running.'); // [DEBUG/]
+        return;
+      }
+      resizing = true;
+      initAll();
       resizing = false;
     }), true);
+    window.addEventListener('scroll', anim_event__WEBPACK_IMPORTED_MODULE_1__["default"].add(function () {
+      if (scrolling) {
+        console.log('`scroll` event listener is already running.'); // [DEBUG/]
+        return;
+      }
+      scrolling = true;
+      initAll();
+      scrolling = false;
+    }), true);
   };
-
-  var resizing = false;
-
 
   if (body = document.body) {
     initDoc();
