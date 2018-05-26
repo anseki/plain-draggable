@@ -35,10 +35,13 @@ const
   isFinite = Number.isFinite || (value => typeof value === 'number' && window.isFinite(value)),
 
   /** @type {Object.<_id: number, props>} */
-  insProps = {};
+  insProps = {},
+
+  pointerOffset = {},
+  lastMouseXY = {};
 
 let insId = 0,
-  activeItem, hasMoved, pointerOffset, body,
+  activeItem, hasMoved, body,
   // CSS property/value
   cssValueDraggableCursor, cssValueDraggingCursor, cssOrgValueBodyCursor,
   cssPropTransitionProperty, cssPropTransform, cssPropUserSelect, cssOrgValueBodyUserSelect,
@@ -460,7 +463,10 @@ function mousedown(props, event) {
 
   activeItem = props;
   hasMoved = false;
-  pointerOffset = {left: props.elementBBox.left - event.pageX, top: props.elementBBox.top - event.pageY};
+  pointerOffset.left = props.elementBBox.left -
+    ((lastMouseXY.clientX = event.clientX) + window.pageXOffset);
+  pointerOffset.top = props.elementBBox.top -
+    ((lastMouseXY.clientY = event.clientY) + window.pageYOffset);
 }
 
 /**
@@ -477,35 +483,6 @@ function setOptions(props, newOptions) {
     let bBox;
     if (isElement(newOptions.containment)) { // Specific element
       if (newOptions.containment !== options.containment) {
-        // Restore
-        props.scrollElements.forEach(element => {
-          element.removeEventListener('scroll', props.handleScroll, false);
-        });
-        props.scrollElements = [];
-        window.removeEventListener('scroll', props.handleScroll, false);
-        // Parse tree
-        let element = newOptions.containment,
-          fixedElement;
-        while (element && element !== body) {
-          if (element.nodeType === Node.ELEMENT_NODE) {
-            const cmpStyle = window.getComputedStyle(element, '');
-            // Scrollable element
-            if (!(element instanceof SVGElement) && (
-              cmpStyle.overflow !== 'visible' || cmpStyle.overflowX !== 'visible' ||
-                cmpStyle.overflowY !== 'visible' // `hidden` also is scrollable.
-            )) {
-              element.addEventListener('scroll', props.handleScroll, false);
-              props.scrollElements.push(element);
-            }
-            // Element that is re-positioned (document based) when window scrolled.
-            if (cmpStyle.position === 'fixed') { fixedElement = true; }
-          }
-          element = element.parentNode;
-        }
-        if (fixedElement) {
-          window.addEventListener('scroll', props.handleScroll, false);
-        }
-
         options.containment = newOptions.containment;
         props.containmentIsBBox = false;
         needsInitBBox = true;
@@ -620,8 +597,6 @@ class PlainDraggable {
     if (draggableClass) { mClassList(element).add(draggableClass); }
     // Prepare removable event listeners for each instance.
     props.handleMousedown = event => { mousedown(props, event); };
-    props.handleScroll = AnimEvent.add(() => { initBBox(props); });
-    props.scrollElements = [];
 
     // Default options
     if (!options.containment) {
@@ -797,10 +772,12 @@ class PlainDraggable {
 }
 
 document.addEventListener('mousemove', AnimEvent.add(event => {
+  // MouseEvent constructor and `initMouseEvent` don't support `pageX/Y`, and those are read-only.
+  // Then, calculate those via `clientX/Y`.
   if (activeItem &&
       move(activeItem, {
-        left: event.pageX + pointerOffset.left,
-        top: event.pageY + pointerOffset.top
+        left: (lastMouseXY.clientX = event.clientX) + window.pageXOffset + pointerOffset.left,
+        top: (lastMouseXY.clientY = event.clientY) + window.pageYOffset + pointerOffset.top
       },
       activeItem.onDrag)) {
 
@@ -818,8 +795,29 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
 }, false);
 
 {
-  let resizing = false;
   function initDoc() {
+    function fireMousemove() {
+      let event;
+      try {
+        event = new MouseEvent('mousemove', lastMouseXY);
+      } catch (error) {
+        event = document.createEvent('MouseEvent');
+        event.initMouseEvent('mousemove', true, true, window, 0, 0, 0,
+          lastMouseXY.clientX, lastMouseXY.clientY, false, false, false, false, 0, null);
+      }
+      document.dispatchEvent(event);
+    }
+
+    function initAll() {
+      Object.keys(insProps).forEach(id => {
+        if (insProps[id].initElm) { // Easy checking for instance without errors.
+          initBBox(insProps[id]);
+        } // eslint-disable-line brace-style
+      });
+
+      if (activeItem) { fireMousemove(); }
+    }
+
     cssPropTransitionProperty = CSSPrefix.getName('transitionProperty');
     cssPropTransform = CSSPrefix.getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
@@ -827,18 +825,24 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
       cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
     }
 
-    // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
+    // Multiple calling (parallel) by `requestAnimationFrame`.
+    let resizing = false,
+      scrolling = false;
     window.addEventListener('resize', AnimEvent.add(() => {
       if (resizing) {
         return;
       }
       resizing = true;
-      Object.keys(insProps).forEach(id => {
-        if (insProps[id].initElm) { // Easy checking for instance without errors.
-          initBBox(insProps[id]);
-        } // eslint-disable-line brace-style
-      });
+      initAll();
       resizing = false;
+    }), true);
+    window.addEventListener('scroll', AnimEvent.add(() => {
+      if (scrolling) {
+        return;
+      }
+      scrolling = true;
+      initAll();
+      scrolling = false;
     }), true);
   }
 
