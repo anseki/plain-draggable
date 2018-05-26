@@ -55,12 +55,13 @@ isObject = function () {
 
 
 /** @type {Object.<_id: number, props>} */
-insProps = {};
+insProps = {},
+    pointerOffset = {},
+    lastMouseXY = {};
 
 var insId = 0,
     activeItem = void 0,
     hasMoved = void 0,
-    pointerOffset = void 0,
     body = void 0,
 
 // CSS property/value
@@ -907,7 +908,8 @@ function mousedown(props, event) {
 
   activeItem = props;
   hasMoved = false;
-  pointerOffset = { left: props.elementBBox.left - event.pageX, top: props.elementBBox.top - event.pageY };
+  pointerOffset.left = props.elementBBox.left - ((lastMouseXY.clientX = event.clientX) + window.pageXOffset);
+  pointerOffset.top = props.elementBBox.top - ((lastMouseXY.clientY = event.clientY) + window.pageYOffset);
 }
 
 /**
@@ -1620,9 +1622,11 @@ var PlainDraggable = function () {
 }();
 
 document.addEventListener('mousemove', AnimEvent.add(function (event) {
+  // MouseEvent constructor and `initMouseEvent` don't support `pageX/Y`, and those are read-only.
+  // Then, calculate those via `clientX/Y`.
   if (activeItem && move(activeItem, {
-    left: event.pageX + pointerOffset.left,
-    top: event.pageY + pointerOffset.top
+    left: (lastMouseXY.clientX = event.clientX) + window.pageXOffset + pointerOffset.left,
+    top: (lastMouseXY.clientY = event.clientY) + window.pageYOffset + pointerOffset.top
   },
   // [SNAP]
   activeItem.snapTargets ? function (position) {
@@ -1676,6 +1680,17 @@ document.addEventListener('mouseup', function () {
 
 {
   var initDoc = function initDoc() {
+    function fireMousemove() {
+      var event = void 0;
+      try {
+        event = new MouseEvent('mousemove', lastMouseXY);
+      } catch (error) {
+        event = document.createEvent('MouseEvent');
+        event.initMouseEvent('mousemove', true, true, window, 0, 0, 0, lastMouseXY.clientX, lastMouseXY.clientY, false, false, false, false, 0, null);
+      }
+      document.dispatchEvent(event);
+    }
+
     function initAll() {
       Object.keys(insProps).forEach(function (id) {
         if (insProps[id].initElm) {
@@ -1686,6 +1701,10 @@ document.addEventListener('mouseup', function () {
             console.log('instance may have an error:');console.log(insProps[id]);
           } // [DEBUG/]
       });
+
+      if (activeItem) {
+        fireMousemove();
+      }
     }
 
     cssPropTransitionProperty = CSSPrefix.getName('transitionProperty');
@@ -1695,7 +1714,7 @@ document.addEventListener('mouseup', function () {
       cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
     }
 
-    // Gecko bug, multiple calling (parallel) by `requestAnimationFrame`.
+    // Multiple calling (parallel) by `requestAnimationFrame`.
     var resizing = false,
         scrolling = false;
     window.addEventListener('resize', AnimEvent.add(function () {
