@@ -462,13 +462,15 @@ window.addEventListener('load', function() {
   var elmItems = Array.prototype.slice.call(document.getElementsByClassName('ex-230-item')),
     bBox = elmItems[0].getBoundingClientRect(),
     itemH = bBox.height,
-    itemsTop = elmItems.map(function(v, i) { return bBox.top + window.pageYOffset + itemH * i; }),
+    itemsTop = elmItems.map(function(v, i) {
+      return Math.round(bBox.top + window.pageYOffset + itemH * i);
+    }),
     items = [];
 
   function sort(targetItem, top) {
     var curIndex = items.indexOf(targetItem),
-      newIndex = itemsTop.indexOf(top);
-    if (newIndex !== curIndex) {
+      newIndex = itemsTop.indexOf(Math.round(top));
+    if (newIndex !== -1 && newIndex !== curIndex) {
       var newItems = [],
         i = 0;
       newItems[newIndex] = targetItem;
