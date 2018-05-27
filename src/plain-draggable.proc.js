@@ -416,7 +416,7 @@ function move(props, position, cbCheck) {
 /**
  * Initialize HTMLElement for `translate`, and get `offset` that is used by `moveTranslate`.
  * @param {props} props - `props` of instance.
- * @returns {void}
+ * @returns {BBox} Current BBox without animation, i.e. left/top properties.
  */
 function initTranslate(props) {
   const element = props.element,
@@ -487,13 +487,15 @@ function initTranslate(props) {
     elementStyle[cssPropTransform] =
       `translate(${fixPosition.left + offset.left}px, ${fixPosition.top + offset.top}px)`;
   }
+
+  return fixPosition;
 }
 
 // [LEFTTOP]
 /**
  * Initialize HTMLElement for `left` and `top`, and get `offset` that is used by `moveLeftTop`.
  * @param {props} props - `props` of instance.
- * @returns {void}
+ * @returns {BBox} Current BBox without animation, i.e. left/top properties.
  */
 function initLeftTop(props) {
   const element = props.element,
@@ -553,6 +555,8 @@ function initLeftTop(props) {
     elementStyle.left = fixPosition.left + offset.left + 'px';
     elementStyle.top = fixPosition.top + offset.top + 'px';
   }
+
+  return fixPosition;
 }
 // [/LEFTTOP]
 
@@ -560,12 +564,13 @@ function initLeftTop(props) {
 /**
  * Initialize SVGElement, and get `offset` that is used by `moveSvg`.
  * @param {props} props - `props` of instance.
- * @returns {void}
+ * @returns {BBox} Current BBox without animation, i.e. left/top properties.
  */
 function initSvg(props) {
   const element = props.element,
     svgTransform = props.svgTransform,
-    curRect = element.getBoundingClientRect(); // Get Rect before change position.
+    curRect = element.getBoundingClientRect(), // Get Rect before change position.
+    fixPosition = getBBox(element);
 
   svgTransform.setTranslate(0, 0);
   const originBBox = props.svgOriginBBox = element.getBBox(),
@@ -578,6 +583,8 @@ function initSvg(props) {
     // Restore position
     curPoint = viewPoint2SvgPoint(props, curRect.left, curRect.top);
   svgTransform.setTranslate(curPoint.x + offset.x - originBBox.x, curPoint.y + offset.y - originBBox.y);
+
+  return fixPosition;
 }
 // [/SVG]
 
@@ -587,10 +594,8 @@ function initSvg(props) {
  * @returns {void}
  */
 function initBBox(props) {
-  props.initElm(props);
-
   const docBBox = getBBox(document.documentElement),
-    elementBBox = props.elementBBox = getBBox(props.element),
+    elementBBox = props.elementBBox = props.initElm(props), // reset offset etc.
     containmentBBox = props.containmentBBox =
       props.containmentIsBBox ? (resolvePPBBox(props.options.containment, docBBox) || docBBox) :
       getBBox(props.options.containment, true);

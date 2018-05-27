@@ -906,7 +906,7 @@ function move(props, position, cbCheck) {
 /**
  * Initialize HTMLElement for `translate`, and get `offset` that is used by `moveTranslate`.
  * @param {props} props - `props` of instance.
- * @returns {void}
+ * @returns {BBox} Current BBox without animation, i.e. left/top properties.
  */
 function initTranslate(props) {
   var element = props.element,
@@ -976,6 +976,8 @@ function initTranslate(props) {
     // It seems that it is moving.
     elementStyle[cssPropTransform] = 'translate(' + (fixPosition.left + offset.left) + 'px, ' + (fixPosition.top + offset.top) + 'px)';
   }
+
+  return fixPosition;
 }
 
 /**
@@ -984,11 +986,10 @@ function initTranslate(props) {
  * @returns {void}
  */
 function initBBox(props) {
-  props.initElm(props);
-
   var docBBox = getBBox(document.documentElement),
-      elementBBox = props.elementBBox = getBBox(props.element),
-      containmentBBox = props.containmentBBox = props.containmentIsBBox ? resolvePPBBox(props.options.containment, docBBox) || docBBox : getBBox(props.options.containment, true);
+      elementBBox = props.elementBBox = props.initElm(props),
+      // reset offset etc.
+  containmentBBox = props.containmentBBox = props.containmentIsBBox ? resolvePPBBox(props.options.containment, docBBox) || docBBox : getBBox(props.options.containment, true);
   props.minLeft = containmentBBox.left;
   props.maxLeft = containmentBBox.right - elementBBox.width;
   props.minTop = containmentBBox.top;
