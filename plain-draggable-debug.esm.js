@@ -560,6 +560,11 @@ function initLeftTop(props) {
       // Get BBox before change style.
   RESTORE_PROPS = ['position', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 'width', 'height'];
 
+  // Reset `transition-property` every time because it might be changed frequently.
+  var orgTransitionProperty = elementStyle[cssPropTransitionProperty];
+  elementStyle[cssPropTransitionProperty] = 'none'; // Disable animation
+  var fixPosition = getBBox(element);
+
   if (!props.orgStyle) {
     props.orgStyle = RESTORE_PROPS.reduce(function (orgStyle, prop) {
       orgStyle[prop] = elementStyle[prop] || '';
@@ -598,6 +603,15 @@ function initLeftTop(props) {
     }
     props.lastStyle[prop] = elementStyle[prop];
   });
+
+  // Restore `transition-property`
+  element.offsetWidth; /* force reflow */ // eslint-disable-line no-unused-expressions
+  elementStyle[cssPropTransitionProperty] = orgTransitionProperty;
+  if (fixPosition.left !== curPosition.left || fixPosition.top !== curPosition.top) {
+    // It seems that it is moving.
+    elementStyle.left = fixPosition.left + offset.left + 'px';
+    elementStyle.top = fixPosition.top + offset.top + 'px';
+  }
 }
 // [/LEFTTOP]
 
