@@ -455,7 +455,6 @@ window.addEventListener('load', function() {
   </div>
 </div>
 
-<script src="js/anim-event.min.js"></script>
 <script>
 window.addEventListener('load', function() {
   'use strict';
@@ -482,9 +481,11 @@ window.addEventListener('load', function() {
       });
       items = newItems;
 
-      items.forEach(function(item, i) {
-        if (item !== targetItem) { item.top = itemsTop[i]; }
-      });
+      setTimeout(function() {
+        items.forEach(function(item, i) {
+          if (item !== targetItem) { item.top = itemsTop[i]; }
+        });
+      }, 0);
     }
   }
 
@@ -501,14 +502,6 @@ window.addEventListener('load', function() {
       }
     });
   });
-
-  // Reset position when:
-  // scroll -> initAll -> initBBox -> fireMousemove -> [New Position]
-  window.addEventListener('scroll', AnimEvent.add(function() {
-    setTimeout(function() {
-      items.forEach(function(item, i) { item.top = itemsTop[i]; });
-    }, 0);
-  }), true);
 
 });
 </script>
