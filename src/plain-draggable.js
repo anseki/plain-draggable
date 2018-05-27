@@ -444,6 +444,11 @@ function initTranslate(props) {
     RESTORE_PROPS = ['display', 'marginTop', 'marginBottom', 'width', 'height'];
   RESTORE_PROPS.unshift(cssPropTransform);
 
+  // Reset `transition-property` every time because it might be changed frequently.
+  const orgTransitionProperty = elementStyle[cssPropTransitionProperty];
+  elementStyle[cssPropTransitionProperty] = 'none'; // Disable animation
+  const fixPosition = getBBox(element);
+
   if (!props.orgStyle) {
     props.orgStyle = RESTORE_PROPS.reduce((orgStyle, prop) => {
       orgStyle[prop] = elementStyle[prop] || '';
@@ -471,9 +476,6 @@ function initTranslate(props) {
       elementStyle[`margin${dirProp}`] = padding ? `-${padding}px` : '0';
     });
   }
-  // Reset `transition-property` every time because it might be changed frequently.
-  const orgTransitionProperty = elementStyle[cssPropTransitionProperty];
-  elementStyle[cssPropTransitionProperty] = 'none'; // To get position now
   elementStyle[cssPropTransform] = 'translate(0, 0)';
   // Get document offset.
   let newBBox = getBBox(element);
@@ -483,8 +485,6 @@ function initTranslate(props) {
   // Restore position
   elementStyle[cssPropTransform] =
     `translate(${curPosition.left + offset.left}px, ${curPosition.top + offset.top}px)`;
-  element.offsetWidth; /* force reflow */ // eslint-disable-line no-unused-expressions
-  elementStyle[cssPropTransitionProperty] = orgTransitionProperty;
   // Restore size
   ['width', 'height'].forEach(prop => {
     if (newBBox[prop] !== orgSize[prop]) {
@@ -497,6 +497,15 @@ function initTranslate(props) {
     }
     props.lastStyle[prop] = elementStyle[prop];
   });
+
+  // Restore `transition-property`
+  element.offsetWidth; /* force reflow */ // eslint-disable-line no-unused-expressions
+  elementStyle[cssPropTransitionProperty] = orgTransitionProperty;
+  if (fixPosition.left !== curPosition.left || fixPosition.top !== curPosition.top) {
+    // It seems that it is moving.
+    elementStyle[cssPropTransform] =
+      `translate(${fixPosition.left + offset.left}px, ${fixPosition.top + offset.top}px)`;
+  }
 }
 
 // [LEFTTOP]
