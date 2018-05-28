@@ -43,9 +43,7 @@ const
 
   /** @type {Object.<_id: number, props>} */
   insProps = {},
-
-  pointerOffset = {},
-  lastMouseXY = {};
+  pointerOffset = {};
 
 let insId = 0,
   activeItem, hasMoved, body,
@@ -59,6 +57,114 @@ let insId = 0,
   draggableClass = 'plain-draggable',
   draggingClass = 'plain-draggable-dragging',
   movingClass = 'plain-draggable-moving';
+
+// Event Controler for mouse and touch interfaces
+const pointerEvent = {};
+{
+  /** @type {{clientX, clientY}} */
+  const lastPointerXY = {clientX: 0, clientY: 0},
+    startHandlers = {},
+    DUPLICATE_INTERVAL = 400; // For avoiding mouse event that fired by touch interface
+  let handlerId = 0,
+    lastStartTime = 0,
+    curPointerClass, curMoveHandler;
+
+  /**
+   * @param {function} startHandler - This is called with pointerXY when it starts. This returns boolean.
+   * @returns {number} handlerId which is used for adding/removing to element.
+   */
+  pointerEvent.regStartHandler = startHandler => {
+    startHandlers[++handlerId] = event => {
+      const pointerClass = event.type === 'mousedown' ? 'mouse' : 'touch',
+        pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0],
+        now = Date.now();
+      if (curPointerClass && pointerClass !== curPointerClass &&
+          now - lastStartTime < DUPLICATE_INTERVAL) {
+        console.log(`Event "${event.type}" was ignored.`); // [DEBUG/]
+        return;
+      }
+      if (startHandler(pointerXY)) {
+        curPointerClass = pointerClass;
+        lastPointerXY.clientX = pointerXY.clientX;
+        lastPointerXY.clientY = pointerXY.clientY;
+        lastStartTime = now;
+        event.preventDefault();
+      }
+    };
+    return handlerId;
+  };
+
+  // Gecko, Trident pick drag-event of some elements such as img, a, etc.
+  function dragstart(event) { event.preventDefault(); }
+
+  /**
+   * @param {Element} element - A target element.
+   * @param {number} handlerId - An ID which was returned by regStartHandler.
+   * @returns {void}
+   */
+  pointerEvent.addStartHandler = (element, handlerId) => {
+    element.addEventListener('mousedown', startHandlers[handlerId], false);
+    element.addEventListener('touchstart', startHandlers[handlerId], false);
+    element.addEventListener('dragstart', dragstart, false);
+  };
+
+  /**
+   * @param {Element} element - A target element.
+   * @param {number} handlerId - An ID which was returned by regStartHandler.
+   * @returns {void}
+   */
+  pointerEvent.removeStartHandler = (element, handlerId) => {
+    element.removeEventListener('mousedown', startHandlers[handlerId], false);
+    element.removeEventListener('touchstart', startHandlers[handlerId], false);
+    element.removeEventListener('dragstart', dragstart, false);
+  };
+
+  /**
+   * @param {Element} element - A target element.
+   * @param {function} moveHandler - This is called with pointerXY when it moves.
+   * @returns {void}
+   */
+  pointerEvent.addMoveHandler = (element, moveHandler) => {
+    function pointerMove(event) {
+      const pointerClass = event.type === 'mousemove' ? 'mouse' : 'touch',
+        pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0];
+      if (pointerClass === curPointerClass) {
+        moveHandler(pointerXY);
+        lastPointerXY.clientX = pointerXY.clientX;
+        lastPointerXY.clientY = pointerXY.clientY;
+        event.preventDefault();
+      }
+    }
+    element.addEventListener('mousemove', pointerMove, false);
+    element.addEventListener('touchmove', pointerMove, false);
+    curMoveHandler = moveHandler;
+  };
+
+  /**
+   * @param {Element} element - A target element.
+   * @param {function} endHandler - This is called when it ends.
+   * @returns {void}
+   */
+  pointerEvent.addEndHandler = (element, endHandler) => {
+    function pointerEnd(event) {
+      const pointerClass = event.type === 'mouseup' ? 'mouse' : 'touch';
+      if (pointerClass === curPointerClass) {
+        endHandler();
+        curPointerClass = null;
+        event.preventDefault();
+      }
+    }
+    element.addEventListener('mouseup', pointerEnd, false);
+    element.addEventListener('touchend', pointerEnd, false);
+    element.addEventListener('touchcancel', pointerEnd, false);
+  };
+
+  pointerEvent.callMoveHandler = () => {
+    if (curMoveHandler) {
+      curMoveHandler(lastPointerXY);
+    }
+  };
+}
 
 // [DEBUG]
 window.insProps = insProps;
@@ -832,6 +938,10 @@ function initBBox(props) {
   window.initBBoxDone = true; // [DEBUG/]
 }
 
+/**
+ * @param {props} props - `props` of instance.
+ * @returns {void}
+ */
 function dragEnd(props) {
   setDraggableCursor(props.options.handle, props.orgCursor);
   body.style.cursor = cssOrgValueBodyCursor;
@@ -846,9 +956,14 @@ function dragEnd(props) {
   if (props.onDragEnd) { props.onDragEnd(); }
 }
 
-function mousedown(props, event) {
-  if (props.disabled) { return; }
-  if (activeItem) { dragEnd(activeItem); } // activeItem is normally null by `mouseup`.
+/**
+ * @param {props} props - `props` of instance.
+ * @param {{clientX, clientY}} pointerXY - This might be MouseEvent, Touch of TouchEvent or Object.
+ * @returns {boolean} `true` if it started.
+ */
+function dragStart(props, pointerXY) {
+  if (props.disabled) { return false; }
+  if (activeItem) { dragEnd(activeItem); } // activeItem is normally null by pointerEvent.end.
 
   setDraggingCursor(props.options.handle);
   body.style.cursor = cssValueDraggingCursor || // If it is `false` or `''`
@@ -860,10 +975,9 @@ function mousedown(props, event) {
 
   activeItem = props;
   hasMoved = false;
-  pointerOffset.left = props.elementBBox.left -
-    ((lastMouseXY.clientX = event.clientX) + window.pageXOffset);
-  pointerOffset.top = props.elementBBox.top -
-    ((lastMouseXY.clientY = event.clientY) + window.pageYOffset);
+  pointerOffset.left = props.elementBBox.left - (pointerXY.clientX + window.pageXOffset);
+  pointerOffset.top = props.elementBBox.top - (pointerXY.clientY + window.pageYOffset);
+  return true;
 }
 
 /**
@@ -1126,16 +1240,13 @@ function setOptions(props, newOptions) {
 
   if (needsInitBBox) { initBBox(props); }
 
-  // Gecko, Trident pick drag-event of some elements such as img, a, etc.
-  function dragstart(event) { event.preventDefault(); }
-
   // handle
   if (isElement(newOptions.handle) && newOptions.handle !== options.handle) {
     if (options.handle) { // Restore
       options.handle.style.cursor = props.orgCursor;
       if (cssPropUserSelect) { options.handle.style[cssPropUserSelect] = props.orgUserSelect; }
-      options.handle.removeEventListener('dragstart', dragstart, false);
-      options.handle.removeEventListener('mousedown', props.handleMousedown, false);
+      // pointerEvent remove startHandler
+      pointerEvent.removeStartHandler(options.handle, props.pointerEventHandlerId);
     }
     const handle = options.handle = newOptions.handle;
     props.orgCursor = handle.style.cursor;
@@ -1144,8 +1255,8 @@ function setOptions(props, newOptions) {
       props.orgUserSelect = handle.style[cssPropUserSelect];
       handle.style[cssPropUserSelect] = 'none';
     }
-    handle.addEventListener('dragstart', dragstart, false);
-    handle.addEventListener('mousedown', props.handleMousedown, false);
+    // pointerEvent add startHandler
+    pointerEvent.addStartHandler(handle, props.pointerEventHandlerId);
   }
 
   // zIndex
@@ -1257,8 +1368,9 @@ class PlainDraggable {
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) { mClassList(element).add(draggableClass); }
-    // Prepare removable event listeners for each instance.
-    props.handleMousedown = event => { mousedown(props, event); };
+    // pointerEvent new startHandler
+    props.pointerEventHandlerId =
+      pointerEvent.regStartHandler(pointerXY => dragStart(props, pointerXY));
 
     // Default options
     if (!options.containment) {
@@ -1437,13 +1549,12 @@ class PlainDraggable {
   }
 }
 
-document.addEventListener('mousemove', AnimEvent.add(event => {
-  // MouseEvent constructor and `initMouseEvent` don't support `pageX/Y`, and those are read-only.
-  // Then, calculate those via `clientX/Y`.
+// pointerEvent add moveHandler
+pointerEvent.addMoveHandler(document, AnimEvent.add(pointerXY => {
   if (activeItem &&
       move(activeItem, {
-        left: (lastMouseXY.clientX = event.clientX) + window.pageXOffset + pointerOffset.left,
-        top: (lastMouseXY.clientY = event.clientY) + window.pageYOffset + pointerOffset.top
+        left: pointerXY.clientX + window.pageXOffset + pointerOffset.left,
+        top: pointerXY.clientY + window.pageYOffset + pointerOffset.top
       },
       // [SNAP]
       activeItem.snapTargets ? position => { // Snap
@@ -1482,26 +1593,15 @@ document.addEventListener('mousemove', AnimEvent.add(event => {
     }
     if (activeItem.onMove) { activeItem.onMove(); }
   }
-}), false);
+}));
 
-document.addEventListener('mouseup', () => { // It might occur outside body.
+// pointerEvent add endHandler
+pointerEvent.addEndHandler(document, () => {
   if (activeItem) { dragEnd(activeItem); }
-}, false);
+});
 
 {
   function initDoc() {
-    function fireMousemove() {
-      let event;
-      try {
-        event = new MouseEvent('mousemove', lastMouseXY);
-      } catch (error) {
-        event = document.createEvent('MouseEvent');
-        event.initMouseEvent('mousemove', true, true, window, 0, 0, 0,
-          lastMouseXY.clientX, lastMouseXY.clientY, false, false, false, false, 0, null);
-      }
-      document.dispatchEvent(event);
-    }
-
     function initAll() {
       Object.keys(insProps).forEach(id => {
         if (insProps[id].initElm) { // Easy checking for instance without errors.
@@ -1510,7 +1610,7 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
         else { console.log('instance may have an error:'); console.log(insProps[id]); } // [DEBUG/]
       });
 
-      if (activeItem) { fireMousemove(); }
+      if (activeItem) { pointerEvent.callMoveHandler(); }
     }
 
     cssPropTransitionProperty = CSSPrefix.getName('transitionProperty');
@@ -1521,26 +1621,18 @@ document.addEventListener('mouseup', () => { // It might occur outside body.
     }
 
     // Multiple calling (parallel) by `requestAnimationFrame`.
-    let resizing = false,
-      scrolling = false;
-    window.addEventListener('resize', AnimEvent.add(() => {
-      if (resizing) {
-        console.log('`resize` event listener is already running.'); // [DEBUG/]
+    let layoutChanging = false;
+    const layoutChange = AnimEvent.add(() => {
+      if (layoutChanging) {
+        console.log('`resize/scroll` event listener is already running.'); // [DEBUG/]
         return;
       }
-      resizing = true;
+      layoutChanging = true;
       initAll();
-      resizing = false;
-    }), true);
-    window.addEventListener('scroll', AnimEvent.add(() => {
-      if (scrolling) {
-        console.log('`scroll` event listener is already running.'); // [DEBUG/]
-        return;
-      }
-      scrolling = true;
-      initAll();
-      scrolling = false;
-    }), true);
+      layoutChanging = false;
+    });
+    window.addEventListener('resize', layoutChange, true);
+    window.addEventListener('scroll', layoutChange, true);
   }
 
   if ((body = document.body)) {

@@ -11,6 +11,7 @@ The simple and high performance library to allow HTML/SVG element to be dragged.
 **Features:**
 
 - Accept HTML/SVG element as an element that comes to be draggable.
+- Support both mouse and touch interfaces.
 - Restrict the draggable area.
 - Snap the draggable element to other elements, points, lines, consecutive points (i.e. grid) or something.
 - Use `requestAnimationFrame` API, `translate` and `will-change` CSS if possible, for high performance.  
@@ -34,7 +35,7 @@ This is simplest case:
 draggable = new PlainDraggable(element);
 ```
 
-Now, the `element` can be moved by mouse-dragging operation.  
+Now, the `element` can be moved by mouse-dragging (or touch interfaces) operation.  
 The `element` might be a `<div>`, `<span>`, `<circle>` or something.
 
 By default, the moving is restricted to inside of the `element`'s parent element.
@@ -128,7 +129,7 @@ See [Snap](#snap).
 *Type:* HTML/SVG element  
 *Default:* Draggable element
 
-A part element of the draggable element that receives mouse operations. A user seizes and drags this element to move the draggable element.  
+A part element of the draggable element that receives mouse (or touch interfaces) operations. A user seizes and drags this element to move the draggable element.  
 The default is the draggable element itself, and all of the draggable element can be seized and dragged.
 
 ### <a name="options-zIndex"></a>`zIndex`
