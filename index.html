@@ -51,6 +51,7 @@ window.addEventListener('load', function() {
 
 <ul>
 <li>Accept HTML/SVG element as an element that comes to be draggable.</li>
+<li>Support both mouse and touch interfaces.</li>
 <li>Restrict the draggable area.</li>
 <li>Snap the draggable element to other elements, points, lines, consecutive points (i.e. grid) or something.</li>
 <li>Use <code>requestAnimationFrame</code> API, <code>translate</code> and <code>will-change</code> CSS if possible, for high performance.<br><img src="img/ss-02.png" style="max-width: 100%;" alt="ss-02"></li>
@@ -518,7 +519,7 @@ window.addEventListener('load', function() {
 <p>This is simplest case:</p>
 <div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PlainDraggable</span><span class="p">(</span><span class="nx">element</span><span class="p">);</span>
 </code></pre></div>
-<p>Now, the <code>element</code> can be moved by mouse-dragging operation.<br>The <code>element</code> might be a <code>&lt;div&gt;</code>, <code>&lt;span&gt;</code>, <code>&lt;circle&gt;</code> or something.</p>
+<p>Now, the <code>element</code> can be moved by mouse-dragging (or touch interfaces) operation.<br>The <code>element</code> might be a <code>&lt;div&gt;</code>, <code>&lt;span&gt;</code>, <code>&lt;circle&gt;</code> or something.</p>
 
 <!-- include "ex-085.html" -->
 <!-- ================ ex -->
@@ -659,7 +660,7 @@ window.addEventListener('load', function() {
 
 <p><em>Type:</em> HTML/SVG element<br><em>Default:</em> Draggable element</p>
 
-<p>A part element of the draggable element that receives mouse operations. A user seizes and drags this element to move the draggable element.<br>The default is the draggable element itself, and all of the draggable element can be seized and dragged.</p>
+<p>A part element of the draggable element that receives mouse (or touch interfaces) operations. A user seizes and drags this element to move the draggable element.<br>The default is the draggable element itself, and all of the draggable element can be seized and dragged.</p>
 
 <!-- include "ex-100.html" -->
 <!-- ================ ex -->
