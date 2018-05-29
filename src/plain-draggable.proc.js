@@ -1579,16 +1579,6 @@ pointerEvent.addEndHandler(document, () => {
 
 {
   function initDoc() {
-    function initAll() {
-      Object.keys(insProps).forEach(id => {
-        if (insProps[id].initElm) { // Easy checking for instance without errors.
-          initBBox(insProps[id]);
-        } // eslint-disable-line brace-style
-      });
-
-      if (activeItem) { pointerEvent.callMoveHandler(); }
-    }
-
     cssPropTransitionProperty = CSSPrefix.getName('transitionProperty');
     cssPropTransform = CSSPrefix.getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
@@ -1596,14 +1586,41 @@ pointerEvent.addEndHandler(document, () => {
       cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
     }
 
-    // Multiple calling (parallel) by `requestAnimationFrame`.
-    let layoutChanging = false;
+    // Init active item when layout is changed, and init others later.
+
+    const LAZY_INIT_DELAY = 200;
+    let initDoneItems = {},
+      lazyInitTimer;
+
+    function checkInitBBox(props) {
+      if (props.initElm) { // Easy checking for instance without errors.
+        initBBox(props);
+      } // eslint-disable-line brace-style
+    }
+
+    function initAll() {
+      clearTimeout(lazyInitTimer);
+      Object.keys(insProps).forEach(id => {
+        if (!initDoneItems[id]) { checkInitBBox(insProps[id]); }
+      });
+      initDoneItems = {};
+    }
+
+    let layoutChanging = false; // Multiple calling (parallel) by `requestAnimationFrame`.
     const layoutChange = AnimEvent.add(() => {
       if (layoutChanging) {
         return;
       }
       layoutChanging = true;
-      initAll();
+
+      if (activeItem) {
+        checkInitBBox(activeItem);
+        pointerEvent.callMoveHandler();
+        initDoneItems[activeItem._id] = true;
+      }
+      clearTimeout(lazyInitTimer);
+      lazyInitTimer = setTimeout(initAll, LAZY_INIT_DELAY);
+
       layoutChanging = false;
     });
     window.addEventListener('resize', layoutChange, true);

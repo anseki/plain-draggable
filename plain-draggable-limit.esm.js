@@ -1074,19 +1074,6 @@ pointerEvent.addEndHandler(document, function () {
 
 {
   var initDoc = function initDoc() {
-    function initAll() {
-      Object.keys(insProps).forEach(function (id) {
-        if (insProps[id].initElm) {
-          // Easy checking for instance without errors.
-          initBBox(insProps[id]);
-        } // eslint-disable-line brace-style
-      });
-
-      if (activeItem) {
-        pointerEvent.callMoveHandler();
-      }
-    }
-
     cssPropTransitionProperty = CSSPrefix.getName('transitionProperty');
     cssPropTransform = CSSPrefix.getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
@@ -1094,14 +1081,44 @@ pointerEvent.addEndHandler(document, function () {
       cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
     }
 
-    // Multiple calling (parallel) by `requestAnimationFrame`.
-    var layoutChanging = false;
+    // Init active item when layout is changed, and init others later.
+
+    var LAZY_INIT_DELAY = 200;
+    var initDoneItems = {},
+        lazyInitTimer = void 0;
+
+    function checkInitBBox(props) {
+      if (props.initElm) {
+        // Easy checking for instance without errors.
+        initBBox(props);
+      } // eslint-disable-line brace-style
+    }
+
+    function initAll() {
+      clearTimeout(lazyInitTimer);
+      Object.keys(insProps).forEach(function (id) {
+        if (!initDoneItems[id]) {
+          checkInitBBox(insProps[id]);
+        }
+      });
+      initDoneItems = {};
+    }
+
+    var layoutChanging = false; // Multiple calling (parallel) by `requestAnimationFrame`.
     var layoutChange = AnimEvent.add(function () {
       if (layoutChanging) {
         return;
       }
       layoutChanging = true;
-      initAll();
+
+      if (activeItem) {
+        checkInitBBox(activeItem);
+        pointerEvent.callMoveHandler();
+        initDoneItems[activeItem._id] = true;
+      }
+      clearTimeout(lazyInitTimer);
+      lazyInitTimer = setTimeout(initAll, LAZY_INIT_DELAY);
+
       layoutChanging = false;
     });
     window.addEventListener('resize', layoutChange, true);
