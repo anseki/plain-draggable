@@ -81,7 +81,7 @@ draggableClass = 'plain-draggable',
     draggingClass = 'plain-draggable-dragging',
     movingClass = 'plain-draggable-moving';
 
-// Event Controler for mouse and touch interfaces
+// Event Controller for mouse and touch interfaces
 var pointerEvent = {};
 {
 
@@ -151,7 +151,7 @@ var pointerEvent = {};
    * @returns {void}
    */
   pointerEvent.addMoveHandler = function (element, moveHandler) {
-    function pointerMove(event) {
+    var pointerMove = AnimEvent.add(function (event) {
       var pointerClass = event.type === 'mousemove' ? 'mouse' : 'touch',
           pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0];
       if (pointerClass === curPointerClass) {
@@ -160,7 +160,7 @@ var pointerEvent = {};
         lastPointerXY.clientY = pointerXY.clientY;
         event.preventDefault();
       }
-    }
+    });
     element.addEventListener('mousemove', pointerMove, false);
     element.addEventListener('touchmove', pointerMove, false);
     curMoveHandler = moveHandler;
@@ -1768,7 +1768,7 @@ var PlainDraggable = function () {
 // pointerEvent add moveHandler
 
 
-pointerEvent.addMoveHandler(document, AnimEvent.add(function (pointerXY) {
+pointerEvent.addMoveHandler(document, function (pointerXY) {
   if (activeItem && move(activeItem, {
     left: pointerXY.clientX + window.pageXOffset + pointerOffset.left,
     top: pointerXY.clientY + window.pageYOffset + pointerOffset.top
@@ -1814,7 +1814,7 @@ pointerEvent.addMoveHandler(document, AnimEvent.add(function (pointerXY) {
       activeItem.onMove();
     }
   }
-}));
+});
 
 // pointerEvent add endHandler
 pointerEvent.addEndHandler(document, function () {
@@ -1858,7 +1858,7 @@ pointerEvent.addEndHandler(document, function () {
       initDoneItems = {};
     }
 
-    var layoutChanging = false; // Multiple calling (parallel) by `requestAnimationFrame`.
+    var layoutChanging = false; // Gecko bug, multiple calling by `resize`.
     var layoutChange = AnimEvent.add(function () {
       if (layoutChanging) {
         console.log('`resize/scroll` event listener is already running.'); // [DEBUG/]

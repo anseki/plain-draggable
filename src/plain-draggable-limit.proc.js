@@ -51,7 +51,7 @@ let insId = 0,
   draggingClass = 'plain-draggable-dragging',
   movingClass = 'plain-draggable-moving';
 
-// Event Controler for mouse and touch interfaces
+// Event Controller for mouse and touch interfaces
 const pointerEvent = {};
 {
   /** @type {{clientX, clientY}} */
@@ -117,7 +117,7 @@ const pointerEvent = {};
    * @returns {void}
    */
   pointerEvent.addMoveHandler = (element, moveHandler) => {
-    function pointerMove(event) {
+    const pointerMove = AnimEvent.add(event => {
       const pointerClass = event.type === 'mousemove' ? 'mouse' : 'touch',
         pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0];
       if (pointerClass === curPointerClass) {
@@ -126,7 +126,7 @@ const pointerEvent = {};
         lastPointerXY.clientY = pointerXY.clientY;
         event.preventDefault();
       }
-    }
+    });
     element.addEventListener('mousemove', pointerMove, false);
     element.addEventListener('touchmove', pointerMove, false);
     curMoveHandler = moveHandler;
@@ -152,9 +152,7 @@ const pointerEvent = {};
   };
 
   pointerEvent.callMoveHandler = () => {
-    if (curMoveHandler) {
-      curMoveHandler(lastPointerXY);
-    }
+    if (curMoveHandler) { curMoveHandler(lastPointerXY); }
   };
 }
 
@@ -892,7 +890,7 @@ class PlainDraggable {
 }
 
 // pointerEvent add moveHandler
-pointerEvent.addMoveHandler(document, AnimEvent.add(pointerXY => {
+pointerEvent.addMoveHandler(document, pointerXY => {
   if (activeItem &&
       move(activeItem, {
         left: pointerXY.clientX + window.pageXOffset + pointerOffset.left,
@@ -907,7 +905,7 @@ pointerEvent.addMoveHandler(document, AnimEvent.add(pointerXY => {
     }
     if (activeItem.onMove) { activeItem.onMove(); }
   }
-}));
+});
 
 // pointerEvent add endHandler
 pointerEvent.addEndHandler(document, () => {
@@ -943,7 +941,7 @@ pointerEvent.addEndHandler(document, () => {
       initDoneItems = {};
     }
 
-    let layoutChanging = false; // Multiple calling (parallel) by `requestAnimationFrame`.
+    let layoutChanging = false; // Gecko bug, multiple calling by `resize`.
     const layoutChange = AnimEvent.add(() => {
       if (layoutChanging) {
         return;
