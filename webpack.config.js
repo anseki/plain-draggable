@@ -5,7 +5,7 @@
 const
   BASE_NAME = 'plain-draggable',
   OBJECT_NAME = 'PlainDraggable',
-  LIMIT_TAGS = ['SNAP', 'SVG', 'LEFTTOP'],
+  LIMIT_TAGS = ['SNAP', 'AUTO-SCROLL', 'SVG', 'LEFTTOP'],
   BUILD_MODE = process.env.NODE_ENV === 'production',
   LIMIT = process.env.EDITION === 'limit',
   BUILD_BASE_NAME = `${BASE_NAME}${LIMIT ? '-limit' : ''}`,
