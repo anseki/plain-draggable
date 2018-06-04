@@ -609,3 +609,26 @@
 .ex-230-item.lift {
   color: #3bc9ff;
 }
+
+/* line 494, ex.scss */
+#ex-240-draggable {
+  position: absolute;
+}
+
+/* line 498, ex.scss */
+#ex-240-stage {
+  width: 900px;
+  background-color: #d4d4d4;
+}
+
+/* line 503, ex.scss */
+#ex-240-stage p {
+  margin-bottom: 0;
+}
+
+/* line 507, ex.scss */
+#ex-240-scroll {
+  width: 600px;
+  height: 400px;
+  overflow: scroll;
+}

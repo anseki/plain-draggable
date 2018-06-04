@@ -54,6 +54,7 @@ window.addEventListener('load', function() {
 <li>Support both mouse and touch interfaces.</li>
 <li>Restrict the draggable area.</li>
 <li>Snap the draggable element to other elements, points, lines, consecutive points (i.e. grid) or something.</li>
+<li>Scroll an element or window automatically.</li>
 <li>Use <code>requestAnimationFrame</code> API, <code>translate</code> and <code>will-change</code> CSS if possible, for high performance.<br><img src="img/ss-02.png" style="max-width: 100%;" alt="ss-02"></li>
 <li>Provide only basic methods, easy and simple usage.</li>
 <li>No dependency.</li>
@@ -616,7 +617,7 @@ window.addEventListener('load', function() {
 <h3 id="position"><code>position</code></h3>
 <div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">self</span> <span class="o">=</span> <span class="nx">draggable</span><span class="p">.</span><span class="nx">position</span><span class="p">()</span>
 </code></pre></div>
-<p>Re-calculate the position of the draggable element, <a href="#options-containment"><code>containment</code></a> option and <a href="#options-snap"><code>snap</code></a> option, with current layout of a page.<br>Those are re-calculated as needed automatically when a window is resized, or a window or something is scrolled.<br>You should call <code>position</code> method if you changed the layout without resizing the window or scrolling something.</p>
+<p>Re-calculate the position of the draggable element, <a href="#options-containment"><code>containment</code></a> option, <a href="#options-snap"><code>snap</code></a> option and <a href="#options-autoscroll"><code>autoScroll</code></a> option, with current layout of a page.<br>Those are re-calculated as needed automatically when a window is resized, or a window or something is scrolled.<br>You should call <code>position</code> method if you changed the layout without resizing the window or scrolling something.</p>
 
 <h2 id="options">Options</h2>
 
@@ -655,6 +656,53 @@ window.addEventListener('load', function() {
 <p><em>Type:</em> number, string, HTML/SVG element, <a href="#rect"><code>Rect</code></a>, Array, Object or <code>undefined</code><br><em>Default:</em> <code>undefined</code></p>
 
 <p>See <a href="#snap">Snap</a>.</p>
+
+<h3 id="options-autoscroll"><code>autoScroll</code></h3>
+
+<p><em>Type:</em> boolean, window, HTML element, Object or <code>undefined</code><br><em>Default:</em> <code>undefined</code></p>
+
+<p>Scroll a scrollable area when the draggable element is moved to near the edges of the area. The scrollable area can be the current window or a HTML element.</p>
+
+<p>For example:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span><span class="p">.</span><span class="nx">autoScroll</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+</code></pre></div>
+<p>If <code>true</code> is specified, the <code>autoScroll</code> is enabled with all default options.</p>
+
+<p>If a HTML element is specified, it is enabled with <code>{target: element}</code> option.</p>
+
+<p>Or, you can specify an Object that can have properties as following options.</p>
+
+<h4 id="target"><code>target</code></h4>
+
+<p><em>Type:</em> window or HTML element<br><em>Default:</em> window</p>
+
+<p>A scrollable area. Maybe, that contains the <a href="#options-containment"><code>containment</code></a> or that is the <code>containment</code> itself.</p>
+
+<h4 id="options-speed"><code>speed</code></h4>
+
+<p><em>Type:</em> number or Array<br><em>Default:</em> <code>[40, 200, 1000]</code></p>
+
+<p>A number determining the speed of scrolling, pixels per second.</p>
+
+<p>You can specify an Array that contains multiple values. Then, scroll it with the first speed when the draggable element was moved near the edges of the area, and scroll it with the next speed when the draggable element was moved near more..., in this way. At most, you can specify three numbers.<br>Those must be sorted in ascending order.</p>
+
+<p>See <a href="#options-sensitivity"><code>sensitivity</code></a> option for lines of demarcation that switch the speed.</p>
+
+<h4 id="options-sensitivity"><code>sensitivity</code></h4>
+
+<p><em>Type:</em> number or Array<br><em>Default:</em> <code>[100, 40, 0]</code></p>
+
+<p>A number determining the starting or switching the speed, the distance from the edge of the area, in pixels.</p>
+
+<p>When you specify multiple values for <a href="#options-speed"><code>speed</code></a> option, you can specify an Array that contains multiple values. Then, scroll it with the first speed when the draggable element was moved at less than the first distance from the edges of the area, and scroll it with the next speed when the draggable element was moved at less than the next distance..., in this way. At most, you can specify three numbers.<br>Those must be sorted in descending order.</p>
+
+<p>See <a href="#options-speed"><code>speed</code></a> option for the speed.</p>
+
+<h4 id="minx-/-maxx-/-miny-/-maxy"><code>minX</code> / <code>maxX</code> / <code>minY</code> / <code>maxY</code></h4>
+
+<p><em>Type:</em> number or <code>undefined</code><br><em>Default:</em> <code>undefined</code></p>
+
+<p>A number setting a limit to scrolling. These values are returned value by <code>pageXOffset</code>, <code>pageYOffset</code>, <code>scrollLeft</code> or <code>scrollTop</code>.<br>Note that this is a limit of the <code>autoScroll</code>, not a scrolling of UI. That is, user can scroll manually, regardless of this.</p>
 
 <h3 id="options-handle"><code>handle</code></h3>
 
@@ -784,6 +832,7 @@ window.addEventListener('load', function() {
 <ul>
 <li><a href="#options-containment"><code>containment</code></a></li>
 <li><a href="#options-snap"><code>snap</code></a></li>
+<li><a href="#options-autoscroll"><code>autoScroll</code></a></li>
 <li><a href="#options-handle"><code>handle</code></a></li>
 <li><a href="#options-zIndex"><code>zIndex</code></a></li>
 <li><a href="#options-left_top"><code>left</code> / <code>top</code></a></li>
