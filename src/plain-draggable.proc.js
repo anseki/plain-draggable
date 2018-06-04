@@ -30,7 +30,7 @@ const
 
   // [AUTO-SCROLL]
   AUTOSCROLL_SPEED = [40, 200, 1000],
-  AUTOSCROLL_SENSITIVITY = [120, 40, 0],
+  AUTOSCROLL_SENSITIVITY = [100, 40, 0],
   // [/AUTO-SCROLL]
 
   IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
