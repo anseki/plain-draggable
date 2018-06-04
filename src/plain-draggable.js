@@ -24,6 +24,11 @@ const
   SNAP_ALL_EDGES = ['inside', 'outside'],
   // [/SNAP]
 
+  // [AUTO-SCROLL]
+  AUTOSCROLL_SPEED = [40, 200, 1000],
+  AUTOSCROLL_SENSITIVITY = [120, 40, 0],
+  // [/AUTO-SCROLL]
+
   IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
   IS_GECKO = 'MozAppearance' in document.documentElement.style, // [SVG/]
 
@@ -164,6 +169,216 @@ const pointerEvent = {};
   };
 }
 
+// [AUTO-SCROLL]
+// Scroll Animation Controller
+const scrollFrame = {},
+  MSPF = 1000 / 60, // ms/frame (FPS: 60)
+  requestAnim = window.requestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    (callback => setTimeout(callback, MSPF)),
+  cancelAnim = window.cancelAnimationFrame ||
+    window.mozCancelAnimationFrame ||
+    window.webkitCancelAnimationFrame ||
+    window.msCancelAnimationFrame ||
+    (requestID => clearTimeout(requestID));
+{
+  /**
+   * @typedef {Object} MoveArgs
+   * @property {number} dir - [-1 | 1] minus or plus to position value.
+   * @property {number} speed - px/ms
+   * @property {number} min - Minimum position value.
+   * @property {number} max - Maximum position value.
+   * @property {number} [lastFrameTime] - Time of last frame.
+   * @property {number} [lastValue] - Strict value of last frame.
+   */
+
+  let curXyMoveArgs = {},
+    curElement, curScrollXY, requestID;
+
+  function frameUpdate() {
+    const now = Date.now();
+    ['x', 'y'].forEach(xy => {
+      const moveArgs = curXyMoveArgs[xy];
+      if (moveArgs) {
+        const timeLen = now - moveArgs.lastFrameTime,
+          absValue = curScrollXY(curElement, xy),
+          curValue = moveArgs.lastValue != null &&
+              Math.abs(moveArgs.lastValue - absValue) < 10 // It was not moved manually
+            ? moveArgs.lastValue : absValue;
+        if (moveArgs.dir === -1 ? (curValue > moveArgs.min) : (curValue < moveArgs.max)) {
+          let newValue = curValue + moveArgs.speed * timeLen * moveArgs.dir;
+          if (newValue < moveArgs.min) {
+            newValue = moveArgs.min;
+          } else if (newValue > moveArgs.max) {
+            newValue = moveArgs.max;
+          }
+          curScrollXY(curElement, xy, newValue);
+          moveArgs.lastValue = newValue;
+        }
+        moveArgs.lastFrameTime = now;
+      }
+    });
+  }
+
+  function frame() {
+    cancelAnim.call(window, requestID);
+    frameUpdate();
+    requestID = requestAnim.call(window, frame);
+  }
+
+  /**
+   * @param {Element} element - A target element.
+   * @param {{x: ?MoveArgs, y: ?MoveArgs}} xyMoveArgs - MoveArgs for x and y
+   * @param {function} scrollXY - (element: Element, xy: string, value: number) => number
+   * @returns {void}
+   */
+  scrollFrame.move = (element, xyMoveArgs, scrollXY) => {
+    cancelAnim.call(window, requestID);
+    frameUpdate(); // Update current data now because it might be not continuation.
+
+    // Re-use lastValue
+    if (curElement === element) {
+      if (xyMoveArgs.x && curXyMoveArgs.x) { xyMoveArgs.x.lastValue = curXyMoveArgs.x.lastValue; }
+      if (xyMoveArgs.y && curXyMoveArgs.y) { xyMoveArgs.y.lastValue = curXyMoveArgs.y.lastValue; }
+    }
+
+    curElement = element;
+    curXyMoveArgs = xyMoveArgs;
+    curScrollXY = scrollXY;
+
+    const now = Date.now();
+    ['x', 'y'].forEach(xy => {
+      const moveArgs = curXyMoveArgs[xy];
+      if (moveArgs) { moveArgs.lastFrameTime = now; }
+    });
+
+    requestID = requestAnim.call(window, frame);
+  };
+
+  scrollFrame.stop = () => {
+    cancelAnim.call(window, requestID);
+    frameUpdate();
+    curXyMoveArgs = {};
+    curElement = null; // Remove reference
+  };
+}
+
+function scrollXYWindow(element, xy, value) {
+  if (value != null) {
+    if (xy === 'x') {
+      element.scrollTo(value, element.pageYOffset);
+    } else {
+      element.scrollTo(element.pageXOffset, value);
+    }
+  }
+  return xy === 'x' ? element.pageXOffset : element.pageYOffset;
+}
+
+function scrollXYElement(element, xy, value) {
+  const prop = xy === 'x' ? 'scrollLeft' : 'scrollTop';
+  if (value != null) { element[prop] = value; }
+  return element[prop];
+}
+
+/**
+ * @typedef {Object} Scrollable
+ * @property {number} clientWidth - width of scrollable area.
+ * @property {number} clientHeight - height of scrollable area.
+ * @property {number} scrollWidth - width of inner content.
+ * @property {number} scrollHeight - height of inner content.
+ * @property {number} clientX - X of scrollable area, document coordinate.
+ * @property {number} clientY - T of scrollable area, document coordinate.
+ */
+
+/**
+ * @param {Element} element - A target element.
+ * @param {boolean} [isWindow] - `true` if element is window.
+ * @param {boolean} [dontScroll] - `true` makes it skip scroll that gets scrollWidth/Height.
+ * @returns {Scrollable} Information for scroll.
+ */
+function getScrollable(element, isWindow, dontScroll) {
+  const scrollable = {};
+  let cmpStyleHtml, cmpStyleBody, cmpStyleElement;
+
+  // clientWidth/Height
+  (function(target) {
+    scrollable.clientWidth = target.clientWidth;
+    scrollable.clientHeight = target.clientHeight;
+  })(isWindow ? document.documentElement : element);
+
+  // scrollWidth/Height
+  /*
+    Gecko bug, bottom-padding of element is reduced.
+    Blink for Android bug, borders of <html> is rendered but those are not added to scrollW/H.
+    Then, move it to max scroll position (sufficiently larger values) forcibly, and get scroll position.
+  */
+  let maxScrollLeft = 0,
+    maxScrollTop = 0;
+  if (!dontScroll) {
+    let curScrollLeft, curScrollTop;
+    if (isWindow) {
+      curScrollLeft = scrollXYWindow(element, 'x');
+      curScrollTop = scrollXYWindow(element, 'y');
+      cmpStyleHtml = getComputedStyle(document.documentElement, '');
+      cmpStyleBody = getComputedStyle(document.body, '');
+      maxScrollLeft = scrollXYWindow(element, 'x',
+        document.documentElement.scrollWidth +
+        scrollable.clientWidth + // Blink for Android bug, scroll* returns size of smaller body
+        ['marginLeft', 'marginRight', 'borderLeftWidth', 'borderRightWidth',
+          'paddingLeft', 'paddingRight']
+          .reduce((len, prop) => len + (parseFloat(cmpStyleHtml[prop]) || 0) +
+            (parseFloat(cmpStyleBody[prop]) || 0), 0));
+      maxScrollTop = scrollXYWindow(element, 'y',
+        document.documentElement.scrollHeight +
+        scrollable.clientHeight +
+        ['marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth',
+          'paddingTop', 'paddingBottom']
+          .reduce((len, prop) => len + (parseFloat(cmpStyleHtml[prop]) || 0) +
+            (parseFloat(cmpStyleBody[prop]) || 0), 0));
+
+      scrollXYWindow(element, 'x', curScrollLeft);
+      scrollXYWindow(element, 'y', curScrollTop);
+    } else {
+      curScrollLeft = scrollXYElement(element, 'x');
+      curScrollTop = scrollXYElement(element, 'y');
+      cmpStyleElement = getComputedStyle(element, '');
+      maxScrollLeft = scrollXYElement(element, 'x',
+        element.scrollWidth +
+        scrollable.clientWidth + // Blink for Android bug, scroll* returns size of smaller body
+        ['marginLeft', 'marginRight', 'borderLeftWidth', 'borderRightWidth',
+          'paddingLeft', 'paddingRight']
+          .reduce((len, prop) => len + (parseFloat(cmpStyleElement[prop]) || 0), 0));
+      maxScrollTop = scrollXYElement(element, 'y',
+        element.scrollHeight +
+        scrollable.clientHeight +
+        ['marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth',
+          'paddingTop', 'paddingBottom']
+          .reduce((len, prop) => len + (parseFloat(cmpStyleElement[prop]) || 0), 0));
+
+      scrollXYElement(element, 'x', curScrollLeft);
+      scrollXYElement(element, 'y', curScrollTop);
+    }
+  }
+  scrollable.scrollWidth = scrollable.clientWidth + maxScrollLeft;
+  scrollable.scrollHeight = scrollable.clientHeight + maxScrollTop;
+
+  // clientX/Y
+  let rect;
+  if (isWindow) {
+    scrollable.clientX = scrollable.clientY = 0;
+  } else { // padding-box
+    rect = element.getBoundingClientRect();
+    if (!cmpStyleElement) { cmpStyleElement = getComputedStyle(element, ''); }
+    scrollable.clientX = rect.left + (parseFloat(cmpStyleElement.borderLeftWidth) || 0);
+    scrollable.clientY = rect.top + (parseFloat(cmpStyleElement.borderTopWidth) || 0);
+  }
+
+  return scrollable;
+}
+// [/AUTO-SCROLL]
+
 // [DEBUG]
 window.insProps = insProps;
 window.IS_WEBKIT = IS_WEBKIT;
@@ -178,6 +393,10 @@ window.SNAP_ALL_CORNERS = SNAP_ALL_CORNERS;
 window.SNAP_ALL_SIDES = SNAP_ALL_SIDES;
 window.SNAP_ALL_EDGES = SNAP_ALL_EDGES;
 // [/SNAP]
+// [AUTO-SCROLL]
+window.AUTOSCROLL_SPEED = AUTOSCROLL_SPEED;
+window.AUTOSCROLL_SENSITIVITY = AUTOSCROLL_SENSITIVITY;
+// [/AUTO-SCROLL]
 // [/DEBUG]
 
 function copyTree(obj) {
@@ -721,7 +940,7 @@ function initSvg(props) {
  * @param {string} [eventType] - A type of event that kicked this method.
  * @returns {void}
  */
-function initBBox(props, eventType) { // eslint-disable-line no-unused-vars
+function initBBox(props, eventType) {
   const docBBox = getBBox(document.documentElement),
     elementBBox = props.elementBBox = props.initElm(props), // reset offset etc.
     containmentBBox = props.containmentBBox =
@@ -938,6 +1157,59 @@ function initBBox(props, eventType) { // eslint-disable-line no-unused-vars
     props.snapTargets = snapTargets.length ? snapTargets : null;
   }
   // [/SNAP]
+
+  // [AUTO-SCROLL]
+  const autoScroll = {},
+    autoScrollOptions = props.options.autoScroll;
+  if (autoScrollOptions) {
+    autoScroll.isWindow = autoScrollOptions.target === window;
+    autoScroll.target = autoScrollOptions.target;
+
+    const dontScroll = eventType === 'scroll', // Avoid duplicated calling
+      scrollable = getScrollable(autoScrollOptions.target, autoScroll.isWindow, dontScroll),
+      scrollableBBox = validBBox({left: scrollable.clientX, top: scrollable.clientY,
+        width: scrollable.clientWidth, height: scrollable.clientHeight});
+    autoScroll.scrollableBBox = scrollableBBox; // [DEBUG/]
+
+    if (!dontScroll) {
+      autoScroll.scrollWidth = scrollable.scrollWidth;
+      autoScroll.scrollHeight = scrollable.scrollHeight;
+    } else if (props.autoScroll) {
+      autoScroll.scrollWidth = props.autoScroll.scrollWidth;
+      autoScroll.scrollHeight = props.autoScroll.scrollHeight;
+    }
+
+    [['X', 'Width', 'left', 'right'], ['Y', 'Height', 'top', 'bottom']].forEach(axis => {
+      const xy = axis[0],
+        wh = axis[1],
+        back = axis[2],
+        forward = axis[3],
+        maxAbs = (autoScroll[`scroll${wh}`] || 0) - scrollable[`client${wh}`],
+        min = autoScrollOptions[`min${xy}`] || 0;
+      let max = isFinite(autoScrollOptions[`max${xy}`]) ? autoScrollOptions[`max${xy}`] : maxAbs;
+      if (min < max && min < maxAbs) {
+        if (max > maxAbs) { max = maxAbs; }
+
+        const lines = [],
+          elementSize = elementBBox[wh.toLowerCase()];
+        for (let i = autoScrollOptions.sensitivity.length - 1; i >= 0; i--) { // near -> far
+          const sensitivity = autoScrollOptions.sensitivity[i],
+            speed = autoScrollOptions.speed[i];
+          // back
+          lines.push({dir: -1, speed,
+            position: scrollableBBox[back] + sensitivity});
+          // forward
+          lines.push({dir: 1, speed,
+            position: scrollableBBox[forward] - sensitivity - elementSize});
+        }
+
+        autoScroll[xy.toLowerCase()] = {min, max, lines};
+      }
+    });
+
+  }
+  props.autoScroll = autoScroll.x || autoScroll.y ? autoScroll : null;
+  // [/AUTO-SCROLL]
   window.initBBoxDone = true; // [DEBUG/]
 }
 
@@ -946,6 +1218,7 @@ function initBBox(props, eventType) { // eslint-disable-line no-unused-vars
  * @returns {void}
  */
 function dragEnd(props) {
+  scrollFrame.stop(); // [AUTO-SCROLL/]
   setDraggableCursor(props.options.handle, props.orgCursor);
   body.style.cursor = cssOrgValueBodyCursor;
 
@@ -1241,6 +1514,72 @@ function setOptions(props, newOptions) {
 
   // [/SNAP]
 
+  // [AUTO-SCROLL]
+
+  /**
+   * @typedef {Object} AutoScrollOptions
+   * @property {(Element|Window)} target
+   * @property {Array} speed
+   * @property {Array} sensitivity
+   * @property {number} [minX]
+   * @property {number} [maxX]
+   * @property {number} [minY]
+   * @property {number} [maxY]
+   */
+
+  // autoScroll
+  if (newOptions.autoScroll) {
+    const newAutoScrollOptions =
+        isObject(newOptions.autoScroll) ? newOptions.autoScroll :
+        {target: newOptions.autoScroll === true ? window : newOptions.autoScroll},
+      autoScrollOptions = {};
+
+    // target
+    autoScrollOptions.target =
+      isElement(newAutoScrollOptions.target) ? newAutoScrollOptions.target : window;
+    // speed
+    autoScrollOptions.speed = [];
+    (Array.isArray(newAutoScrollOptions.speed)
+      ? newAutoScrollOptions.speed : [newAutoScrollOptions.speed]).every((speed, i) => {
+      if (i <= 2 && isFinite(speed)) {
+        autoScrollOptions.speed[i] = speed;
+        return true;
+      }
+      return false;
+    });
+    if (!autoScrollOptions.speed.length) {
+      autoScrollOptions.speed = AUTOSCROLL_SPEED;
+    }
+    // sensitivity
+    const newSensitivity = Array.isArray(newAutoScrollOptions.sensitivity)
+      ? newAutoScrollOptions.sensitivity : [newAutoScrollOptions.sensitivity];
+    autoScrollOptions.sensitivity = autoScrollOptions.speed.map(
+      (v, i) => (isFinite(newSensitivity[i]) ? newSensitivity[i] : AUTOSCROLL_SENSITIVITY[i]));
+    // min*, max*
+    ['X', 'Y'].forEach(option => {
+      const optionMin = `min${option}`,
+        optionMax = `max${option}`;
+      if (isFinite(newAutoScrollOptions[optionMin]) && newAutoScrollOptions[optionMin] >= 0) {
+        autoScrollOptions[optionMin] = newAutoScrollOptions[optionMin];
+      }
+      if (isFinite(newAutoScrollOptions[optionMax]) && newAutoScrollOptions[optionMax] >= 0 &&
+          (!autoScrollOptions[optionMin] ||
+            newAutoScrollOptions[optionMax] >= autoScrollOptions[optionMin])) {
+        autoScrollOptions[optionMax] = newAutoScrollOptions[optionMax];
+      }
+    });
+
+    if (hasChanged(autoScrollOptions, options.autoScroll)) {
+      options.autoScroll = autoScrollOptions;
+      needsInitBBox = true;
+    }
+  } else if (newOptions.hasOwnProperty('autoScroll')) {
+    if (options.autoScroll) { needsInitBBox = true; }
+    options.autoScroll = void 0;
+  }
+
+  // [/AUTO-SCROLL]
+
   if (needsInitBBox) { initBBox(props); }
 
   // handle
@@ -1447,6 +1786,11 @@ class PlainDraggable {
   set snap(value) { setOptions(insProps[this._id], {snap: value}); }
   // [/SNAP]
 
+  // [AUTO-SCROLL]
+  get autoScroll() { return copyTree(insProps[this._id].options.autoScroll); }
+  set autoScroll(value) { setOptions(insProps[this._id], {autoScroll: value}); }
+  // [/AUTO-SCROLL]
+
   get handle() { return insProps[this._id].options.handle; }
   set handle(value) { setOptions(insProps[this._id], {handle: value}); }
 
@@ -1588,6 +1932,38 @@ pointerEvent.addMoveHandler(document, pointerXY => {
       } :
       // [/SNAP]
       activeItem.onDrag)) {
+
+    // [AUTO-SCROLL]
+    const xyMoveArgs = {},
+      autoScroll = activeItem.autoScroll;
+    if (autoScroll) {
+      const clientXY = {
+        x: activeItem.elementBBox.left - window.pageXOffset,
+        y: activeItem.elementBBox.top - window.pageYOffset
+      };
+
+      ['x', 'y'].forEach(axis => {
+        if (autoScroll[axis]) {
+          const min = autoScroll[axis].min,
+            max = autoScroll[axis].max;
+          autoScroll[axis].lines.some(line => {
+            if (line.dir === -1 ? (clientXY[axis] <= line.position) :
+              (clientXY[axis] >= line.position)) {
+              xyMoveArgs[axis] = {dir: line.dir, speed: line.speed / 1000, min, max};
+              return true;
+            }
+            return false;
+          });
+        }
+      });
+    }
+    if (xyMoveArgs.x || xyMoveArgs.y) {
+      scrollFrame.move(autoScroll.target, xyMoveArgs,
+        autoScroll.isWindow ? scrollXYWindow : scrollXYElement);
+    } else {
+      scrollFrame.stop();
+    }
+    // [/AUTO-SCROLL]
 
     if (!hasMoved) {
       hasMoved = true;
