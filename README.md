@@ -14,6 +14,7 @@ The simple and high performance library to allow HTML/SVG element to be dragged.
 - Support both mouse and touch interfaces.
 - Restrict the draggable area.
 - Snap the draggable element to other elements, points, lines, consecutive points (i.e. grid) or something.
+- Scroll an element or window automatically.
 - Use `requestAnimationFrame` API, `translate` and `will-change` CSS if possible, for high performance.  
 ![ss-02](ss-02.png)
 - Provide only basic methods, easy and simple usage.
@@ -91,7 +92,7 @@ The `options` argument is an Object that can have properties as [options](#optio
 self = draggable.position()
 ```
 
-Re-calculate the position of the draggable element, [`containment`](#options-containment) option and [`snap`](#options-snap) option, with current layout of a page.  
+Re-calculate the position of the draggable element, [`containment`](#options-containment) option, [`snap`](#options-snap) option and [`autoScroll`](#options-autoscroll) option, with current layout of a page.  
 Those are re-calculated as needed automatically when a window is resized, or a window or something is scrolled.  
 You should call `position` method if you changed the layout without resizing the window or scrolling something.
 
@@ -123,6 +124,64 @@ You can specify a `<body>` element that means all of a page, or `{left: 0, top: 
 *Default:* `undefined`
 
 See [Snap](#snap).
+
+### <a name="options-autoscroll"></a>`autoScroll`
+
+*Type:* boolean, window, HTML element, Object or `undefined`  
+*Default:* `undefined`
+
+Scroll a scrollable area when the draggable element is moved to near the edges of the area. The scrollable area can be the current window or a HTML element.
+
+For example:
+
+```js
+draggable.autoScroll = true;
+```
+
+If `true` is specified, the `autoScroll` is enabled with all default options.
+
+If a HTML element is specified, it is enabled with `{target: element}` option.
+
+Or, you can specify an Object that can have properties as following options.
+
+#### `target`
+
+*Type:* window or HTML element  
+*Default:* window
+
+A scrollable area. Maybe, that contains the [`containment`](#options-containment) or that is the `containment` itself.
+
+#### <a name="options-speed"></a>`speed`
+
+*Type:* number or Array  
+*Default:* `[40, 200, 1000]`
+
+A number determining the speed of scrolling, pixels per second.
+
+You can specify an Array that contains multiple values. Then, scroll it with the first speed when the draggable element was moved near the edges of the area, and scroll it with the next speed when the draggable element was moved near more..., in this way. At most, you can specify three numbers.  
+Those must be sorted in ascending order.
+
+See [`sensitivity`](#options-sensitivity) option for lines of demarcation that switch the speed.
+
+#### <a name="options-sensitivity"></a>`sensitivity`
+
+*Type:* number or Array  
+*Default:* `[120, 40, 0]`
+
+A number determining the starting or switching the speed, the distance from the edge of the area, in pixels.
+
+When you specify multiple values for [`speed`](#options-speed) option, you can specify an Array that contains multiple values. Then, scroll it with the first speed when the draggable element was moved at less than the first distance from the edges of the area, and scroll it with the next speed when the draggable element was moved at less than the next distance..., in this way. At most, you can specify three numbers.  
+Those must be sorted in descending order.
+
+See [`speed`](#options-speed) option for the speed.
+
+#### `minX` / `maxX` / `minY` / `maxY`
+
+*Type:* number or `undefined`  
+*Default:* `undefined`
+
+A number setting a limit to scrolling. These values are returned value by `pageXOffset`, `pageYOffset`, `scrollLeft` or `scrollTop`.  
+Note that this is a limit of the `autoScroll`, not a scrolling of UI. That is, user can scroll manually, regardless of this.
 
 ### <a name="options-handle"></a>`handle`
 
@@ -260,6 +319,7 @@ Properties with the same name as each option to get or set following options:
 
 - [`containment`](#options-containment)
 - [`snap`](#options-snap)
+- [`autoScroll`](#options-autoscroll)
 - [`handle`](#options-handle)
 - [`zIndex`](#options-zIndex)
 - [`left` / `top`](#options-left_top)
