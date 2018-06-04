@@ -568,6 +568,12 @@ SNAP_GRAVITY = 20,
 
 // [/SNAP]
 
+// [AUTO-SCROLL]
+AUTOSCROLL_SPEED = [40, 200, 1000],
+    AUTOSCROLL_SENSITIVITY = [120, 40, 0],
+
+// [/AUTO-SCROLL]
+
 IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
     IS_GECKO = 'MozAppearance' in document.documentElement.style,
     // [SVG/]
@@ -725,6 +731,218 @@ var pointerEvent = {};
   };
 }
 
+// [AUTO-SCROLL]
+// Scroll Animation Controller
+var scrollFrame = {},
+    MSPF = 1000 / 60,
+    // ms/frame (FPS: 60)
+requestAnim = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
+  return setTimeout(callback, MSPF);
+},
+    cancelAnim = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame || function (requestID) {
+  return clearTimeout(requestID);
+};
+{
+  var frameUpdate = function frameUpdate() {
+    var now = Date.now();
+    ['x', 'y'].forEach(function (xy) {
+      var moveArgs = curXyMoveArgs[xy];
+      if (moveArgs) {
+        var timeLen = now - moveArgs.lastFrameTime,
+            absValue = curScrollXY(curElement, xy),
+            curValue = moveArgs.lastValue != null && Math.abs(moveArgs.lastValue - absValue) < 10 // It was not moved manually
+        ? moveArgs.lastValue : absValue;
+        if (moveArgs.dir === -1 ? curValue > moveArgs.min : curValue < moveArgs.max) {
+          var newValue = curValue + moveArgs.speed * timeLen * moveArgs.dir;
+          if (newValue < moveArgs.min) {
+            newValue = moveArgs.min;
+          } else if (newValue > moveArgs.max) {
+            newValue = moveArgs.max;
+          }
+          curScrollXY(curElement, xy, newValue);
+          moveArgs.lastValue = newValue;
+        }
+        moveArgs.lastFrameTime = now;
+      }
+    });
+  };
+
+  var frame = function frame() {
+    cancelAnim.call(window, requestID);
+    frameUpdate();
+    requestID = requestAnim.call(window, frame);
+  };
+
+  /**
+   * @param {Element} element - A target element.
+   * @param {{x: ?MoveArgs, y: ?MoveArgs}} xyMoveArgs - MoveArgs for x and y
+   * @param {function} scrollXY - (element: Element, xy: string, value: number) => number
+   * @returns {void}
+   */
+
+
+  /**
+   * @typedef {Object} MoveArgs
+   * @property {number} dir - [-1 | 1] minus or plus to position value.
+   * @property {number} speed - px/ms
+   * @property {number} min - Minimum position value.
+   * @property {number} max - Maximum position value.
+   * @property {number} [lastFrameTime] - Time of last frame.
+   * @property {number} [lastValue] - Strict value of last frame.
+   */
+
+  var curXyMoveArgs = {},
+      curElement = void 0,
+      curScrollXY = void 0,
+      requestID = void 0;
+
+  scrollFrame.move = function (element, xyMoveArgs, scrollXY) {
+    cancelAnim.call(window, requestID);
+    frameUpdate(); // Update current data now because it might be not continuation.
+
+    // Re-use lastValue
+    if (curElement === element) {
+      if (xyMoveArgs.x && curXyMoveArgs.x) {
+        xyMoveArgs.x.lastValue = curXyMoveArgs.x.lastValue;
+      }
+      if (xyMoveArgs.y && curXyMoveArgs.y) {
+        xyMoveArgs.y.lastValue = curXyMoveArgs.y.lastValue;
+      }
+    }
+
+    curElement = element;
+    curXyMoveArgs = xyMoveArgs;
+    curScrollXY = scrollXY;
+
+    var now = Date.now();
+    ['x', 'y'].forEach(function (xy) {
+      var moveArgs = curXyMoveArgs[xy];
+      if (moveArgs) {
+        moveArgs.lastFrameTime = now;
+      }
+    });
+
+    requestID = requestAnim.call(window, frame);
+  };
+
+  scrollFrame.stop = function () {
+    cancelAnim.call(window, requestID);
+    frameUpdate();
+    curXyMoveArgs = {};
+    curElement = null; // Remove reference
+  };
+}
+
+function scrollXYWindow(element, xy, value) {
+  if (value != null) {
+    if (xy === 'x') {
+      element.scrollTo(value, element.pageYOffset);
+    } else {
+      element.scrollTo(element.pageXOffset, value);
+    }
+  }
+  return xy === 'x' ? element.pageXOffset : element.pageYOffset;
+}
+
+function scrollXYElement(element, xy, value) {
+  var prop = xy === 'x' ? 'scrollLeft' : 'scrollTop';
+  if (value != null) {
+    element[prop] = value;
+  }
+  return element[prop];
+}
+
+/**
+ * @typedef {Object} Scrollable
+ * @property {number} clientWidth - width of scrollable area.
+ * @property {number} clientHeight - height of scrollable area.
+ * @property {number} scrollWidth - width of inner content.
+ * @property {number} scrollHeight - height of inner content.
+ * @property {number} clientX - X of scrollable area, document coordinate.
+ * @property {number} clientY - T of scrollable area, document coordinate.
+ */
+
+/**
+ * @param {Element} element - A target element.
+ * @param {boolean} [isWindow] - `true` if element is window.
+ * @param {boolean} [dontScroll] - `true` makes it skip scroll that gets scrollWidth/Height.
+ * @returns {Scrollable} Information for scroll.
+ */
+function getScrollable(element, isWindow, dontScroll) {
+  var scrollable = {};
+  var cmpStyleHtml = void 0,
+      cmpStyleBody = void 0,
+      cmpStyleElement = void 0;
+
+  // clientWidth/Height
+  (function (target) {
+    scrollable.clientWidth = target.clientWidth;
+    scrollable.clientHeight = target.clientHeight;
+  })(isWindow ? document.documentElement : element);
+
+  // scrollWidth/Height
+  /*
+    Gecko bug, bottom-padding of element is reduced.
+    Blink for Android bug, borders of <html> is rendered but those are not added to scrollW/H.
+    Then, move it to max scroll position (sufficiently larger values) forcibly, and get scroll position.
+  */
+  var maxScrollLeft = 0,
+      maxScrollTop = 0;
+  if (!dontScroll) {
+    var curScrollLeft = void 0,
+        curScrollTop = void 0;
+    if (isWindow) {
+      curScrollLeft = scrollXYWindow(element, 'x');
+      curScrollTop = scrollXYWindow(element, 'y');
+      cmpStyleHtml = getComputedStyle(document.documentElement, '');
+      cmpStyleBody = getComputedStyle(document.body, '');
+      maxScrollLeft = scrollXYWindow(element, 'x', document.documentElement.scrollWidth + scrollable.clientWidth + // Blink for Android bug, scroll* returns size of smaller body
+      ['marginLeft', 'marginRight', 'borderLeftWidth', 'borderRightWidth', 'paddingLeft', 'paddingRight'].reduce(function (len, prop) {
+        return len + (parseFloat(cmpStyleHtml[prop]) || 0) + (parseFloat(cmpStyleBody[prop]) || 0);
+      }, 0));
+      maxScrollTop = scrollXYWindow(element, 'y', document.documentElement.scrollHeight + scrollable.clientHeight + ['marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth', 'paddingTop', 'paddingBottom'].reduce(function (len, prop) {
+        return len + (parseFloat(cmpStyleHtml[prop]) || 0) + (parseFloat(cmpStyleBody[prop]) || 0);
+      }, 0));
+
+      scrollXYWindow(element, 'x', curScrollLeft);
+      scrollXYWindow(element, 'y', curScrollTop);
+    } else {
+      curScrollLeft = scrollXYElement(element, 'x');
+      curScrollTop = scrollXYElement(element, 'y');
+      cmpStyleElement = getComputedStyle(element, '');
+      maxScrollLeft = scrollXYElement(element, 'x', element.scrollWidth + scrollable.clientWidth + // Blink for Android bug, scroll* returns size of smaller body
+      ['marginLeft', 'marginRight', 'borderLeftWidth', 'borderRightWidth', 'paddingLeft', 'paddingRight'].reduce(function (len, prop) {
+        return len + (parseFloat(cmpStyleElement[prop]) || 0);
+      }, 0));
+      maxScrollTop = scrollXYElement(element, 'y', element.scrollHeight + scrollable.clientHeight + ['marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth', 'paddingTop', 'paddingBottom'].reduce(function (len, prop) {
+        return len + (parseFloat(cmpStyleElement[prop]) || 0);
+      }, 0));
+
+      scrollXYElement(element, 'x', curScrollLeft);
+      scrollXYElement(element, 'y', curScrollTop);
+    }
+  }
+  scrollable.scrollWidth = scrollable.clientWidth + maxScrollLeft;
+  scrollable.scrollHeight = scrollable.clientHeight + maxScrollTop;
+
+  // clientX/Y
+  var rect = void 0;
+  if (isWindow) {
+    scrollable.clientX = scrollable.clientY = 0;
+  } else {
+    // padding-box
+    rect = element.getBoundingClientRect();
+    if (!cmpStyleElement) {
+      cmpStyleElement = getComputedStyle(element, '');
+    }
+    scrollable.clientX = rect.left + (parseFloat(cmpStyleElement.borderLeftWidth) || 0);
+    scrollable.clientY = rect.top + (parseFloat(cmpStyleElement.borderTopWidth) || 0);
+  }
+
+  return scrollable;
+}
+// [/AUTO-SCROLL]
+
 // [DEBUG]
 window.insProps = insProps;
 window.IS_WEBKIT = IS_WEBKIT;
@@ -739,6 +957,10 @@ window.SNAP_ALL_CORNERS = SNAP_ALL_CORNERS;
 window.SNAP_ALL_SIDES = SNAP_ALL_SIDES;
 window.SNAP_ALL_EDGES = SNAP_ALL_EDGES;
 // [/SNAP]
+// [AUTO-SCROLL]
+window.AUTOSCROLL_SPEED = AUTOSCROLL_SPEED;
+window.AUTOSCROLL_SENSITIVITY = AUTOSCROLL_SENSITIVITY;
+// [/AUTO-SCROLL]
 // [/DEBUG]
 
 function copyTree(obj) {
@@ -1301,7 +1523,6 @@ function initSvg(props) {
  * @returns {void}
  */
 function initBBox(props, eventType) {
-  // eslint-disable-line no-unused-vars
   var docBBox = getBBox(document.documentElement),
       elementBBox = props.elementBBox = props.initElm(props),
       // reset offset etc.
@@ -1531,6 +1752,62 @@ function initBBox(props, eventType) {
     props.snapTargets = snapTargets.length ? snapTargets : null;
   }
   // [/SNAP]
+
+  // [AUTO-SCROLL]
+  var autoScroll = {},
+      autoScrollOptions = props.options.autoScroll;
+  if (autoScrollOptions) {
+    autoScroll.isWindow = autoScrollOptions.target === window;
+    autoScroll.target = autoScrollOptions.target;
+
+    var dontScroll = eventType === 'scroll',
+        // Avoid duplicated calling
+    scrollable = getScrollable(autoScrollOptions.target, autoScroll.isWindow, dontScroll),
+        scrollableBBox = validBBox({ left: scrollable.clientX, top: scrollable.clientY,
+      width: scrollable.clientWidth, height: scrollable.clientHeight });
+    autoScroll.scrollableBBox = scrollableBBox; // [DEBUG/]
+
+    if (!dontScroll) {
+      autoScroll.scrollWidth = scrollable.scrollWidth;
+      autoScroll.scrollHeight = scrollable.scrollHeight;
+    } else if (props.autoScroll) {
+      autoScroll.scrollWidth = props.autoScroll.scrollWidth;
+      autoScroll.scrollHeight = props.autoScroll.scrollHeight;
+    }
+
+    [['X', 'Width', 'left', 'right'], ['Y', 'Height', 'top', 'bottom']].forEach(function (axis) {
+      var xy = axis[0],
+          wh = axis[1],
+          back = axis[2],
+          forward = axis[3],
+          maxAbs = (autoScroll['scroll' + wh] || 0) - scrollable['client' + wh],
+          min = autoScrollOptions['min' + xy] || 0;
+      var max = isFinite(autoScrollOptions['max' + xy]) ? autoScrollOptions['max' + xy] : maxAbs;
+      if (min < max && min < maxAbs) {
+        if (max > maxAbs) {
+          max = maxAbs;
+        }
+
+        var lines = [],
+            elementSize = elementBBox[wh.toLowerCase()];
+        for (var i = autoScrollOptions.sensitivity.length - 1; i >= 0; i--) {
+          // near -> far
+          var sensitivity = autoScrollOptions.sensitivity[i],
+              speed = autoScrollOptions.speed[i];
+          // back
+          lines.push({ dir: -1, speed: speed,
+            position: scrollableBBox[back] + sensitivity });
+          // forward
+          lines.push({ dir: 1, speed: speed,
+            position: scrollableBBox[forward] - sensitivity - elementSize });
+        }
+
+        autoScroll[xy.toLowerCase()] = { min: min, max: max, lines: lines };
+      }
+    });
+  }
+  props.autoScroll = autoScroll.x || autoScroll.y ? autoScroll : null;
+  // [/AUTO-SCROLL]
   window.initBBoxDone = true; // [DEBUG/]
 }
 
@@ -1539,6 +1816,7 @@ function initBBox(props, eventType) {
  * @returns {void}
  */
 function dragEnd(props) {
+  scrollFrame.stop(); // [AUTO-SCROLL/]
   setDraggableCursor(props.options.handle, props.orgCursor);
   body.style.cursor = cssOrgValueBodyCursor;
 
@@ -1875,6 +2153,68 @@ function _setOptions(props, newOptions) {
 
   // [/SNAP]
 
+  // [AUTO-SCROLL]
+
+  /**
+   * @typedef {Object} AutoScrollOptions
+   * @property {(Element|Window)} target
+   * @property {Array} speed
+   * @property {Array} sensitivity
+   * @property {number} [minX]
+   * @property {number} [maxX]
+   * @property {number} [minY]
+   * @property {number} [maxY]
+   */
+
+  // autoScroll
+  if (newOptions.autoScroll) {
+    var newAutoScrollOptions = isObject(newOptions.autoScroll) ? newOptions.autoScroll : { target: newOptions.autoScroll === true ? window : newOptions.autoScroll },
+        autoScrollOptions = {};
+
+    // target
+    autoScrollOptions.target = isElement(newAutoScrollOptions.target) ? newAutoScrollOptions.target : window;
+    // speed
+    autoScrollOptions.speed = [];
+    (Array.isArray(newAutoScrollOptions.speed) ? newAutoScrollOptions.speed : [newAutoScrollOptions.speed]).every(function (speed, i) {
+      if (i <= 2 && isFinite(speed)) {
+        autoScrollOptions.speed[i] = speed;
+        return true;
+      }
+      return false;
+    });
+    if (!autoScrollOptions.speed.length) {
+      autoScrollOptions.speed = AUTOSCROLL_SPEED;
+    }
+    // sensitivity
+    var newSensitivity = Array.isArray(newAutoScrollOptions.sensitivity) ? newAutoScrollOptions.sensitivity : [newAutoScrollOptions.sensitivity];
+    autoScrollOptions.sensitivity = autoScrollOptions.speed.map(function (v, i) {
+      return isFinite(newSensitivity[i]) ? newSensitivity[i] : AUTOSCROLL_SENSITIVITY[i];
+    });
+    // min*, max*
+    ['X', 'Y'].forEach(function (option) {
+      var optionMin = 'min' + option,
+          optionMax = 'max' + option;
+      if (isFinite(newAutoScrollOptions[optionMin]) && newAutoScrollOptions[optionMin] >= 0) {
+        autoScrollOptions[optionMin] = newAutoScrollOptions[optionMin];
+      }
+      if (isFinite(newAutoScrollOptions[optionMax]) && newAutoScrollOptions[optionMax] >= 0 && (!autoScrollOptions[optionMin] || newAutoScrollOptions[optionMax] >= autoScrollOptions[optionMin])) {
+        autoScrollOptions[optionMax] = newAutoScrollOptions[optionMax];
+      }
+    });
+
+    if (hasChanged(autoScrollOptions, options.autoScroll)) {
+      options.autoScroll = autoScrollOptions;
+      needsInitBBox = true;
+    }
+  } else if (newOptions.hasOwnProperty('autoScroll')) {
+    if (options.autoScroll) {
+      needsInitBBox = true;
+    }
+    options.autoScroll = void 0;
+  }
+
+  // [/AUTO-SCROLL]
+
   if (needsInitBBox) {
     initBBox(props);
   }
@@ -2141,6 +2481,18 @@ var PlainDraggable = function () {
     }
     // [/SNAP]
 
+    // [AUTO-SCROLL]
+
+  }, {
+    key: 'autoScroll',
+    get: function get() {
+      return copyTree(insProps[this._id].options.autoScroll);
+    },
+    set: function set(value) {
+      _setOptions(insProps[this._id], { autoScroll: value });
+    }
+    // [/AUTO-SCROLL]
+
   }, {
     key: 'handle',
     get: function get() {
@@ -2335,6 +2687,36 @@ pointerEvent.addMoveHandler(document, function (pointerXY) {
   } :
   // [/SNAP]
   activeItem.onDrag)) {
+
+    // [AUTO-SCROLL]
+    var xyMoveArgs = {},
+        autoScroll = activeItem.autoScroll;
+    if (autoScroll) {
+      var clientXY = {
+        x: activeItem.elementBBox.left - window.pageXOffset,
+        y: activeItem.elementBBox.top - window.pageYOffset
+      };
+
+      ['x', 'y'].forEach(function (axis) {
+        if (autoScroll[axis]) {
+          var min = autoScroll[axis].min,
+              max = autoScroll[axis].max;
+          autoScroll[axis].lines.some(function (line) {
+            if (line.dir === -1 ? clientXY[axis] <= line.position : clientXY[axis] >= line.position) {
+              xyMoveArgs[axis] = { dir: line.dir, speed: line.speed / 1000, min: min, max: max };
+              return true;
+            }
+            return false;
+          });
+        }
+      });
+    }
+    if (xyMoveArgs.x || xyMoveArgs.y) {
+      scrollFrame.move(autoScroll.target, xyMoveArgs, autoScroll.isWindow ? scrollXYWindow : scrollXYElement);
+    } else {
+      scrollFrame.stop();
+    }
+    // [/AUTO-SCROLL]
 
     if (!hasMoved) {
       hasMoved = true;

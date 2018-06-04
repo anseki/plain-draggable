@@ -18,6 +18,7 @@ mClassList.ignoreNative = true;
 const
   ZINDEX = 9000,
 
+
   IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
 
   isObject = (() => {
@@ -155,6 +156,7 @@ const pointerEvent = {};
     if (curMoveHandler) { curMoveHandler(lastPointerXY); }
   };
 }
+
 
 
 function copyTree(obj) {
@@ -537,7 +539,7 @@ function initTranslate(props) {
  * @param {string} [eventType] - A type of event that kicked this method.
  * @returns {void}
  */
-function initBBox(props, eventType) { // eslint-disable-line no-unused-vars
+function initBBox(props, eventType) {
   const docBBox = getBBox(document.documentElement),
     elementBBox = props.elementBBox = props.initElm(props), // reset offset etc.
     containmentBBox = props.containmentBBox =
@@ -549,6 +551,7 @@ function initBBox(props, eventType) { // eslint-disable-line no-unused-vars
   props.maxTop = containmentBBox.bottom - elementBBox.height;
   // Adjust position
   move(props, {left: elementBBox.left, top: elementBBox.top});
+
 
 }
 
@@ -619,6 +622,7 @@ function setOptions(props, newOptions) {
       needsInitBBox = true;
     }
   }
+
 
 
   if (needsInitBBox) { initBBox(props); }
@@ -789,6 +793,7 @@ class PlainDraggable {
   set containment(value) { setOptions(insProps[this._id], {containment: value}); }
 
 
+
   get handle() { return insProps[this._id].options.handle; }
   set handle(value) { setOptions(insProps[this._id], {handle: value}); }
 
@@ -902,6 +907,7 @@ pointerEvent.addMoveHandler(document, pointerXY => {
         top: pointerXY.clientY + window.pageYOffset + pointerOffset.top
       },
       activeItem.onDrag)) {
+
 
     if (!hasMoved) {
       hasMoved = true;
