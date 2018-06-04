@@ -166,7 +166,7 @@ See [`sensitivity`](#options-sensitivity) option for lines of demarcation that s
 #### <a name="options-sensitivity"></a>`sensitivity`
 
 *Type:* number or Array  
-*Default:* `[120, 40, 0]`
+*Default:* `[100, 40, 0]`
 
 A number determining the starting or switching the speed, the distance from the edge of the area, in pixels.
 
