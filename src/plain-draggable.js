@@ -248,12 +248,16 @@ function validBBox(bBox) {
     bBox.right = bBox.left + bBox.width;
   } else if (isFinite(bBox.right) && bBox.right >= bBox.left) {
     bBox.width = bBox.right - bBox.left;
-  } else { return null; }
+  } else {
+    return null;
+  }
   if (isFinite(bBox.height) && bBox.height >= 0) {
     bBox.bottom = bBox.top + bBox.height;
   } else if (isFinite(bBox.bottom) && bBox.bottom >= bBox.top) {
     bBox.height = bBox.bottom - bBox.top;
-  } else { return null; }
+  } else {
+    return null;
+  }
   return bBox;
 }
 window.validBBox = validBBox; // [DEBUG/]
@@ -714,9 +718,10 @@ function initSvg(props) {
 /**
  * Set `elementBBox`, `containmentBBox`, `min/max``Left/Top` and `snapTargets`.
  * @param {props} props - `props` of instance.
+ * @param {string} [eventType] - A type of event that kicked this method.
  * @returns {void}
  */
-function initBBox(props) {
+function initBBox(props, eventType) { // eslint-disable-line no-unused-vars
   const docBBox = getBBox(document.documentElement),
     elementBBox = props.elementBBox = props.initElm(props), // reset offset etc.
     containmentBBox = props.containmentBBox =
@@ -1613,23 +1618,23 @@ pointerEvent.addEndHandler(document, () => {
     let initDoneItems = {},
       lazyInitTimer;
 
-    function checkInitBBox(props) {
+    function checkInitBBox(props, eventType) {
       if (props.initElm) { // Easy checking for instance without errors.
-        initBBox(props);
+        initBBox(props, eventType);
       } // eslint-disable-line brace-style
       else { console.log('instance may have an error:'); console.log(props); } // [DEBUG/]
     }
 
-    function initAll() {
+    function initAll(eventType) {
       clearTimeout(lazyInitTimer);
       Object.keys(insProps).forEach(id => {
-        if (!initDoneItems[id]) { checkInitBBox(insProps[id]); }
+        if (!initDoneItems[id]) { checkInitBBox(insProps[id], eventType); }
       });
       initDoneItems = {};
     }
 
     let layoutChanging = false; // Gecko bug, multiple calling by `resize`.
-    const layoutChange = AnimEvent.add(() => {
+    const layoutChange = AnimEvent.add(event => {
       if (layoutChanging) {
         console.log('`resize/scroll` event listener is already running.'); // [DEBUG/]
         return;
@@ -1637,12 +1642,12 @@ pointerEvent.addEndHandler(document, () => {
       layoutChanging = true;
 
       if (activeItem) {
-        checkInitBBox(activeItem);
+        checkInitBBox(activeItem, event.type);
         pointerEvent.callMoveHandler();
         initDoneItems[activeItem._id] = true;
       }
       clearTimeout(lazyInitTimer);
-      lazyInitTimer = setTimeout(initAll, LAZY_INIT_DELAY);
+      lazyInitTimer = setTimeout(() => { initAll(event.type); }, LAZY_INIT_DELAY);
 
       layoutChanging = false;
     });

@@ -739,9 +739,11 @@ function initSvg(props) {
 /**
  * Set `elementBBox`, `containmentBBox`, `min/max``Left/Top` and `snapTargets`.
  * @param {props} props - `props` of instance.
+ * @param {string} [eventType] - A type of event that kicked this method.
  * @returns {void}
  */
-function initBBox(props) {
+function initBBox(props, eventType) {
+  // eslint-disable-line no-unused-vars
   var docBBox = getBBox(document.documentElement),
       elementBBox = props.elementBBox = props.initElm(props),
       // reset offset etc.
@@ -1810,37 +1812,39 @@ pointerEvent.addEndHandler(document, function () {
     var initDoneItems = {},
         lazyInitTimer = void 0;
 
-    function checkInitBBox(props) {
+    function checkInitBBox(props, eventType) {
       if (props.initElm) {
         // Easy checking for instance without errors.
-        initBBox(props);
+        initBBox(props, eventType);
       } // eslint-disable-line brace-style
     }
 
-    function initAll() {
+    function initAll(eventType) {
       clearTimeout(lazyInitTimer);
       Object.keys(insProps).forEach(function (id) {
         if (!initDoneItems[id]) {
-          checkInitBBox(insProps[id]);
+          checkInitBBox(insProps[id], eventType);
         }
       });
       initDoneItems = {};
     }
 
     var layoutChanging = false; // Gecko bug, multiple calling by `resize`.
-    var layoutChange = AnimEvent.add(function () {
+    var layoutChange = AnimEvent.add(function (event) {
       if (layoutChanging) {
         return;
       }
       layoutChanging = true;
 
       if (activeItem) {
-        checkInitBBox(activeItem);
+        checkInitBBox(activeItem, event.type);
         pointerEvent.callMoveHandler();
         initDoneItems[activeItem._id] = true;
       }
       clearTimeout(lazyInitTimer);
-      lazyInitTimer = setTimeout(initAll, LAZY_INIT_DELAY);
+      lazyInitTimer = setTimeout(function () {
+        initAll(event.type);
+      }, LAZY_INIT_DELAY);
 
       layoutChanging = false;
     });
