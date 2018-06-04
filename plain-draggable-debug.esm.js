@@ -990,6 +990,7 @@ function initSvg(props) {
  * @returns {void}
  */
 function initBBox(props, eventType) {
+  // eslint-disable-line no-unused-vars
   var docBBox = getBBox(document.documentElement),
       elementBBox = props.elementBBox = props.initElm(props),
       // reset offset etc.

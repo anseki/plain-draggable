@@ -539,7 +539,7 @@ function initTranslate(props) {
  * @param {string} [eventType] - A type of event that kicked this method.
  * @returns {void}
  */
-function initBBox(props, eventType) {
+function initBBox(props, eventType) { // eslint-disable-line no-unused-vars
   const docBBox = getBBox(document.documentElement),
     elementBBox = props.elementBBox = props.initElm(props), // reset offset etc.
     containmentBBox = props.containmentBBox =
