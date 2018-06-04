@@ -274,22 +274,22 @@
   width: 78px;
   height: 78px;
 }
-/* line 236, ex.scss */
+/* line 237, ex.scss */
 #ex-110-draggable > div {
   width: 78px;
   height: 78px;
 }
-/* line 241, ex.scss */
+/* line 242, ex.scss */
 #ex-110-draggable.cat > div {
   background-image: url("../img/cat-0.png");
   background-repeat: no-repeat;
   background-position: center top;
 }
-/* line 247, ex.scss */
+/* line 248, ex.scss */
 #ex-110-draggable.lift > div {
   background-image: url("../img/cat-1.png");
 }
-/* line 251, ex.scss */
+/* line 252, ex.scss */
 #ex-110-draggable.swing > div {
   -moz-animation-name: ex-110-draggable-swing;
   -webkit-animation-name: ex-110-draggable-swing;
@@ -311,7 +311,7 @@
   -webkit-transform-origin: center 5%;
   transform-origin: center 5%;
 }
-/* line 261, ex.scss */
+/* line 262, ex.scss */
 #ex-110-draggable > div > div {
   height: 32px;
 }
@@ -350,21 +350,21 @@
     transform: rotate(-15deg);
   }
 }
-/* line 271, ex.scss */
+/* line 272, ex.scss */
 #ex-120-stage {
   position: relative;
 }
 
-/* line 275, ex.scss */
+/* line 276, ex.scss */
 #ex-120-point {
   left: 160px;
   top: 64px;
 }
-/* line 279, ex.scss */
+/* line 280, ex.scss */
 #ex-120-point div {
   position: absolute;
 }
-/* line 280, ex.scss */
+/* line 282, ex.scss */
 #ex-120-point > div {
   right: 0;
   bottom: 100%;
@@ -372,17 +372,17 @@
   margin-right: 5px;
   margin-bottom: 5px;
 }
-/* line 287, ex.scss */
+/* line 289, ex.scss */
 #ex-120-point > div > div {
   right: 0;
   bottom: 100%;
 }
 
-/* line 294, ex.scss */
+/* line 296, ex.scss */
 #ex-120-line {
   left: 360px;
 }
-/* line 297, ex.scss */
+/* line 299, ex.scss */
 #ex-120-line div {
   position: absolute;
   right: 5px;
@@ -390,7 +390,7 @@
   white-space: nowrap;
 }
 
-/* line 305, ex.scss */
+/* line 307, ex.scss */
 #ex-120-rect {
   position: absolute;
   left: 520px;
@@ -398,7 +398,7 @@
   width: 164px;
   height: 54px;
 }
-/* line 312, ex.scss */
+/* line 314, ex.scss */
 #ex-120-rect div {
   position: absolute;
   top: -1px;
@@ -408,12 +408,12 @@
   border: 2px solid #24c4f1;
 }
 
-/* line 324, ex.scss */
+/* line 326, ex.scss */
 #ex-180-stage {
   position: relative;
 }
 
-/* line 328, ex.scss */
+/* line 330, ex.scss */
 #ex-180-grid {
   position: absolute;
   left: 0;
@@ -423,22 +423,22 @@
   background-image: url("../img/grid-line-h-32.png");
 }
 
-/* line 339, ex.scss */
+/* line 341, ex.scss */
 #ex-190-stage {
   position: relative;
 }
 
-/* line 343, ex.scss */
+/* line 345, ex.scss */
 #ex-190-point1,
 #ex-190-point2 {
   top: 64px;
 }
-/* line 347, ex.scss */
+/* line 349, ex.scss */
 #ex-190-point1 div,
 #ex-190-point2 div {
   position: absolute;
 }
-/* line 348, ex.scss */
+/* line 351, ex.scss */
 #ex-190-point1 > div,
 #ex-190-point2 > div {
   right: 0;
@@ -447,29 +447,29 @@
   margin-right: 5px;
   margin-bottom: 5px;
 }
-/* line 355, ex.scss */
+/* line 358, ex.scss */
 #ex-190-point1 > div > div,
 #ex-190-point2 > div > div {
   right: 20px;
   bottom: 100%;
 }
 
-/* line 362, ex.scss */
+/* line 365, ex.scss */
 #ex-190-point1 {
   left: 260px;
 }
 
-/* line 363, ex.scss */
+/* line 366, ex.scss */
 #ex-190-point2 {
   left: 520px;
 }
 
-/* line 367, ex.scss */
+/* line 370, ex.scss */
 #ex-200-stage {
   position: relative;
 }
 
-/* line 373, ex.scss */
+/* line 377, ex.scss */
 #ex-200-line1 div,
 #ex-200-line2 div {
   position: absolute;
@@ -478,31 +478,31 @@
   white-space: nowrap;
 }
 
-/* line 381, ex.scss */
+/* line 385, ex.scss */
 #ex-200-line1 {
   left: 260px;
 }
 
-/* line 382, ex.scss */
+/* line 386, ex.scss */
 #ex-200-line2 {
   left: 520px;
 }
 
-/* line 386, ex.scss */
+/* line 390, ex.scss */
 #ex-210-stage {
   position: relative;
 }
 
-/* line 390, ex.scss */
+/* line 394, ex.scss */
 #ex-210-point1 {
   left: 260px;
   top: 64px;
 }
-/* line 394, ex.scss */
+/* line 398, ex.scss */
 #ex-210-point1 div {
   position: absolute;
 }
-/* line 395, ex.scss */
+/* line 400, ex.scss */
 #ex-210-point1 > div {
   right: 0;
   bottom: 100%;
@@ -510,17 +510,17 @@
   margin-right: 5px;
   margin-bottom: 5px;
 }
-/* line 402, ex.scss */
+/* line 407, ex.scss */
 #ex-210-point1 > div > div {
   right: 20px;
   bottom: 100%;
 }
 
-/* line 409, ex.scss */
+/* line 414, ex.scss */
 #ex-210-line2 {
   left: 520px;
 }
-/* line 411, ex.scss */
+/* line 417, ex.scss */
 #ex-210-line2 div {
   position: absolute;
   right: 5px;
@@ -528,17 +528,17 @@
   white-space: nowrap;
 }
 
-/* line 419, ex.scss */
+/* line 425, ex.scss */
 #ex-210-draggable {
   background-color: rgba(205, 92, 92, 0.6);
 }
 
-/* line 425, ex.scss */
+/* line 431, ex.scss */
 #ex-220-stage {
   position: relative;
 }
 
-/* line 429, ex.scss */
+/* line 435, ex.scss */
 #ex-220-rect1 {
   position: absolute;
   left: 160px;
@@ -546,7 +546,7 @@
   width: 164px;
   height: 54px;
 }
-/* line 436, ex.scss */
+/* line 442, ex.scss */
 #ex-220-rect1 div {
   position: absolute;
   top: -1px;
@@ -556,7 +556,7 @@
   border: 2px solid #24c4f1;
 }
 
-/* line 446, ex.scss */
+/* line 452, ex.scss */
 #ex-220-rect2 {
   position: absolute;
   left: 460px;
@@ -564,7 +564,7 @@
   width: 120px;
   height: 40px;
 }
-/* line 453, ex.scss */
+/* line 459, ex.scss */
 #ex-220-rect2 div {
   position: absolute;
   top: -1px;
@@ -574,13 +574,13 @@
   border: 2px solid #24c4f1;
 }
 
-/* line 465, ex.scss */
+/* line 471, ex.scss */
 #ex-230-stage {
   width: 200px;
   background-color: #d4d4d4;
 }
 
-/* line 470, ex.scss */
+/* line 476, ex.scss */
 .ex-230-item {
   display: block;
   background-color: transparent;
@@ -605,30 +605,32 @@
   -webkit-transition-timing-function: ease-in;
   transition-timing-function: ease-in;
 }
-/* line 482, ex.scss */
+/* line 488, ex.scss */
 .ex-230-item.lift {
   color: #3bc9ff;
 }
 
-/* line 494, ex.scss */
+/* line 500, ex.scss */
 #ex-240-draggable {
   position: absolute;
 }
 
-/* line 498, ex.scss */
+/* line 504, ex.scss */
 #ex-240-stage {
+  position: relative;
   width: 900px;
   background-color: #d4d4d4;
 }
 
-/* line 503, ex.scss */
+/* line 510, ex.scss */
 #ex-240-stage p {
   margin-bottom: 0;
 }
 
-/* line 507, ex.scss */
+/* line 514, ex.scss */
 #ex-240-scroll {
   width: 600px;
   height: 400px;
   overflow: scroll;
+  margin-bottom: 4em;
 }
