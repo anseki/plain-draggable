@@ -72,9 +72,12 @@ describe('autoScroll', function() {
       speed: AUTOSCROLL_SPEED,
       sensitivity: AUTOSCROLL_SENSITIVITY
     });
+    delete props.autoScroll.scrollableBBox; // Ignore
     expect(props.autoScroll).toEqual({
       target: window,
       isWindow: true,
+      scrollWidth: SCROLL_WIDTH,
+      scrollHeight: SCROLL_HEIGHT,
       x: {
         min: 0,
         max: SCROLL_WIDTH - clientWidth,
@@ -117,9 +120,12 @@ describe('autoScroll', function() {
       speed: SPEED,
       sensitivity: SENSITIVITY
     });
+    delete props.autoScroll.scrollableBBox; // Ignore
     expect(props.autoScroll).toEqual({
       target: window,
       isWindow: true,
+      scrollWidth: SCROLL_WIDTH,
+      scrollHeight: SCROLL_HEIGHT,
       x: {
         min: 0,
         max: SCROLL_WIDTH - clientWidth,
