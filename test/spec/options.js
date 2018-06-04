@@ -8,6 +8,7 @@ describe('setOptions()', function() {
     SNAP_ALL_CORNERS, SNAP_ALL_SIDES, SNAP_ALL_EDGES,
     DEFAULT_SNAP_CORNERS, DEFAULT_SNAP_SIDES, DEFAULT_SNAP_EDGES,
     DEFAULT_PARSED_SNAP_TARGET, DEFAULT_SNAP_OPTIONS,
+    AUTOSCROLL_SPEED, AUTOSCROLL_SENSITIVITY,
     DEFAULT_START = {value: 0, isRatio: false},
     DEFAULT_END = {value: 1, isRatio: true},
     ppValue2OptionValue;
@@ -65,6 +66,9 @@ describe('setOptions()', function() {
           edge: SNAP_EDGE,
           base: SNAP_BASE
         };
+
+        AUTOSCROLL_SPEED = window.AUTOSCROLL_SPEED;
+        AUTOSCROLL_SENSITIVITY = window.AUTOSCROLL_SENSITIVITY;
       }
       ppValue2OptionValue = window.ppValue2OptionValue;
 
@@ -990,6 +994,456 @@ describe('setOptions()', function() {
     expect(draggable.snap).toEqual(merge(DEFAULT_SNAP_OPTIONS,
       {targets: [{x: 16, y: 16}]}
     ));
+
+    done();
+  });
+
+  it('`autoScroll` - omission', function(done) {
+    if (LIMIT) { done(); return; }
+
+    expect(draggable.autoScroll).not.toBeDefined(); // Default
+
+    // true
+    window.initBBoxDone = false;
+    draggable.autoScroll = true;
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // false
+    window.initBBoxDone = false;
+    draggable.autoScroll = false;
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).not.toBeDefined();
+
+    // Other -> window
+    window.initBBoxDone = false;
+    draggable.autoScroll = 16;
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // element
+    window.initBBoxDone = false;
+    draggable.autoScroll = parent;
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).toEqual({
+      target: parent,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    done();
+  });
+
+  it('`autoScroll` - target', function(done) {
+    if (LIMIT) { done(); return; }
+
+    // window
+    window.initBBoxDone = false;
+    draggable.autoScroll = {target: window};
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // element
+    window.initBBoxDone = false;
+    draggable.autoScroll = {target: parent};
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).toEqual({
+      target: parent,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // Other -> window
+    window.initBBoxDone = false;
+    draggable.autoScroll = {target: 17};
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    done();
+  });
+
+  it('`autoScroll` - speed, sensitivity', function(done) {
+    if (LIMIT) { done(); return; }
+
+    // Default
+    draggable.autoScroll = {};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // Array 3 elements
+    draggable.autoScroll = {speed: [1, 2, 3]};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [1, 2, 3],
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // Array 2 elements
+    draggable.autoScroll = {speed: [1, 2]};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [1, 2],
+      sensitivity: AUTOSCROLL_SENSITIVITY.slice(0, 2)
+    });
+
+    // Array 4 elements -> ignore 4th
+    draggable.autoScroll = {speed: [1, 2, 3, 4]};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [1, 2, 3],
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // Array 0 elements -> Default
+    draggable.autoScroll = {speed: []};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // Array Not number element 1
+    draggable.autoScroll = {speed: [1, 2, 'A']};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [1, 2],
+      sensitivity: AUTOSCROLL_SENSITIVITY.slice(0, 2)
+    });
+
+    // Array Not number element 2
+    draggable.autoScroll = {speed: [1, 'A', 2]};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [1],
+      sensitivity: [AUTOSCROLL_SENSITIVITY[0]]
+    });
+
+    // Array Not number element 3 -> 0 elements -> Default
+    draggable.autoScroll = {speed: ['A', 1, 2]};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // Not Array
+    draggable.autoScroll = {speed: 3};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [3],
+      sensitivity: [AUTOSCROLL_SENSITIVITY[0]]
+    });
+
+    // Other -> Default
+    draggable.autoScroll = {speed: 'A'};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // sensitivity
+
+    // Array speed: 3 elements, sensitivity: 3 elements
+    draggable.autoScroll = {speed: [1, 2, 3], sensitivity: [11, 12, 13]};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [1, 2, 3],
+      sensitivity: [11, 12, 13]
+    });
+
+    // Array speed: 3 elements, sensitivity: 2 elements
+    draggable.autoScroll = {speed: [1, 2, 3], sensitivity: [11, 12]};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [1, 2, 3],
+      sensitivity: [11, 12, AUTOSCROLL_SENSITIVITY[2]]
+    });
+
+    // Array speed: 2 elements, sensitivity: 3 elements
+    draggable.autoScroll = {speed: [1, 2], sensitivity: [11, 12, 13]};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [1, 2],
+      sensitivity: [11, 12]
+    });
+
+    // Array 0 elements -> Default
+    draggable.autoScroll = {speed: [1, 2], sensitivity: []};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [1, 2],
+      sensitivity: AUTOSCROLL_SENSITIVITY.slice(0, 2)
+    });
+
+    // Array Not number element 1
+    draggable.autoScroll = {sensitivity: ['A', 12, 13]};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: [AUTOSCROLL_SENSITIVITY[0], 12, 13]
+    });
+
+    // Array Not number element 2
+    draggable.autoScroll = {sensitivity: [11, 'A', 13]};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: [11, AUTOSCROLL_SENSITIVITY[1], 13]
+    });
+
+    // Array Not number element 3
+    draggable.autoScroll = {sensitivity: [11, 12, 'A']};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: [11, 12, AUTOSCROLL_SENSITIVITY[2]]
+    });
+
+    // Not Array
+    draggable.autoScroll = {sensitivity: 13};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: [13, AUTOSCROLL_SENSITIVITY[1], AUTOSCROLL_SENSITIVITY[2]]
+    });
+
+    // Other -> Default
+    draggable.autoScroll = {sensitivity: 'A'};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    done();
+  });
+
+  it('`autoScroll` - min*, max*', function(done) {
+    if (LIMIT) { done(); return; }
+
+    // Default
+    draggable.autoScroll = {};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // min* number
+    draggable.autoScroll = {minX: 11, minY: 12};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY,
+      minX: 11, minY: 12
+    });
+    draggable.autoScroll = {minX: 13};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY,
+      minX: 13
+    });
+
+    // min* number zero
+    draggable.autoScroll = {minX: 0};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY,
+      minX: 0
+    });
+
+    // min* number minus
+    draggable.autoScroll = {minX: -5};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // min* Not number
+    draggable.autoScroll = {minX: 'A'};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // max* number
+    draggable.autoScroll = {maxX: 21, maxY: 22};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY,
+      maxX: 21, maxY: 22
+    });
+    draggable.autoScroll = {maxX: 23};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY,
+      maxX: 23
+    });
+
+    // max* number zero
+    draggable.autoScroll = {maxX: 0};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY,
+      maxX: 0
+    });
+
+    // max* number maxus
+    draggable.autoScroll = {maxX: -5};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // max* Not number
+    draggable.autoScroll = {maxX: 'A'};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // max* < min -> deny
+    draggable.autoScroll = {minX: 30, maxX: 29};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY,
+      minX: 30
+    });
+    draggable.autoScroll = {minX: 30, maxY: 29}; // Not maxX
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY,
+      minX: 30, maxY: 29
+    });
+
+    // max* == min
+    draggable.autoScroll = {minX: 30, maxX: 30};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY,
+      minX: 30, maxX: 30
+    });
+
+    // max* > min
+    draggable.autoScroll = {minX: 30, maxX: 31};
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY,
+      minX: 30, maxX: 31
+    });
+
+    done();
+  });
+
+  it('`autoScroll` - same options', function(done) {
+    if (LIMIT) { done(); return; }
+
+    // Default
+    draggable.autoScroll = true;
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // Specify winow
+    window.initBBoxDone = false;
+    draggable.autoScroll = window;
+    expect(window.initBBoxDone).toBe(false);
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // Specify speed
+    window.initBBoxDone = false;
+    draggable.autoScroll = {speed: AUTOSCROLL_SPEED};
+    expect(window.initBBoxDone).toBe(false);
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // Specify another speed
+    window.initBBoxDone = false;
+    draggable.autoScroll = {speed: 11};
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: [11],
+      sensitivity: [AUTOSCROLL_SENSITIVITY[0]]
+    });
+
+    // Specify original speed
+    window.initBBoxDone = false;
+    draggable.autoScroll = {speed: AUTOSCROLL_SPEED};
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // Specify another target
+    window.initBBoxDone = false;
+    draggable.autoScroll = parent;
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).toEqual({
+      target: parent,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
+
+    // ON -> OFF
+    window.initBBoxDone = false;
+    draggable.autoScroll = null;
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).not.toBeDefined();
+
+    // OFF -> ON
+    window.initBBoxDone = false;
+    draggable.autoScroll = true;
+    expect(window.initBBoxDone).toBe(true);
+    expect(draggable.autoScroll).toEqual({
+      target: window,
+      speed: AUTOSCROLL_SPEED,
+      sensitivity: AUTOSCROLL_SENSITIVITY
+    });
 
     done();
   });
