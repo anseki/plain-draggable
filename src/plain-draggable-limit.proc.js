@@ -52,6 +52,20 @@ let insId = 0,
   draggingClass = 'plain-draggable-dragging',
   movingClass = 'plain-draggable-moving';
 
+// Support options for addEventListener
+let passiveSupported = false;
+try {
+  window.addEventListener('test', null, Object.defineProperty({}, 'passive', {
+    get() { passiveSupported = true; }
+  }));
+} catch (error) { /* ignore */ }
+
+function addEventListenerWithOptions(target, type, handler, options) {
+  // When `passive` is not supported, consider that the `useCapture` is supported instead of
+  // `options` (i.e. options other than the `passive` also are not supported).
+  target.addEventListener(type, handler, passiveSupported ? options : options.capture);
+}
+
 // Event Controller for mouse and touch interfaces
 const pointerEvent = {};
 {
@@ -96,9 +110,11 @@ const pointerEvent = {};
    * @returns {void}
    */
   pointerEvent.addStartHandler = (element, handlerId) => {
-    element.addEventListener('mousedown', startHandlers[handlerId], false);
-    element.addEventListener('touchstart', startHandlers[handlerId], false);
-    element.addEventListener('dragstart', dragstart, false);
+    addEventListenerWithOptions(element, 'mousedown', startHandlers[handlerId],
+      {capture: true, passive: false});
+    addEventListenerWithOptions(element, 'touchstart', startHandlers[handlerId],
+      {capture: true, passive: false});
+    addEventListenerWithOptions(element, 'dragstart', dragstart, {capture: true, passive: false});
   };
 
   /**
@@ -107,9 +123,9 @@ const pointerEvent = {};
    * @returns {void}
    */
   pointerEvent.removeStartHandler = (element, handlerId) => {
-    element.removeEventListener('mousedown', startHandlers[handlerId], false);
-    element.removeEventListener('touchstart', startHandlers[handlerId], false);
-    element.removeEventListener('dragstart', dragstart, false);
+    element.removeEventListener('mousedown', startHandlers[handlerId], true);
+    element.removeEventListener('touchstart', startHandlers[handlerId], true);
+    element.removeEventListener('dragstart', dragstart, true);
   };
 
   /**
@@ -128,8 +144,8 @@ const pointerEvent = {};
         event.preventDefault();
       }
     });
-    element.addEventListener('mousemove', pointerMove, false);
-    element.addEventListener('touchmove', pointerMove, false);
+    addEventListenerWithOptions(element, 'mousemove', pointerMove, {capture: true, passive: false});
+    addEventListenerWithOptions(element, 'touchmove', pointerMove, {capture: true, passive: false});
     curMoveHandler = moveHandler;
   };
 
@@ -147,9 +163,9 @@ const pointerEvent = {};
         event.preventDefault();
       }
     }
-    element.addEventListener('mouseup', pointerEnd, false);
-    element.addEventListener('touchend', pointerEnd, false);
-    element.addEventListener('touchcancel', pointerEnd, false);
+    addEventListenerWithOptions(element, 'mouseup', pointerEnd, {capture: true, passive: false});
+    addEventListenerWithOptions(element, 'touchend', pointerEnd, {capture: true, passive: false});
+    addEventListenerWithOptions(element, 'touchcancel', pointerEnd, {capture: true, passive: false});
   };
 
   pointerEvent.callMoveHandler = () => {
