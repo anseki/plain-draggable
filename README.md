@@ -14,7 +14,7 @@ The simple and high performance library to allow HTML/SVG element to be dragged.
 - Support both mouse and touch interfaces.
 - Restrict the draggable area.
 - Snap the draggable element to other elements, points, lines, consecutive points (i.e. grid) or something.
-- Scroll an element or window automatically.
+- Scroll an element or window automatically when the draggable element was moved to edge of the area.
 - Use `requestAnimationFrame` API, `translate` and `will-change` CSS if possible, for high performance.  
 ![ss-02](ss-02.png)
 - Provide only basic methods, easy and simple usage.
