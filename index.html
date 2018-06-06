@@ -818,6 +818,27 @@ window.addEventListener('load', function() {
   <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">rect</span><span class="p">);</span> <span class="c1">// current position and size</span>
 <span class="p">};</span>
 </code></pre></div>
+<h3 id="options-ondragstart"><code>onDragStart</code></h3>
+
+<p><em>Type:</em> function or <code>undefined</code><br><em>Default:</em> <code>undefined</code></p>
+
+<p>A function that is called when a mouse button or touch interface was pressed on the draggable element. That is not dragged yet.<br>It is called even if the draggable element is not dragged. Use <a href="#options-ondrag"><code>onDrag</code></a> if you want to do something when the draggable element was dragged.</p>
+
+<p>In the function, <code>this</code> refers to the current PlainDraggable instance.</p>
+
+<p>An Object that has <code>clientX</code> and <code>clientY</code> properties pointing a position of a mouse pointer or touch interface is passed to the function. That might be <a href="https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent"><code>MouseEvent</code></a> or first <a href="https://developer.mozilla.org/en-US/docs/Web/API/Touch"><code>Touch</code></a> object of <a href="https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent"><code>TouchEvent</code></a>.</p>
+
+<p>If the function returns <code>false</code>, the dragging is canceled.</p>
+
+<p>For example:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span><span class="p">.</span><span class="nx">onDragStart</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">pointerXY</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">isEar</span><span class="p">(</span><span class="nx">pointerXY</span><span class="p">))</span> <span class="p">{</span>
+    <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;Do not pull my ear!!&#39;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div>
 <h3 id="options-onmovestart"><code>onMoveStart</code></h3>
 
 <p><em>Type:</em> function or <code>undefined</code><br><em>Default:</em> <code>undefined</code></p>
@@ -871,6 +892,7 @@ window.addEventListener('load', function() {
 <li><a href="#options-left_top"><code>left</code> / <code>top</code></a></li>
 <li><a href="#options-ondrag"><code>onDrag</code></a></li>
 <li><a href="#options-onmove"><code>onMove</code></a></li>
+<li><a href="#options-ondragstart"><code>onDragStart</code></a></li>
 <li><a href="#options-onmovestart"><code>onMoveStart</code></a></li>
 <li><a href="#options-ondragend"><code>onDragEnd</code></a></li>
 </ul>
