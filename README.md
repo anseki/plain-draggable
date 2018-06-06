@@ -269,6 +269,32 @@ draggable.onMove = function() {
 };
 ```
 
+### <a name="options-ondragstart"></a>`onDragStart`
+
+*Type:* function or `undefined`  
+*Default:* `undefined`
+
+A function that is called when a mouse button or touch interface was pressed on the draggable element. That is not dragged yet.  
+It is called even if the draggable element is not dragged. Use [`onDrag`](#options-ondrag) if you want to do something when the draggable element was dragged.
+
+In the function, `this` refers to the current PlainDraggable instance.
+
+An Object that has `clientX` and `clientY` properties pointing a position of a mouse pointer or touch interface is passed to the function. That might be [`MouseEvent`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent) or first [`Touch`](https://developer.mozilla.org/en-US/docs/Web/API/Touch) object of [`TouchEvent`](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent).
+
+If the function returns `false`, the dragging is canceled.
+
+For example:
+
+```js
+draggable.onDragStart = function(pointerXY) {
+  if (isEar(pointerXY)) {
+    alert('Do not pull my ear!!');
+    return false;
+  }
+  return true;
+};
+```
+
 ### <a name="options-onmovestart"></a>`onMoveStart`
 
 *Type:* function or `undefined`  
@@ -327,6 +353,7 @@ Properties with the same name as each option to get or set following options:
 - [`left` / `top`](#options-left_top)
 - [`onDrag`](#options-ondrag)
 - [`onMove`](#options-onmove)
+- [`onDragStart`](#options-ondragstart)
 - [`onMoveStart`](#options-onmovestart)
 - [`onDragEnd`](#options-ondragend)
 
