@@ -181,7 +181,9 @@ See [`speed`](#options-speed) option for the speed.
 *Default:* `undefined`
 
 A number setting a limit to scrolling. These values are returned value by `pageXOffset`, `pageYOffset`, `scrollLeft` or `scrollTop`.  
-Note that this is a limit of the `autoScroll`, not a scrolling of UI. That is, user can scroll manually, regardless of this.
+You can specify `0` for `maxX` or `maxY` to disable scrolling for that axis only. For example, `maxX: 0` disables horizontal scrolling only.
+
+Note that this is a limit of the `autoScroll`, not scrolling of UI. That is, user can scroll manually, regardless of this.
 
 ### <a name="options-handle"></a>`handle`
 
