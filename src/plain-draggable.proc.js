@@ -1229,6 +1229,7 @@ function dragEnd(props) {
  */
 function dragStart(props, pointerXY) {
   if (props.disabled) { return false; }
+  if (props.onDragStart && props.onDragStart(pointerXY) === false) { return false; }
   if (activeItem) { dragEnd(activeItem); } // activeItem is normally null by pointerEvent.end.
 
   setDraggingCursor(props.options.handle);
@@ -1612,7 +1613,7 @@ function setOptions(props, newOptions) {
   if (needsMove) { move(props, position); }
 
   // Event listeners
-  ['onDrag', 'onMove', 'onMoveStart', 'onDragEnd'].forEach(option => {
+  ['onDrag', 'onMove', 'onDragStart', 'onMoveStart', 'onDragEnd'].forEach(option => {
     if (typeof newOptions[option] === 'function') {
       options[option] = newOptions[option];
       props[option] = options[option].bind(props.ins);
@@ -1790,6 +1791,9 @@ class PlainDraggable {
 
   get onMove() { return insProps[this._id].options.onMove; }
   set onMove(value) { setOptions(insProps[this._id], {onMove: value}); }
+
+  get onDragStart() { return insProps[this._id].options.onDragStart; }
+  set onDragStart(value) { setOptions(insProps[this._id], {onDragStart: value}); }
 
   get onMoveStart() { return insProps[this._id].options.onMoveStart; }
   set onMoveStart(value) { setOptions(insProps[this._id], {onMoveStart: value}); }
