@@ -733,7 +733,9 @@ window.addEventListener('load', function() {
 
 <p><em>Type:</em> number or <code>undefined</code><br><em>Default:</em> <code>undefined</code></p>
 
-<p>A number setting a limit to scrolling. These values are returned value by <code>pageXOffset</code>, <code>pageYOffset</code>, <code>scrollLeft</code> or <code>scrollTop</code>.<br>Note that this is a limit of the <code>autoScroll</code>, not a scrolling of UI. That is, user can scroll manually, regardless of this.</p>
+<p>A number setting a limit to scrolling. These values are returned value by <code>pageXOffset</code>, <code>pageYOffset</code>, <code>scrollLeft</code> or <code>scrollTop</code>.<br>You can specify <code>0</code> for <code>maxX</code> or <code>maxY</code> to disable scrolling for that axis only. For example, <code>maxX: 0</code> disables horizontal scrolling only.</p>
+
+<p>Note that this is a limit of the <code>autoScroll</code>, not scrolling of UI. That is, user can scroll manually, regardless of this.</p>
 
 <h3 id="options-handle"><code>handle</code></h3>
 
