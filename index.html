@@ -462,10 +462,10 @@ window.addEventListener('load', function() {
   'use strict';
 
   var elmItems = Array.prototype.slice.call(document.getElementsByClassName('ex-230-item')),
-    bBox = elmItems[0].getBoundingClientRect(),
-    itemH = bBox.height,
+    rect = elmItems[0].getBoundingClientRect(),
+    itemHeight = rect.height,
     itemsTop = elmItems.map(function(v, i) {
-      return Math.round(bBox.top + window.pageYOffset + itemH * i);
+      return Math.round(rect.top + window.pageYOffset + itemHeight * i);
     }),
     items = [];
 
@@ -473,30 +473,17 @@ window.addEventListener('load', function() {
     var curIndex = items.indexOf(targetItem),
       newIndex = itemsTop.indexOf(Math.round(top));
     if (newIndex !== -1 && newIndex !== curIndex) {
-      var newItems = [],
-        i = 0;
-      newItems[newIndex] = targetItem;
-      items.forEach(function(item) {
-        if (item !== targetItem) {
-          if (i === newIndex) { i++; }
-          newItems[i] = item;
-          i++;
-        }
+      items.splice(newIndex, 0, items.splice(curIndex, 1)[0]);
+      items.forEach(function(item, i) {
+        if (item !== targetItem) { item.top = itemsTop[i]; }
       });
-      items = newItems;
-
-      setTimeout(function() {
-        items.forEach(function(item, i) {
-          if (item !== targetItem) { item.top = itemsTop[i]; }
-        });
-      }, 0);
     }
   }
 
   items = elmItems.map(function(elmItem) {
     return new PlainDraggable(elmItem, {
       snap: {
-        y: {step: itemH},
+        y: {step: itemHeight},
         side: 'start'
       },
       onDrag: function(moveTo) {
