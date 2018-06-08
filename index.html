@@ -800,9 +800,15 @@ window.addEventListener('load', function() {
 
 <p>In the function, <code>this</code> refers to the current PlainDraggable instance.</p>
 
+<p>An Object that has <code>left</code> and <code>top</code> properties is passed to the function. It might have <code>snapped</code> property too. See <a href="#options-ondrag"><code>onDrag</code></a> for those properties.<br>And also, <code>autoScroll</code> property is <code>true</code> if it tried scroll (See <a href="#options-autoscroll"><code>autoScroll</code></a> option). This means that the draggable element was moved to near the edges of the area, it might have been not scrolled.</p>
+
 <p>For example:</p>
-<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span><span class="p">.</span><span class="nx">onMove</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">rect</span><span class="p">);</span> <span class="c1">// current position and size</span>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span><span class="p">.</span><span class="nx">onMove</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">newPosition</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;left: %d top: %d width: %d height: %d it is scrolling: %s&#39;</span>
+    <span class="c1">// determined position that was changed by snap and onDrag</span>
+    <span class="nx">newPosition</span><span class="p">.</span><span class="nx">left</span><span class="p">,</span> <span class="nx">newPosition</span><span class="p">.</span><span class="nx">top</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">rect</span><span class="p">.</span><span class="nx">width</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">rect</span><span class="p">.</span><span class="nx">height</span><span class="p">,</span>
+    <span class="nx">newPosition</span><span class="p">.</span><span class="nx">autoScroll</span><span class="p">);</span>
 <span class="p">};</span>
 </code></pre></div>
 <h3 id="options-ondragstart"><code>onDragStart</code></h3>
@@ -834,6 +840,8 @@ window.addEventListener('load', function() {
 
 <p>In the function, <code>this</code> refers to the current PlainDraggable instance.</p>
 
+<p>An Object that has <code>left</code> and <code>top</code> properties is passed to the function. It might have <code>snapped</code> and <code>autoScroll</code> properties too. See <a href="#options-onmove"><code>onMove</code></a> for those properties.</p>
+
 <h3 id="options-ondragend"><code>onDragEnd</code></h3>
 
 <p><em>Type:</em> function or <code>undefined</code><br><em>Default:</em> <code>undefined</code></p>
@@ -841,6 +849,8 @@ window.addEventListener('load', function() {
 <p>A function that is called when a mouse button was released.<br>It is called even if the mouse pointer was not moved.</p>
 
 <p>In the function, <code>this</code> refers to the current PlainDraggable instance.</p>
+
+<p>An Object that has <code>left</code> and <code>top</code> properties is passed to the function. See <a href="#options-ondrag"><code>onDrag</code></a> for those properties.  </p>
 
 <h2 id="properties">Properties</h2>
 
