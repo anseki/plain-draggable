@@ -261,11 +261,18 @@ It is not called when the draggable element is not moved because [`containment`]
 
 In the function, `this` refers to the current PlainDraggable instance.
 
+An Object that has `left` and `top` properties is passed to the function. It might have `snapped` property too. See [`onDrag`](#options-ondrag) for those properties.  
+And also, `autoScroll` property is `true` if it tried scroll (See [`autoScroll`](#options-autoscroll) option). This means that the draggable element was moved to near the edges of the area, it might have been not scrolled.
+
 For example:
 
 ```js
-draggable.onMove = function() {
-  console.log(this.rect); // current position and size
+draggable.onMove = function(newPosition) {
+  console.log('left: %d top: %d width: %d height: %d it is scrolling: %s'
+    // determined position that was changed by snap and onDrag
+    newPosition.left, newPosition.top,
+    this.rect.width, this.rect.height,
+    newPosition.autoScroll);
 };
 ```
 
@@ -305,6 +312,8 @@ It is not called until the draggable element is moved even if it was dragged, an
 
 In the function, `this` refers to the current PlainDraggable instance.
 
+An Object that has `left` and `top` properties is passed to the function. It might have `snapped` and `autoScroll` properties too. See [`onMove`](#options-onmove) for those properties.
+
 ### <a name="options-ondragend"></a>`onDragEnd`
 
 *Type:* function or `undefined`  
@@ -314,6 +323,8 @@ A function that is called when a mouse button was released.
 It is called even if the mouse pointer was not moved.
 
 In the function, `this` refers to the current PlainDraggable instance.
+
+An Object that has `left` and `top` properties is passed to the function. See [`onDrag`](#options-ondrag) for those properties.  
 
 ## Properties
 
