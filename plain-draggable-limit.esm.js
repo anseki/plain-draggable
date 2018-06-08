@@ -618,7 +618,7 @@ function dragEnd(props) {
 
   activeItem = null;
   if (props.onDragEnd) {
-    props.onDragEnd();
+    props.onDragEnd({ left: props.elementBBox.left, top: props.elementBBox.top });
   }
 }
 
@@ -1074,10 +1074,14 @@ var PlainDraggable = function () {
 
 
 pointerEvent.addMoveHandler(document, function (pointerXY) {
-  if (activeItem && move(activeItem, {
+  if (!activeItem) {
+    return;
+  }
+  var position = {
     left: pointerXY.clientX + window.pageXOffset + pointerOffset.left,
     top: pointerXY.clientY + window.pageYOffset + pointerOffset.top
-  }, activeItem.onDrag)) {
+  };
+  if (move(activeItem, position, activeItem.onDrag)) {
 
     if (!hasMoved) {
       hasMoved = true;
@@ -1085,11 +1089,11 @@ pointerEvent.addMoveHandler(document, function (pointerXY) {
         mClassList(activeItem.element).add(movingClass);
       }
       if (activeItem.onMoveStart) {
-        activeItem.onMoveStart();
+        activeItem.onMoveStart(position);
       }
     }
     if (activeItem.onMove) {
-      activeItem.onMove();
+      activeItem.onMove(position);
     }
   }
 });

@@ -1219,7 +1219,9 @@ function dragEnd(props) {
   if (draggingClass) { classList.remove(draggingClass); }
 
   activeItem = null;
-  if (props.onDragEnd) { props.onDragEnd(); }
+  if (props.onDragEnd) {
+    props.onDragEnd({left: props.elementBBox.left, top: props.elementBBox.top});
+  }
 }
 
 /**
@@ -1890,40 +1892,41 @@ class PlainDraggable {
 
 // pointerEvent add moveHandler
 pointerEvent.addMoveHandler(document, pointerXY => {
-  if (activeItem &&
-      move(activeItem, {
-        left: pointerXY.clientX + window.pageXOffset + pointerOffset.left,
-        top: pointerXY.clientY + window.pageYOffset + pointerOffset.top
-      },
-      // [SNAP]
-      activeItem.snapTargets ? position => { // Snap
-        const iLen = activeItem.snapTargets.length;
-        let snappedX = false,
-          snappedY = false,
-          i;
-        for (i = 0; i < iLen && (!snappedX || !snappedY); i++) {
-          const snapTarget = activeItem.snapTargets[i];
-          if ((snapTarget.gravityXStart == null || position.left >= snapTarget.gravityXStart) &&
-              (snapTarget.gravityXEnd == null || position.left <= snapTarget.gravityXEnd) &&
-              (snapTarget.gravityYStart == null || position.top >= snapTarget.gravityYStart) &&
-              (snapTarget.gravityYEnd == null || position.top <= snapTarget.gravityYEnd)) {
-            if (!snappedX && snapTarget.x != null) {
-              position.left = snapTarget.x;
-              snappedX = true;
-              i = -1; // Restart loop
-            }
-            if (!snappedY && snapTarget.y != null) {
-              position.top = snapTarget.y;
-              snappedY = true;
-              i = -1; // Restart loop
-            }
+  if (!activeItem) { return; }
+  const position = {
+    left: pointerXY.clientX + window.pageXOffset + pointerOffset.left,
+    top: pointerXY.clientY + window.pageYOffset + pointerOffset.top
+  };
+  if (move(activeItem, position,
+    // [SNAP]
+    activeItem.snapTargets ? position => { // Snap
+      const iLen = activeItem.snapTargets.length;
+      let snappedX = false,
+        snappedY = false,
+        i;
+      for (i = 0; i < iLen && (!snappedX || !snappedY); i++) {
+        const snapTarget = activeItem.snapTargets[i];
+        if ((snapTarget.gravityXStart == null || position.left >= snapTarget.gravityXStart) &&
+            (snapTarget.gravityXEnd == null || position.left <= snapTarget.gravityXEnd) &&
+            (snapTarget.gravityYStart == null || position.top >= snapTarget.gravityYStart) &&
+            (snapTarget.gravityYEnd == null || position.top <= snapTarget.gravityYEnd)) {
+          if (!snappedX && snapTarget.x != null) {
+            position.left = snapTarget.x;
+            snappedX = true;
+            i = -1; // Restart loop
+          }
+          if (!snappedY && snapTarget.y != null) {
+            position.top = snapTarget.y;
+            snappedY = true;
+            i = -1; // Restart loop
           }
         }
-        position.snapped = snappedX || snappedY;
-        return activeItem.onDrag ? activeItem.onDrag(position) : true;
-      } :
-      // [/SNAP]
-      activeItem.onDrag)) {
+      }
+      position.snapped = snappedX || snappedY;
+      return activeItem.onDrag ? activeItem.onDrag(position) : true;
+    } :
+    // [/SNAP]
+    activeItem.onDrag)) {
 
     // [AUTO-SCROLL]
     const xyMoveArgs = {},
@@ -1952,6 +1955,7 @@ pointerEvent.addMoveHandler(document, pointerXY => {
     if (xyMoveArgs.x || xyMoveArgs.y) {
       scrollFrame.move(autoScroll.target, xyMoveArgs,
         autoScroll.isWindow ? scrollXYWindow : scrollXYElement);
+      position.autoScroll = true;
     } else {
       scrollFrame.stop();
     }
@@ -1960,9 +1964,9 @@ pointerEvent.addMoveHandler(document, pointerXY => {
     if (!hasMoved) {
       hasMoved = true;
       if (movingClass) { mClassList(activeItem.element).add(movingClass); }
-      if (activeItem.onMoveStart) { activeItem.onMoveStart(); }
+      if (activeItem.onMoveStart) { activeItem.onMoveStart(position); }
     }
-    if (activeItem.onMove) { activeItem.onMove(); }
+    if (activeItem.onMove) { activeItem.onMove(position); }
   }
 });
 

@@ -586,7 +586,9 @@ function dragEnd(props) {
   if (draggingClass) { classList.remove(draggingClass); }
 
   activeItem = null;
-  if (props.onDragEnd) { props.onDragEnd(); }
+  if (props.onDragEnd) {
+    props.onDragEnd({left: props.elementBBox.left, top: props.elementBBox.top});
+  }
 }
 
 /**
@@ -921,20 +923,21 @@ class PlainDraggable {
 
 // pointerEvent add moveHandler
 pointerEvent.addMoveHandler(document, pointerXY => {
-  if (activeItem &&
-      move(activeItem, {
-        left: pointerXY.clientX + window.pageXOffset + pointerOffset.left,
-        top: pointerXY.clientY + window.pageYOffset + pointerOffset.top
-      },
-      activeItem.onDrag)) {
+  if (!activeItem) { return; }
+  const position = {
+    left: pointerXY.clientX + window.pageXOffset + pointerOffset.left,
+    top: pointerXY.clientY + window.pageYOffset + pointerOffset.top
+  };
+  if (move(activeItem, position,
+    activeItem.onDrag)) {
 
 
     if (!hasMoved) {
       hasMoved = true;
       if (movingClass) { mClassList(activeItem.element).add(movingClass); }
-      if (activeItem.onMoveStart) { activeItem.onMoveStart(); }
+      if (activeItem.onMoveStart) { activeItem.onMoveStart(position); }
     }
-    if (activeItem.onMove) { activeItem.onMove(); }
+    if (activeItem.onMove) { activeItem.onMove(position); }
   }
 });
 
