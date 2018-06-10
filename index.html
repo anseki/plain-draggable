@@ -606,6 +606,11 @@ window.addEventListener('load', function() {
 </code></pre></div>
 <p>Re-calculate the position of the draggable element, <a href="#options-containment"><code>containment</code></a> option, <a href="#options-snap"><code>snap</code></a> option and <a href="#options-autoscroll"><code>autoScroll</code></a> option, with current layout of a page.<br>Those are re-calculated as needed automatically when a window is resized, or a window or something is scrolled.<br>You should call <code>position</code> method if you changed the layout without resizing the window or scrolling something.</p>
 
+<h3 id="remove"><code>remove</code></h3>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span><span class="p">.</span><span class="nx">remove</span><span class="p">()</span>
+</code></pre></div>
+<p>Remove the current PlainDraggable instance.<br>Never use the removed instance.</p>
+
 <h2 id="options">Options</h2>
 
 <h3 id="options-containment"><code>containment</code></h3>
