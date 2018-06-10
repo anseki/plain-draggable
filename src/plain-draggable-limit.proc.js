@@ -101,6 +101,8 @@ const pointerEvent = {};
     return handlerId;
   };
 
+  pointerEvent.unregStartHandler = handlerId => { delete startHandlers[handlerId]; };
+
   // Gecko, Trident pick drag-event of some elements such as img, a, etc.
   function dragstart(event) { event.preventDefault(); }
 
@@ -752,6 +754,14 @@ class PlainDraggable {
     if (!options.handle) { options.handle = element; }
 
     setOptions(props, options);
+  }
+
+  remove() {
+    const props = insProps[this._id];
+    this.disabled = true; // To restore
+    pointerEvent.removeStartHandler(props.options.handle, props.pointerEventHandlerId);
+    pointerEvent.unregStartHandler(props.pointerEventHandlerId);
+    delete insProps[this._id];
   }
 
   /**
