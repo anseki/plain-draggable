@@ -127,6 +127,10 @@ var pointerEvent = {};
       }
     };
     return handlerId;
+  };
+
+  pointerEvent.unregStartHandler = function (handlerId) {
+    delete startHandlers[handlerId];
   };pointerEvent.addStartHandler = function (element, handlerId) {
     addEventListenerWithOptions(element, 'mousedown', startHandlers[handlerId], { capture: true, passive: false });
     addEventListenerWithOptions(element, 'touchstart', startHandlers[handlerId], { capture: true, passive: false });
@@ -817,13 +821,22 @@ var PlainDraggable = function () {
     _setOptions(props, options);
   }
 
-  /**
-   * @param {Object} options - New options.
-   * @returns {PlainDraggable} Current instance itself.
-   */
-
-
   _createClass(PlainDraggable, [{
+    key: 'remove',
+    value: function remove() {
+      var props = insProps[this._id];
+      this.disabled = true; // To restore
+      pointerEvent.removeStartHandler(props.options.handle, props.pointerEventHandlerId);
+      pointerEvent.unregStartHandler(props.pointerEventHandlerId);
+      delete insProps[this._id];
+    }
+
+    /**
+     * @param {Object} options - New options.
+     * @returns {PlainDraggable} Current instance itself.
+     */
+
+  }, {
     key: 'setOptions',
     value: function setOptions(options) {
       if (isObject(options)) {
