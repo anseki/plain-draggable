@@ -96,6 +96,15 @@ Re-calculate the position of the draggable element, [`containment`](#options-con
 Those are re-calculated as needed automatically when a window is resized, or a window or something is scrolled.  
 You should call `position` method if you changed the layout without resizing the window or scrolling something.
 
+### `remove`
+
+```js
+draggable.remove()
+```
+
+Remove the current PlainDraggable instance.  
+Never use the removed instance.
+
 ## Options
 
 ### <a name="options-containment"></a>`containment`
