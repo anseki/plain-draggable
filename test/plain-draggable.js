@@ -688,9 +688,9 @@ var pointerEvent = {};
   pointerEvent.unregStartHandler = function (handlerId) {
     delete startHandlers[handlerId];
   };pointerEvent.addStartHandler = function (element, handlerId) {
-    addEventListenerWithOptions(element, 'mousedown', startHandlers[handlerId], { capture: true, passive: false });
-    addEventListenerWithOptions(element, 'touchstart', startHandlers[handlerId], { capture: true, passive: false });
-    addEventListenerWithOptions(element, 'dragstart', dragstart, { capture: true, passive: false });
+    addEventListenerWithOptions(element, 'mousedown', startHandlers[handlerId], { capture: false, passive: false });
+    addEventListenerWithOptions(element, 'touchstart', startHandlers[handlerId], { capture: false, passive: false });
+    addEventListenerWithOptions(element, 'dragstart', dragstart, { capture: false, passive: false });
   };
 
   /**
@@ -699,9 +699,9 @@ var pointerEvent = {};
    * @returns {void}
    */
   pointerEvent.removeStartHandler = function (element, handlerId) {
-    element.removeEventListener('mousedown', startHandlers[handlerId], true);
-    element.removeEventListener('touchstart', startHandlers[handlerId], true);
-    element.removeEventListener('dragstart', dragstart, true);
+    element.removeEventListener('mousedown', startHandlers[handlerId], false);
+    element.removeEventListener('touchstart', startHandlers[handlerId], false);
+    element.removeEventListener('dragstart', dragstart, false);
   };
 
   /**
@@ -720,8 +720,8 @@ var pointerEvent = {};
         event.preventDefault();
       }
     });
-    addEventListenerWithOptions(element, 'mousemove', pointerMove, { capture: true, passive: false });
-    addEventListenerWithOptions(element, 'touchmove', pointerMove, { capture: true, passive: false });
+    addEventListenerWithOptions(element, 'mousemove', pointerMove, { capture: false, passive: false });
+    addEventListenerWithOptions(element, 'touchmove', pointerMove, { capture: false, passive: false });
     curMoveHandler = moveHandler;
   };
 
@@ -739,9 +739,9 @@ var pointerEvent = {};
         event.preventDefault();
       }
     }
-    addEventListenerWithOptions(element, 'mouseup', pointerEnd, { capture: true, passive: false });
-    addEventListenerWithOptions(element, 'touchend', pointerEnd, { capture: true, passive: false });
-    addEventListenerWithOptions(element, 'touchcancel', pointerEnd, { capture: true, passive: false });
+    addEventListenerWithOptions(element, 'mouseup', pointerEnd, { capture: false, passive: false });
+    addEventListenerWithOptions(element, 'touchend', pointerEnd, { capture: false, passive: false });
+    addEventListenerWithOptions(element, 'touchcancel', pointerEnd, { capture: false, passive: false });
   };
 
   pointerEvent.callMoveHandler = function () {
@@ -2851,7 +2851,7 @@ pointerEvent.addEndHandler(document, function () {
     document.addEventListener('DOMContentLoaded', function () {
       body = document.body;
       initDoc();
-    }, false);
+    }, true);
   }
 }
 
