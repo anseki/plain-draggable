@@ -35,7 +35,6 @@
     "node-static-alias": "^1.1.2",
     "pointer-event": "^0.1.0",
     "pre-proc": "^1.0.2",
-    "pre-proc-loader": "^3.0.3",
     "skeleton-loader": "^2.0.0",
     "stats-filelist": "^1.0.1",
     "test-page-loader": "^1.0.7",
