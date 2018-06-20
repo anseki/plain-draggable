@@ -10,6 +10,7 @@
  * Licensed under the MIT license.
  */
 
+import PointerEvent from 'pointer-event';
 import CSSPrefix from 'cssprefix';
 import AnimEvent from 'anim-event';
 import mClassList from 'm-class-list';
@@ -37,7 +38,8 @@ const
 
   /** @type {Object.<_id: number, props>} */
   insProps = {},
-  pointerOffset = {};
+  pointerOffset = {},
+  pointerEvent = new PointerEvent(); // Event Controller for mouse and touch interfaces
 
 let insId = 0,
   activeItem, hasMoved, body,
@@ -51,129 +53,6 @@ let insId = 0,
   draggableClass = 'plain-draggable',
   draggingClass = 'plain-draggable-dragging',
   movingClass = 'plain-draggable-moving';
-
-// Support options for addEventListener
-let passiveSupported = false;
-try {
-  window.addEventListener('test', null, Object.defineProperty({}, 'passive', {
-    get() { passiveSupported = true; }
-  }));
-} catch (error) { /* ignore */ }
-
-function addEventListenerWithOptions(target, type, handler, options) {
-  // When `passive` is not supported, consider that the `useCapture` is supported instead of
-  // `options` (i.e. options other than the `passive` also are not supported).
-  target.addEventListener(type, handler, passiveSupported ? options : options.capture);
-}
-
-// Event Controller for mouse and touch interfaces
-const pointerEvent = {};
-{
-  /** @type {{clientX, clientY}} */
-  const lastPointerXY = {clientX: 0, clientY: 0},
-    startHandlers = {},
-    DUPLICATE_INTERVAL = 400; // For avoiding mouse event that fired by touch interface
-  let handlerId = 0,
-    lastStartTime = 0,
-    curPointerClass, curMoveHandler;
-
-  /**
-   * @param {function} startHandler - This is called with pointerXY when it starts. This returns boolean.
-   * @returns {number} handlerId which is used for adding/removing to element.
-   */
-  pointerEvent.regStartHandler = startHandler => {
-    startHandlers[++handlerId] = event => {
-      const pointerClass = event.type === 'mousedown' ? 'mouse' : 'touch',
-        pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0],
-        now = Date.now();
-      if (curPointerClass && pointerClass !== curPointerClass &&
-          now - lastStartTime < DUPLICATE_INTERVAL) {
-        return;
-      }
-      if (startHandler(pointerXY)) {
-        curPointerClass = pointerClass;
-        lastPointerXY.clientX = pointerXY.clientX;
-        lastPointerXY.clientY = pointerXY.clientY;
-        lastStartTime = now;
-        event.preventDefault();
-      }
-    };
-    return handlerId;
-  };
-
-  pointerEvent.unregStartHandler = handlerId => { delete startHandlers[handlerId]; };
-
-  // Gecko, Trident pick drag-event of some elements such as img, a, etc.
-  function dragstart(event) { event.preventDefault(); }
-
-  /**
-   * @param {Element} element - A target element.
-   * @param {number} handlerId - An ID which was returned by regStartHandler.
-   * @returns {void}
-   */
-  pointerEvent.addStartHandler = (element, handlerId) => {
-    addEventListenerWithOptions(element, 'mousedown', startHandlers[handlerId],
-      {capture: false, passive: false});
-    addEventListenerWithOptions(element, 'touchstart', startHandlers[handlerId],
-      {capture: false, passive: false});
-    addEventListenerWithOptions(element, 'dragstart', dragstart, {capture: false, passive: false});
-  };
-
-  /**
-   * @param {Element} element - A target element.
-   * @param {number} handlerId - An ID which was returned by regStartHandler.
-   * @returns {void}
-   */
-  pointerEvent.removeStartHandler = (element, handlerId) => {
-    element.removeEventListener('mousedown', startHandlers[handlerId], false);
-    element.removeEventListener('touchstart', startHandlers[handlerId], false);
-    element.removeEventListener('dragstart', dragstart, false);
-  };
-
-  /**
-   * @param {Element} element - A target element.
-   * @param {function} moveHandler - This is called with pointerXY when it moves.
-   * @returns {void}
-   */
-  pointerEvent.addMoveHandler = (element, moveHandler) => {
-    const pointerMove = AnimEvent.add(event => {
-      const pointerClass = event.type === 'mousemove' ? 'mouse' : 'touch',
-        pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0];
-      if (pointerClass === curPointerClass) {
-        moveHandler(pointerXY);
-        lastPointerXY.clientX = pointerXY.clientX;
-        lastPointerXY.clientY = pointerXY.clientY;
-        event.preventDefault();
-      }
-    });
-    addEventListenerWithOptions(element, 'mousemove', pointerMove, {capture: false, passive: false});
-    addEventListenerWithOptions(element, 'touchmove', pointerMove, {capture: false, passive: false});
-    curMoveHandler = moveHandler;
-  };
-
-  /**
-   * @param {Element} element - A target element.
-   * @param {function} endHandler - This is called when it ends.
-   * @returns {void}
-   */
-  pointerEvent.addEndHandler = (element, endHandler) => {
-    function pointerEnd(event) {
-      const pointerClass = event.type === 'mouseup' ? 'mouse' : 'touch';
-      if (pointerClass === curPointerClass) {
-        endHandler();
-        curPointerClass = null;
-        event.preventDefault();
-      }
-    }
-    addEventListenerWithOptions(element, 'mouseup', pointerEnd, {capture: false, passive: false});
-    addEventListenerWithOptions(element, 'touchend', pointerEnd, {capture: false, passive: false});
-    addEventListenerWithOptions(element, 'touchcancel', pointerEnd, {capture: false, passive: false});
-  };
-
-  pointerEvent.callMoveHandler = () => {
-    if (curMoveHandler) { curMoveHandler(lastPointerXY); }
-  };
-}
 
 
 

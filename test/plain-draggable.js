@@ -523,6 +523,195 @@ mClassList.methodChain = true;
 
 /***/ }),
 
+/***/ "./node_modules/pointer-event/pointer-event.esm.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/pointer-event/pointer-event.esm.js ***!
+  \*********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var anim_event__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! anim-event */ "./node_modules/anim-event/anim-event.esm.js");
+/* ================================================
+        DON'T MANUALLY EDIT THIS FILE
+================================================ */
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/*
+ * PointerEvent
+ * https://github.com/anseki/pointer-event
+ *
+ * Copyright (c) 2018 anseki
+ * Licensed under the MIT license.
+ */
+
+
+
+var DUPLICATE_INTERVAL = 400; // For avoiding mouse event that fired by touch interface
+
+// Support options for addEventListener
+var passiveSupported = false;
+try {
+  window.addEventListener('test', null, Object.defineProperty({}, 'passive', {
+    get: function get() {
+      passiveSupported = true;
+    }
+  }));
+} catch (error) {/* ignore */}
+
+function addEventListenerWithOptions(target, type, handler, options) {
+  // When `passive` is not supported, consider that the `useCapture` is supported instead of
+  // `options` (i.e. options other than the `passive` also are not supported).
+  target.addEventListener(type, handler, passiveSupported ? options : options.capture);
+}
+
+// Gecko, Trident pick drag-event of some elements such as img, a, etc.
+function dragstart(event) {
+  event.preventDefault();
+}
+
+var PointerEvent = function () {
+  /**
+   * Create a `PointerEvent` instance.
+   */
+  function PointerEvent() {
+    _classCallCheck(this, PointerEvent);
+
+    this.startHandlers = {};
+    this.handlerId = 0;
+    this.curPointerClass = null;
+    this.lastPointerXY = { clientX: 0, clientY: 0 };
+    this.lastStartTime = 0;
+  }
+
+  /**
+   * @param {function} startHandler - This is called with pointerXY when it starts. This returns boolean.
+   * @returns {number} handlerId which is used for adding/removing to element.
+   */
+
+
+  _createClass(PointerEvent, [{
+    key: 'regStartHandler',
+    value: function regStartHandler(startHandler) {
+      var that = this;
+      that.startHandlers[++that.handlerId] = function (event) {
+        var pointerClass = event.type === 'mousedown' ? 'mouse' : 'touch',
+            pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0],
+            now = Date.now();
+        if (that.curPointerClass && pointerClass !== that.curPointerClass && now - that.lastStartTime < DUPLICATE_INTERVAL) {
+          return;
+        }
+        if (startHandler(pointerXY)) {
+          that.curPointerClass = pointerClass;
+          that.lastPointerXY.clientX = pointerXY.clientX;
+          that.lastPointerXY.clientY = pointerXY.clientY;
+          that.lastStartTime = now;
+          event.preventDefault();
+        }
+      };
+      return that.handlerId;
+    }
+  }, {
+    key: 'unregStartHandler',
+    value: function unregStartHandler(handlerId) {
+      delete this.startHandlers[handlerId];
+    }
+
+    /**
+     * @param {Element} element - A target element.
+     * @param {number} handlerId - An ID which was returned by regStartHandler.
+     * @returns {void}
+     */
+
+  }, {
+    key: 'addStartHandler',
+    value: function addStartHandler(element, handlerId) {
+      addEventListenerWithOptions(element, 'mousedown', this.startHandlers[handlerId], { capture: false, passive: false });
+      addEventListenerWithOptions(element, 'touchstart', this.startHandlers[handlerId], { capture: false, passive: false });
+      addEventListenerWithOptions(element, 'dragstart', dragstart, { capture: false, passive: false });
+    }
+
+    /**
+     * @param {Element} element - A target element.
+     * @param {number} handlerId - An ID which was returned by regStartHandler.
+     * @returns {void}
+     */
+
+  }, {
+    key: 'removeStartHandler',
+    value: function removeStartHandler(element, handlerId) {
+      element.removeEventListener('mousedown', this.startHandlers[handlerId], false);
+      element.removeEventListener('touchstart', this.startHandlers[handlerId], false);
+      element.removeEventListener('dragstart', dragstart, false);
+    }
+
+    /**
+     * @param {Element} element - A target element.
+     * @param {function} moveHandler - This is called with pointerXY when it moves.
+     * @returns {void}
+     */
+
+  }, {
+    key: 'addMoveHandler',
+    value: function addMoveHandler(element, moveHandler) {
+      var that = this;
+      var pointerMove = anim_event__WEBPACK_IMPORTED_MODULE_0__["default"].add(function (event) {
+        var pointerClass = event.type === 'mousemove' ? 'mouse' : 'touch',
+            pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0];
+        if (pointerClass === that.curPointerClass) {
+          moveHandler(pointerXY);
+          that.lastPointerXY.clientX = pointerXY.clientX;
+          that.lastPointerXY.clientY = pointerXY.clientY;
+          event.preventDefault();
+        }
+      });
+      addEventListenerWithOptions(element, 'mousemove', pointerMove, { capture: false, passive: false });
+      addEventListenerWithOptions(element, 'touchmove', pointerMove, { capture: false, passive: false });
+      that.curMoveHandler = moveHandler;
+    }
+
+    /**
+     * @param {Element} element - A target element.
+     * @param {function} endHandler - This is called when it ends.
+     * @returns {void}
+     */
+
+  }, {
+    key: 'addEndHandler',
+    value: function addEndHandler(element, endHandler) {
+      var that = this;
+      function pointerEnd(event) {
+        var pointerClass = event.type === 'mouseup' ? 'mouse' : 'touch';
+        if (pointerClass === that.curPointerClass) {
+          endHandler();
+          that.curPointerClass = null;
+          event.preventDefault();
+        }
+      }
+      addEventListenerWithOptions(element, 'mouseup', pointerEnd, { capture: false, passive: false });
+      addEventListenerWithOptions(element, 'touchend', pointerEnd, { capture: false, passive: false });
+      addEventListenerWithOptions(element, 'touchcancel', pointerEnd, { capture: false, passive: false });
+    }
+  }, {
+    key: 'callMoveHandler',
+    value: function callMoveHandler() {
+      if (this.curMoveHandler) {
+        this.curMoveHandler(this.lastPointerXY);
+      }
+    }
+  }]);
+
+  return PointerEvent;
+}();
+
+/* harmony default export */ __webpack_exports__["default"] = (PointerEvent);
+
+/***/ }),
+
 /***/ "./src/plain-draggable.js":
 /*!********************************!*\
   !*** ./src/plain-draggable.js ***!
@@ -532,9 +721,10 @@ mClassList.methodChain = true;
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var cssprefix__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! cssprefix */ "./node_modules/cssprefix/cssprefix.esm.js");
-/* harmony import */ var anim_event__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! anim-event */ "./node_modules/anim-event/anim-event.esm.js");
-/* harmony import */ var m_class_list__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! m-class-list */ "./node_modules/m-class-list/m-class-list.esm.js");
+/* harmony import */ var pointer_event__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! pointer-event */ "./node_modules/pointer-event/pointer-event.esm.js");
+/* harmony import */ var cssprefix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! cssprefix */ "./node_modules/cssprefix/cssprefix.esm.js");
+/* harmony import */ var anim_event__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! anim-event */ "./node_modules/anim-event/anim-event.esm.js");
+/* harmony import */ var m_class_list__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! m-class-list */ "./node_modules/m-class-list/m-class-list.esm.js");
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -552,7 +742,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 
 
-m_class_list__WEBPACK_IMPORTED_MODULE_2__["default"].ignoreNative = true;
+
+m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"].ignoreNative = true;
 
 var ZINDEX = 9000,
 
@@ -595,7 +786,8 @@ isObject = function () {
 
 /** @type {Object.<_id: number, props>} */
 insProps = {},
-    pointerOffset = {};
+    pointerOffset = {},
+    pointerEvent = new pointer_event__WEBPACK_IMPORTED_MODULE_0__["default"](); // Event Controller for mouse and touch interfaces
 
 var insId = 0,
     activeItem = void 0,
@@ -619,137 +811,6 @@ cssWantedValueDraggableCursor = IS_WEBKIT ? ['all-scroll', 'move'] : ['grab', 'a
 draggableClass = 'plain-draggable',
     draggingClass = 'plain-draggable-dragging',
     movingClass = 'plain-draggable-moving';
-
-// Support options for addEventListener
-var passiveSupported = false;
-try {
-  window.addEventListener('test', null, Object.defineProperty({}, 'passive', {
-    get: function get() {
-      passiveSupported = true;
-    }
-  }));
-} catch (error) {/* ignore */}
-
-function addEventListenerWithOptions(target, type, handler, options) {
-  // When `passive` is not supported, consider that the `useCapture` is supported instead of
-  // `options` (i.e. options other than the `passive` also are not supported).
-  target.addEventListener(type, handler, passiveSupported ? options : options.capture);
-}
-
-// Event Controller for mouse and touch interfaces
-var pointerEvent = {};
-{
-
-  // Gecko, Trident pick drag-event of some elements such as img, a, etc.
-  var dragstart = function dragstart(event) {
-    event.preventDefault();
-  };
-
-  /**
-   * @param {Element} element - A target element.
-   * @param {number} handlerId - An ID which was returned by regStartHandler.
-   * @returns {void}
-   */
-
-
-  /** @type {{clientX, clientY}} */
-  var lastPointerXY = { clientX: 0, clientY: 0 },
-      startHandlers = {},
-      DUPLICATE_INTERVAL = 400; // For avoiding mouse event that fired by touch interface
-  var handlerId = 0,
-      lastStartTime = 0,
-      curPointerClass = void 0,
-      curMoveHandler = void 0;
-
-  /**
-   * @param {function} startHandler - This is called with pointerXY when it starts. This returns boolean.
-   * @returns {number} handlerId which is used for adding/removing to element.
-   */
-  pointerEvent.regStartHandler = function (startHandler) {
-    startHandlers[++handlerId] = function (event) {
-      var pointerClass = event.type === 'mousedown' ? 'mouse' : 'touch',
-          pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0],
-          now = Date.now();
-      if (curPointerClass && pointerClass !== curPointerClass && now - lastStartTime < DUPLICATE_INTERVAL) {
-        console.log('Event "' + event.type + '" was ignored.'); // [DEBUG/]
-        return;
-      }
-      if (startHandler(pointerXY)) {
-        curPointerClass = pointerClass;
-        lastPointerXY.clientX = pointerXY.clientX;
-        lastPointerXY.clientY = pointerXY.clientY;
-        lastStartTime = now;
-        event.preventDefault();
-      }
-    };
-    return handlerId;
-  };
-
-  pointerEvent.unregStartHandler = function (handlerId) {
-    delete startHandlers[handlerId];
-  };pointerEvent.addStartHandler = function (element, handlerId) {
-    addEventListenerWithOptions(element, 'mousedown', startHandlers[handlerId], { capture: false, passive: false });
-    addEventListenerWithOptions(element, 'touchstart', startHandlers[handlerId], { capture: false, passive: false });
-    addEventListenerWithOptions(element, 'dragstart', dragstart, { capture: false, passive: false });
-  };
-
-  /**
-   * @param {Element} element - A target element.
-   * @param {number} handlerId - An ID which was returned by regStartHandler.
-   * @returns {void}
-   */
-  pointerEvent.removeStartHandler = function (element, handlerId) {
-    element.removeEventListener('mousedown', startHandlers[handlerId], false);
-    element.removeEventListener('touchstart', startHandlers[handlerId], false);
-    element.removeEventListener('dragstart', dragstart, false);
-  };
-
-  /**
-   * @param {Element} element - A target element.
-   * @param {function} moveHandler - This is called with pointerXY when it moves.
-   * @returns {void}
-   */
-  pointerEvent.addMoveHandler = function (element, moveHandler) {
-    var pointerMove = anim_event__WEBPACK_IMPORTED_MODULE_1__["default"].add(function (event) {
-      var pointerClass = event.type === 'mousemove' ? 'mouse' : 'touch',
-          pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0];
-      if (pointerClass === curPointerClass) {
-        moveHandler(pointerXY);
-        lastPointerXY.clientX = pointerXY.clientX;
-        lastPointerXY.clientY = pointerXY.clientY;
-        event.preventDefault();
-      }
-    });
-    addEventListenerWithOptions(element, 'mousemove', pointerMove, { capture: false, passive: false });
-    addEventListenerWithOptions(element, 'touchmove', pointerMove, { capture: false, passive: false });
-    curMoveHandler = moveHandler;
-  };
-
-  /**
-   * @param {Element} element - A target element.
-   * @param {function} endHandler - This is called when it ends.
-   * @returns {void}
-   */
-  pointerEvent.addEndHandler = function (element, endHandler) {
-    function pointerEnd(event) {
-      var pointerClass = event.type === 'mouseup' ? 'mouse' : 'touch';
-      if (pointerClass === curPointerClass) {
-        endHandler();
-        curPointerClass = null;
-        event.preventDefault();
-      }
-    }
-    addEventListenerWithOptions(element, 'mouseup', pointerEnd, { capture: false, passive: false });
-    addEventListenerWithOptions(element, 'touchend', pointerEnd, { capture: false, passive: false });
-    addEventListenerWithOptions(element, 'touchcancel', pointerEnd, { capture: false, passive: false });
-  };
-
-  pointerEvent.callMoveHandler = function () {
-    if (curMoveHandler) {
-      curMoveHandler(lastPointerXY);
-    }
-  };
-}
 
 // [AUTO-SCROLL]
 // Scroll Animation Controller
@@ -1194,7 +1255,7 @@ function initAnim(element, gpuTrigger) {
   style.webkitTapHighlightColor = 'transparent';
 
   // Only when it has no shadow
-  var cssPropBoxShadow = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('boxShadow'),
+  var cssPropBoxShadow = cssprefix__WEBPACK_IMPORTED_MODULE_1__["default"].getName('boxShadow'),
       boxShadow = window.getComputedStyle(element, '')[cssPropBoxShadow];
   if (!boxShadow || boxShadow === 'none') {
     style[cssPropBoxShadow] = '0 0 1px transparent';
@@ -1209,7 +1270,7 @@ function initAnim(element, gpuTrigger) {
 function setDraggableCursor(element, orgCursor) {
   if (cssValueDraggableCursor == null) {
     if (cssWantedValueDraggableCursor !== false) {
-      cssValueDraggableCursor = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getValue('cursor', cssWantedValueDraggableCursor);
+      cssValueDraggableCursor = cssprefix__WEBPACK_IMPORTED_MODULE_1__["default"].getValue('cursor', cssWantedValueDraggableCursor);
     }
     // The wanted value was denied, or changing is not wanted.
     if (cssValueDraggableCursor == null) {
@@ -1223,7 +1284,7 @@ function setDraggableCursor(element, orgCursor) {
 function setDraggingCursor(element) {
   if (cssValueDraggingCursor == null) {
     if (cssWantedValueDraggingCursor !== false) {
-      cssValueDraggingCursor = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getValue('cursor', cssWantedValueDraggingCursor);
+      cssValueDraggingCursor = cssprefix__WEBPACK_IMPORTED_MODULE_1__["default"].getValue('cursor', cssWantedValueDraggingCursor);
     }
     // The wanted value was denied, or changing is not wanted.
     if (cssValueDraggingCursor == null) {
@@ -1847,7 +1908,7 @@ function dragEnd(props) {
   if (cssPropUserSelect) {
     body.style[cssPropUserSelect] = cssOrgValueBodyUserSelect;
   }
-  var classList = Object(m_class_list__WEBPACK_IMPORTED_MODULE_2__["default"])(props.element);
+  var classList = Object(m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"])(props.element);
   if (movingClass) {
     classList.remove(movingClass);
   }
@@ -1888,7 +1949,7 @@ function dragStart(props, pointerXY) {
     body.style[cssPropUserSelect] = 'none';
   }
   if (draggingClass) {
-    Object(m_class_list__WEBPACK_IMPORTED_MODULE_2__["default"])(props.element).add(draggingClass);
+    Object(m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"])(props.element).add(draggingClass);
   }
 
   activeItem = props;
@@ -2355,7 +2416,7 @@ var PlainDraggable = function () {
     } else {
       // [/SVG]
       /* eslint-disable indent */ /* [SVG/] */
-      var cssPropWillChange = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('willChange');
+      var cssPropWillChange = cssprefix__WEBPACK_IMPORTED_MODULE_1__["default"].getName('willChange');
       if (cssPropWillChange) {
         gpuTrigger = false;
       }
@@ -2387,7 +2448,7 @@ var PlainDraggable = function () {
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) {
-      Object(m_class_list__WEBPACK_IMPORTED_MODULE_2__["default"])(element).add(draggableClass);
+      Object(m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"])(element).add(draggableClass);
     }
     // pointerEvent new startHandler
     props.pointerEventHandlerId = pointerEvent.regStartHandler(function (pointerXY) {
@@ -2453,7 +2514,7 @@ var PlainDraggable = function () {
             props.options.handle.style[cssPropUserSelect] = props.orgUserSelect;
           }
           if (draggableClass) {
-            Object(m_class_list__WEBPACK_IMPORTED_MODULE_2__["default"])(props.element).remove(draggableClass);
+            Object(m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"])(props.element).remove(draggableClass);
           }
         } else {
           setDraggableCursor(props.options.handle, props.orgCursor);
@@ -2461,7 +2522,7 @@ var PlainDraggable = function () {
             props.options.handle.style[cssPropUserSelect] = 'none';
           }
           if (draggableClass) {
-            Object(m_class_list__WEBPACK_IMPORTED_MODULE_2__["default"])(props.element).add(draggableClass);
+            Object(m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"])(props.element).add(draggableClass);
           }
         }
       }
@@ -2636,7 +2697,7 @@ var PlainDraggable = function () {
         Object.keys(insProps).forEach(function (id) {
           var props = insProps[id];
           if (!props.disabled) {
-            var classList = Object(m_class_list__WEBPACK_IMPORTED_MODULE_2__["default"])(props.element);
+            var classList = Object(m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"])(props.element);
             if (draggableClass) {
               classList.remove(draggableClass);
             }
@@ -2657,7 +2718,7 @@ var PlainDraggable = function () {
       value = value ? value + '' : void 0;
       if (value !== draggingClass) {
         if (activeItem) {
-          var classList = Object(m_class_list__WEBPACK_IMPORTED_MODULE_2__["default"])(activeItem.element);
+          var classList = Object(m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"])(activeItem.element);
           if (draggingClass) {
             classList.remove(draggingClass);
           }
@@ -2677,7 +2738,7 @@ var PlainDraggable = function () {
       value = value ? value + '' : void 0;
       if (value !== movingClass) {
         if (activeItem && hasMoved) {
-          var classList = Object(m_class_list__WEBPACK_IMPORTED_MODULE_2__["default"])(activeItem.element);
+          var classList = Object(m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"])(activeItem.element);
           if (movingClass) {
             classList.remove(movingClass);
           }
@@ -2767,7 +2828,7 @@ pointerEvent.addMoveHandler(document, function (pointerXY) {
     if (!hasMoved) {
       hasMoved = true;
       if (movingClass) {
-        Object(m_class_list__WEBPACK_IMPORTED_MODULE_2__["default"])(activeItem.element).add(movingClass);
+        Object(m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"])(activeItem.element).add(movingClass);
       }
       if (activeItem.onMoveStart) {
         activeItem.onMoveStart(position);
@@ -2788,10 +2849,10 @@ pointerEvent.addEndHandler(document, function () {
 
 {
   var initDoc = function initDoc() {
-    cssPropTransitionProperty = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('transitionProperty');
-    cssPropTransform = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('transform');
+    cssPropTransitionProperty = cssprefix__WEBPACK_IMPORTED_MODULE_1__["default"].getName('transitionProperty');
+    cssPropTransform = cssprefix__WEBPACK_IMPORTED_MODULE_1__["default"].getName('transform');
     cssOrgValueBodyCursor = body.style.cursor;
-    if (cssPropUserSelect = cssprefix__WEBPACK_IMPORTED_MODULE_0__["default"].getName('userSelect')) {
+    if (cssPropUserSelect = cssprefix__WEBPACK_IMPORTED_MODULE_1__["default"].getName('userSelect')) {
       cssOrgValueBodyUserSelect = body.style[cssPropUserSelect];
     }
 
@@ -2822,7 +2883,7 @@ pointerEvent.addEndHandler(document, function () {
     }
 
     var layoutChanging = false; // Gecko bug, multiple calling by `resize`.
-    var layoutChange = anim_event__WEBPACK_IMPORTED_MODULE_1__["default"].add(function (event) {
+    var layoutChange = anim_event__WEBPACK_IMPORTED_MODULE_2__["default"].add(function (event) {
       if (layoutChanging) {
         console.log('`resize/scroll` event listener is already running.'); // [DEBUG/]
         return;
