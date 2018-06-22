@@ -64,7 +64,7 @@ isObject = function () {
 /** @type {Object.<_id: number, props>} */
 insProps = {},
     pointerOffset = {},
-    pointerEvent = new PointerEvent(); // Event Controller for mouse and touch interfaces
+    pointerEvent = new PointerEvent();
 
 var insId = 0,
     activeItem = void 0,
@@ -1559,7 +1559,6 @@ function _setOptions(props, newOptions) {
       if (cssPropUserSelect) {
         options.handle.style[cssPropUserSelect] = props.orgUserSelect;
       }
-      // pointerEvent remove startHandler
       pointerEvent.removeStartHandler(options.handle, props.pointerEventHandlerId);
     }
     var handle = options.handle = newOptions.handle;
@@ -1569,7 +1568,6 @@ function _setOptions(props, newOptions) {
       props.orgUserSelect = handle.style[cssPropUserSelect];
       handle.style[cssPropUserSelect] = 'none';
     }
-    // pointerEvent add startHandler
     pointerEvent.addStartHandler(handle, props.pointerEventHandlerId);
   }
 
@@ -1696,7 +1694,6 @@ var PlainDraggable = function () {
     if (draggableClass) {
       mClassList(element).add(draggableClass);
     }
-    // pointerEvent new startHandler
     props.pointerEventHandlerId = pointerEvent.regStartHandler(function (pointerXY) {
       return dragStart(props, pointerXY);
     });
@@ -1718,8 +1715,7 @@ var PlainDraggable = function () {
     value: function remove() {
       var props = insProps[this._id];
       this.disabled = true; // To restore
-      pointerEvent.removeStartHandler(props.options.handle, props.pointerEventHandlerId);
-      pointerEvent.unregStartHandler(props.pointerEventHandlerId);
+      pointerEvent.unregStartHandler(pointerEvent.removeStartHandler(props.options.handle, props.pointerEventHandlerId));
       delete insProps[this._id];
     }
 
@@ -2000,9 +1996,6 @@ var PlainDraggable = function () {
   return PlainDraggable;
 }();
 
-// pointerEvent add moveHandler
-
-
 pointerEvent.addMoveHandler(document, function (pointerXY) {
   if (!activeItem) {
     return;
@@ -2086,7 +2079,6 @@ pointerEvent.addMoveHandler(document, function (pointerXY) {
   }
 });
 
-// pointerEvent add endHandler
 pointerEvent.addEndHandler(document, function () {
   if (activeItem) {
     dragEnd(activeItem);
