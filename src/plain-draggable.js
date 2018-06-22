@@ -50,7 +50,7 @@ const
   /** @type {Object.<_id: number, props>} */
   insProps = {},
   pointerOffset = {},
-  pointerEvent = new PointerEvent(); // Event Controller for mouse and touch interfaces
+  pointerEvent = new PointerEvent();
 
 let insId = 0,
   activeItem, hasMoved, body,
@@ -1486,7 +1486,6 @@ function setOptions(props, newOptions) {
     if (options.handle) { // Restore
       options.handle.style.cursor = props.orgCursor;
       if (cssPropUserSelect) { options.handle.style[cssPropUserSelect] = props.orgUserSelect; }
-      // pointerEvent remove startHandler
       pointerEvent.removeStartHandler(options.handle, props.pointerEventHandlerId);
     }
     const handle = options.handle = newOptions.handle;
@@ -1496,7 +1495,6 @@ function setOptions(props, newOptions) {
       props.orgUserSelect = handle.style[cssPropUserSelect];
       handle.style[cssPropUserSelect] = 'none';
     }
-    // pointerEvent add startHandler
     pointerEvent.addStartHandler(handle, props.pointerEventHandlerId);
   }
 
@@ -1609,7 +1607,6 @@ class PlainDraggable {
     props.elementStyle = element.style;
     props.orgZIndex = props.elementStyle.zIndex;
     if (draggableClass) { mClassList(element).add(draggableClass); }
-    // pointerEvent new startHandler
     props.pointerEventHandlerId =
       pointerEvent.regStartHandler(pointerXY => dragStart(props, pointerXY));
 
@@ -1626,8 +1623,8 @@ class PlainDraggable {
   remove() {
     const props = insProps[this._id];
     this.disabled = true; // To restore
-    pointerEvent.removeStartHandler(props.options.handle, props.pointerEventHandlerId);
-    pointerEvent.unregStartHandler(props.pointerEventHandlerId);
+    pointerEvent.unregStartHandler(
+      pointerEvent.removeStartHandler(props.options.handle, props.pointerEventHandlerId));
     delete insProps[this._id];
   }
 
@@ -1806,7 +1803,6 @@ class PlainDraggable {
   }
 }
 
-// pointerEvent add moveHandler
 pointerEvent.addMoveHandler(document, pointerXY => {
   if (!activeItem) { return; }
   const position = {
@@ -1886,7 +1882,6 @@ pointerEvent.addMoveHandler(document, pointerXY => {
   }
 });
 
-// pointerEvent add endHandler
 pointerEvent.addEndHandler(document, () => {
   if (activeItem) { dragEnd(activeItem); }
 });
