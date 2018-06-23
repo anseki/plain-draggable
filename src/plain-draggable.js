@@ -1926,7 +1926,7 @@ pointerEvent.addEndHandler(document, () => {
 
       if (activeProps) {
         checkInitBBox(activeProps, event.type);
-        pointerEvent.callMoveHandler();
+        pointerEvent.move();
         initDoneItems[activeProps._id] = true;
       }
       clearTimeout(lazyInitTimer);
