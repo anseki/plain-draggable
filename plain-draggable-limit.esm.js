@@ -45,7 +45,7 @@ insProps = {},
     pointerEvent = new PointerEvent();
 
 var insId = 0,
-    activeItem = void 0,
+    activeProps = void 0,
     hasMoved = void 0,
     body = void 0,
 
@@ -492,7 +492,8 @@ function dragEnd(props) {
     classList.remove(draggingClass);
   }
 
-  activeItem = null;
+  activeProps = null;
+  pointerEvent.end(); // Reset pointer (activeProps must be null because this calls endHandler)
   if (props.onDragEnd) {
     props.onDragEnd({ left: props.elementBBox.left, top: props.elementBBox.top });
   }
@@ -510,8 +511,8 @@ function dragStart(props, pointerXY) {
   if (props.onDragStart && props.onDragStart(pointerXY) === false) {
     return false;
   }
-  if (activeItem) {
-    dragEnd(activeItem);
+  if (activeProps) {
+    dragEnd(activeProps);
   } // activeItem is normally null by pointerEvent.end.
 
   setDraggingCursor(props.options.handle);
@@ -528,7 +529,7 @@ function dragStart(props, pointerXY) {
     mClassList(props.element).add(draggingClass);
   }
 
-  activeItem = props;
+  activeProps = props;
   hasMoved = false;
   pointerOffset.left = props.elementBBox.left - (pointerXY.clientX + window.pageXOffset);
   pointerOffset.top = props.elementBBox.top - (pointerXY.clientY + window.pageYOffset);
@@ -589,7 +590,7 @@ function _setOptions(props, newOptions) {
   // zIndex
   if (isFinite(newOptions.zIndex) || newOptions.zIndex === false) {
     options.zIndex = newOptions.zIndex;
-    if (props === activeItem) {
+    if (props === activeProps) {
       props.elementStyle.zIndex = options.zIndex === false ? props.orgZIndex : options.zIndex;
     }
   }
@@ -694,7 +695,7 @@ var PlainDraggable = function () {
     key: 'remove',
     value: function remove() {
       var props = insProps[this._id];
-      this.disabled = true; // To restore
+      this.disabled = true; // To restore element and reset pointer
       pointerEvent.unregStartHandler(pointerEvent.removeStartHandler(props.options.handle, props.pointerEventHandlerId));
       delete insProps[this._id];
     }
@@ -728,7 +729,7 @@ var PlainDraggable = function () {
       if ((value = !!value) !== props.disabled) {
         props.disabled = value;
         if (props.disabled) {
-          if (props === activeItem) {
+          if (props === activeProps) {
             dragEnd(props);
           }
           props.options.handle.style.cursor = props.orgCursor;
@@ -851,11 +852,11 @@ var PlainDraggable = function () {
         cssValueDraggableCursor = null; // Reset
         Object.keys(insProps).forEach(function (id) {
           var props = insProps[id];
-          if (props.disabled || props === activeItem && cssValueDraggingCursor !== false) {
+          if (props.disabled || props === activeProps && cssValueDraggingCursor !== false) {
             return;
           }
           setDraggableCursor(props.options.handle, props.orgCursor);
-          if (props === activeItem) {
+          if (props === activeProps) {
             // Since cssValueDraggingCursor is `false`, copy cursor again.
             body.style.cursor = cssOrgValueBodyCursor;
             body.style.cursor = window.getComputedStyle(props.options.handle, '').cursor;
@@ -872,14 +873,14 @@ var PlainDraggable = function () {
       if (cssWantedValueDraggingCursor !== value) {
         cssWantedValueDraggingCursor = value;
         cssValueDraggingCursor = null; // Reset
-        if (activeItem) {
-          setDraggingCursor(activeItem.options.handle);
+        if (activeProps) {
+          setDraggingCursor(activeProps.options.handle);
           if (cssValueDraggingCursor === false) {
-            setDraggableCursor(activeItem.options.handle, activeItem.orgCursor); // draggableCursor
+            setDraggableCursor(activeProps.options.handle, activeProps.orgCursor); // draggableCursor
             body.style.cursor = cssOrgValueBodyCursor;
           }
           body.style.cursor = cssValueDraggingCursor || // If it is `false` or `''`
-          window.getComputedStyle(activeItem.options.handle, '').cursor;
+          window.getComputedStyle(activeProps.options.handle, '').cursor;
         }
       }
     }
@@ -914,8 +915,8 @@ var PlainDraggable = function () {
     set: function set(value) {
       value = value ? value + '' : void 0;
       if (value !== draggingClass) {
-        if (activeItem) {
-          var classList = mClassList(activeItem.element);
+        if (activeProps) {
+          var classList = mClassList(activeProps.element);
           if (draggingClass) {
             classList.remove(draggingClass);
           }
@@ -934,8 +935,8 @@ var PlainDraggable = function () {
     set: function set(value) {
       value = value ? value + '' : void 0;
       if (value !== movingClass) {
-        if (activeItem && hasMoved) {
-          var classList = mClassList(activeItem.element);
+        if (activeProps && hasMoved) {
+          var classList = mClassList(activeProps.element);
           if (movingClass) {
             classList.remove(movingClass);
           }
@@ -952,33 +953,33 @@ var PlainDraggable = function () {
 }();
 
 pointerEvent.addMoveHandler(document, function (pointerXY) {
-  if (!activeItem) {
+  if (!activeProps) {
     return;
   }
   var position = {
     left: pointerXY.clientX + window.pageXOffset + pointerOffset.left,
     top: pointerXY.clientY + window.pageYOffset + pointerOffset.top
   };
-  if (move(activeItem, position, activeItem.onDrag)) {
+  if (move(activeProps, position, activeProps.onDrag)) {
 
     if (!hasMoved) {
       hasMoved = true;
       if (movingClass) {
-        mClassList(activeItem.element).add(movingClass);
+        mClassList(activeProps.element).add(movingClass);
       }
-      if (activeItem.onMoveStart) {
-        activeItem.onMoveStart(position);
+      if (activeProps.onMoveStart) {
+        activeProps.onMoveStart(position);
       }
     }
-    if (activeItem.onMove) {
-      activeItem.onMove(position);
+    if (activeProps.onMove) {
+      activeProps.onMove(position);
     }
   }
 });
 
 pointerEvent.addEndHandler(document, function () {
-  if (activeItem) {
-    dragEnd(activeItem);
+  if (activeProps) {
+    dragEnd(activeProps);
   }
 });
 
@@ -1021,10 +1022,10 @@ pointerEvent.addEndHandler(document, function () {
       }
       layoutChanging = true;
 
-      if (activeItem) {
-        checkInitBBox(activeItem, event.type);
-        pointerEvent.callMoveHandler();
-        initDoneItems[activeItem._id] = true;
+      if (activeProps) {
+        checkInitBBox(activeProps, event.type);
+        pointerEvent.move();
+        initDoneItems[activeProps._id] = true;
       }
       clearTimeout(lazyInitTimer);
       lazyInitTimer = setTimeout(function () {
