@@ -42,7 +42,7 @@ const
   pointerEvent = new PointerEvent();
 
 let insId = 0,
-  activeItem, hasMoved, body,
+  activeProps, hasMoved, body,
   // CSS property/value
   cssValueDraggableCursor, cssValueDraggingCursor, cssOrgValueBodyCursor,
   cssPropTransitionProperty, cssPropTransform, cssPropUserSelect, cssOrgValueBodyUserSelect,
@@ -466,7 +466,8 @@ function dragEnd(props) {
   if (movingClass) { classList.remove(movingClass); }
   if (draggingClass) { classList.remove(draggingClass); }
 
-  activeItem = null;
+  activeProps = null;
+  pointerEvent.end(); // Reset pointer (activeProps must be null because this calls endHandler)
   if (props.onDragEnd) {
     props.onDragEnd({left: props.elementBBox.left, top: props.elementBBox.top});
   }
@@ -480,7 +481,7 @@ function dragEnd(props) {
 function dragStart(props, pointerXY) {
   if (props.disabled) { return false; }
   if (props.onDragStart && props.onDragStart(pointerXY) === false) { return false; }
-  if (activeItem) { dragEnd(activeItem); } // activeItem is normally null by pointerEvent.end.
+  if (activeProps) { dragEnd(activeProps); } // activeItem is normally null by pointerEvent.end.
 
   setDraggingCursor(props.options.handle);
   body.style.cursor = cssValueDraggingCursor || // If it is `false` or `''`
@@ -490,7 +491,7 @@ function dragStart(props, pointerXY) {
   if (cssPropUserSelect) { body.style[cssPropUserSelect] = 'none'; }
   if (draggingClass) { mClassList(props.element).add(draggingClass); }
 
-  activeItem = props;
+  activeProps = props;
   hasMoved = false;
   pointerOffset.left = props.elementBBox.left - (pointerXY.clientX + window.pageXOffset);
   pointerOffset.top = props.elementBBox.top - (pointerXY.clientY + window.pageYOffset);
@@ -547,7 +548,7 @@ function setOptions(props, newOptions) {
   // zIndex
   if (isFinite(newOptions.zIndex) || newOptions.zIndex === false) {
     options.zIndex = newOptions.zIndex;
-    if (props === activeItem) {
+    if (props === activeProps) {
       props.elementStyle.zIndex = options.zIndex === false ? props.orgZIndex : options.zIndex;
     }
   }
@@ -634,7 +635,7 @@ class PlainDraggable {
 
   remove() {
     const props = insProps[this._id];
-    this.disabled = true; // To restore
+    this.disabled = true; // To restore element and reset pointer
     pointerEvent.unregStartHandler(
       pointerEvent.removeStartHandler(props.options.handle, props.pointerEventHandlerId));
     delete insProps[this._id];
@@ -664,7 +665,7 @@ class PlainDraggable {
     if ((value = !!value) !== props.disabled) {
       props.disabled = value;
       if (props.disabled) {
-        if (props === activeItem) { dragEnd(props); }
+        if (props === activeProps) { dragEnd(props); }
         props.options.handle.style.cursor = props.orgCursor;
         if (cssPropUserSelect) { props.options.handle.style[cssPropUserSelect] = props.orgUserSelect; }
         if (draggableClass) { mClassList(props.element).remove(draggableClass); }
@@ -729,9 +730,9 @@ class PlainDraggable {
       cssValueDraggableCursor = null; // Reset
       Object.keys(insProps).forEach(id => {
         const props = insProps[id];
-        if (props.disabled || props === activeItem && cssValueDraggingCursor !== false) { return; }
+        if (props.disabled || props === activeProps && cssValueDraggingCursor !== false) { return; }
         setDraggableCursor(props.options.handle, props.orgCursor);
-        if (props === activeItem) { // Since cssValueDraggingCursor is `false`, copy cursor again.
+        if (props === activeProps) { // Since cssValueDraggingCursor is `false`, copy cursor again.
           body.style.cursor = cssOrgValueBodyCursor;
           body.style.cursor = window.getComputedStyle(props.options.handle, '').cursor;
         }
@@ -746,14 +747,14 @@ class PlainDraggable {
     if (cssWantedValueDraggingCursor !== value) {
       cssWantedValueDraggingCursor = value;
       cssValueDraggingCursor = null; // Reset
-      if (activeItem) {
-        setDraggingCursor(activeItem.options.handle);
+      if (activeProps) {
+        setDraggingCursor(activeProps.options.handle);
         if (cssValueDraggingCursor === false) {
-          setDraggableCursor(activeItem.options.handle, activeItem.orgCursor); // draggableCursor
+          setDraggableCursor(activeProps.options.handle, activeProps.orgCursor); // draggableCursor
           body.style.cursor = cssOrgValueBodyCursor;
         }
         body.style.cursor = cssValueDraggingCursor || // If it is `false` or `''`
-          window.getComputedStyle(activeItem.options.handle, '').cursor;
+          window.getComputedStyle(activeProps.options.handle, '').cursor;
       }
     }
   }
@@ -782,8 +783,8 @@ class PlainDraggable {
   static set draggingClass(value) {
     value = value ? (value + '') : void 0;
     if (value !== draggingClass) {
-      if (activeItem) {
-        const classList = mClassList(activeItem.element);
+      if (activeProps) {
+        const classList = mClassList(activeProps.element);
         if (draggingClass) { classList.remove(draggingClass); }
         if (value) { classList.add(value); }
       }
@@ -797,8 +798,8 @@ class PlainDraggable {
   static set movingClass(value) {
     value = value ? (value + '') : void 0;
     if (value !== movingClass) {
-      if (activeItem && hasMoved) {
-        const classList = mClassList(activeItem.element);
+      if (activeProps && hasMoved) {
+        const classList = mClassList(activeProps.element);
         if (movingClass) { classList.remove(movingClass); }
         if (value) { classList.add(value); }
       }
@@ -808,26 +809,26 @@ class PlainDraggable {
 }
 
 pointerEvent.addMoveHandler(document, pointerXY => {
-  if (!activeItem) { return; }
+  if (!activeProps) { return; }
   const position = {
     left: pointerXY.clientX + window.pageXOffset + pointerOffset.left,
     top: pointerXY.clientY + window.pageYOffset + pointerOffset.top
   };
-  if (move(activeItem, position,
-    activeItem.onDrag)) {
+  if (move(activeProps, position,
+    activeProps.onDrag)) {
 
 
     if (!hasMoved) {
       hasMoved = true;
-      if (movingClass) { mClassList(activeItem.element).add(movingClass); }
-      if (activeItem.onMoveStart) { activeItem.onMoveStart(position); }
+      if (movingClass) { mClassList(activeProps.element).add(movingClass); }
+      if (activeProps.onMoveStart) { activeProps.onMoveStart(position); }
     }
-    if (activeItem.onMove) { activeItem.onMove(position); }
+    if (activeProps.onMove) { activeProps.onMove(position); }
   }
 });
 
 pointerEvent.addEndHandler(document, () => {
-  if (activeItem) { dragEnd(activeItem); }
+  if (activeProps) { dragEnd(activeProps); }
 });
 
 {
@@ -866,10 +867,10 @@ pointerEvent.addEndHandler(document, () => {
       }
       layoutChanging = true;
 
-      if (activeItem) {
-        checkInitBBox(activeItem, event.type);
-        pointerEvent.callMoveHandler();
-        initDoneItems[activeItem._id] = true;
+      if (activeProps) {
+        checkInitBBox(activeProps, event.type);
+        pointerEvent.move();
+        initDoneItems[activeProps._id] = true;
       }
       clearTimeout(lazyInitTimer);
       lazyInitTimer = setTimeout(() => { initAll(event.type); }, LAZY_INIT_DELAY);
