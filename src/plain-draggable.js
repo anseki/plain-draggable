@@ -1125,6 +1125,7 @@ function dragEnd(props) {
   if (draggingClass) { classList.remove(draggingClass); }
 
   activeProps = null;
+  pointerEvent.end(); // Reset pointer (activeProps must be null because this calls endHandler)
   if (props.onDragEnd) {
     props.onDragEnd({left: props.elementBBox.left, top: props.elementBBox.top});
   }
@@ -1622,7 +1623,7 @@ class PlainDraggable {
 
   remove() {
     const props = insProps[this._id];
-    this.disabled = true; // To restore
+    this.disabled = true; // To restore element and reset pointer
     pointerEvent.unregStartHandler(
       pointerEvent.removeStartHandler(props.options.handle, props.pointerEventHandlerId));
     delete insProps[this._id];
