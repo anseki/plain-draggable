@@ -33,7 +33,7 @@
     "log4js": "^2.10.0",
     "m-class-list": "^1.1.9",
     "node-static-alias": "^1.1.2",
-    "pointer-event": "^0.4.0",
+    "pointer-event": "^0.4.1",
     "pre-proc": "^1.0.2",
     "skeleton-loader": "^2.0.0",
     "stats-filelist": "^1.0.1",
