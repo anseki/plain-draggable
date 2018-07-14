@@ -1165,7 +1165,7 @@ function dragEnd(props) {
   }
 
   activeProps = null;
-  pointerEvent.end(); // Reset pointer (activeProps must be null because this calls endHandler)
+  pointerEvent.cancel(); // Reset pointer (activeProps must be null because this calls endHandler)
   if (props.onDragEnd) {
     props.onDragEnd({ left: props.elementBBox.left, top: props.elementBBox.top });
   }
@@ -2080,11 +2080,16 @@ pointerEvent.addMoveHandler(document, function (pointerXY) {
   }
 });
 
-pointerEvent.addEndHandler(document, function () {
-  if (activeProps) {
-    dragEnd(activeProps);
-  }
-});
+{
+  var endHandler = function endHandler() {
+    if (activeProps) {
+      dragEnd(activeProps);
+    }
+  };
+
+  pointerEvent.addEndHandler(document, endHandler);
+  pointerEvent.addCancelHandler(document, endHandler);
+}
 
 {
   var initDoc = function initDoc() {
