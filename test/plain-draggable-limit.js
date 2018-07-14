@@ -553,6 +553,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var DUPLICATE_INTERVAL = 400; // For avoiding mouse event that fired by touch interface
 
+
 // Support options for addEventListener
 var passiveSupported = false;
 try {
@@ -561,12 +562,20 @@ try {
       passiveSupported = true;
     }
   }));
-} catch (error) {/* ignore */}
+} catch (error) {} /* ignore */
 
-function addEventListenerWithOptions(target, type, handler, options) {
+/**
+ * addEventListener with specific option.
+ * @param {Element} target - An event-target element.
+ * @param {string} type - The event type to listen for.
+ * @param {function} listener - The EventListener.
+ * @param {Object} options - An options object.
+ * @returns {void}
+ */
+function addEventListenerWithOptions(target, type, listener, options) {
   // When `passive` is not supported, consider that the `useCapture` is supported instead of
   // `options` (i.e. options other than the `passive` also are not supported).
-  target.addEventListener(type, handler, passiveSupported ? options : options.capture);
+  target.addEventListener(type, listener, passiveSupported ? options : options.capture);
 }
 
 // Gecko, Trident pick drag-event of some elements such as img, a, etc.
@@ -720,19 +729,18 @@ var PointerEvent = function () {
   }, {
     key: 'move',
     value: function move(pointerXY) {
-      if (this.curMoveHandler) {
-        if (!pointerXY) {
-          pointerXY = this.lastPointerXY;
-        }
-        this.curMoveHandler(pointerXY);
+      if (pointerXY) {
         this.lastPointerXY.clientX = pointerXY.clientX;
         this.lastPointerXY.clientY = pointerXY.clientY;
+      }
+      if (this.curMoveHandler) {
+        this.curMoveHandler(this.lastPointerXY);
       }
     }
 
     /**
      * @param {Element} element - A target element.
-     * @param {function} endHandler - This is called when it ends.
+     * @param {function} endHandler - This is called with pointerXY when it ends.
      * @returns {void}
      */
 
@@ -741,9 +749,10 @@ var PointerEvent = function () {
     value: function addEndHandler(element, endHandler) {
       var that = this;
       function wrappedHandler(event) {
-        var pointerClass = event.type === 'mouseup' ? 'mouse' : 'touch';
+        var pointerClass = event.type === 'mouseup' ? 'mouse' : 'touch',
+            pointerXY = pointerClass === 'mouse' ? event : event.targetTouches[0] || event.touches[0];
         if (pointerClass === that.curPointerClass) {
-          that.end();
+          that.end(pointerXY);
           if (that.options.preventDefault) {
             event.preventDefault();
           }
@@ -754,8 +763,48 @@ var PointerEvent = function () {
       }
       addEventListenerWithOptions(element, 'mouseup', wrappedHandler, { capture: false, passive: false });
       addEventListenerWithOptions(element, 'touchend', wrappedHandler, { capture: false, passive: false });
-      addEventListenerWithOptions(element, 'touchcancel', wrappedHandler, { capture: false, passive: false });
       that.curEndHandler = endHandler;
+    }
+
+    /**
+     * @param {{clientX, clientY}} [pointerXY] - This might be MouseEvent, Touch of TouchEvent or Object.
+     * @returns {void}
+     */
+
+  }, {
+    key: 'end',
+    value: function end(pointerXY) {
+      if (pointerXY) {
+        this.lastPointerXY.clientX = pointerXY.clientX;
+        this.lastPointerXY.clientY = pointerXY.clientY;
+      }
+      if (this.curEndHandler) {
+        this.curEndHandler(this.lastPointerXY);
+      }
+      this.curPointerClass = null;
+    }
+
+    /**
+     * @param {Element} element - A target element.
+     * @param {function} cancelHandler - This is called when it cancels.
+     * @returns {void}
+     */
+
+  }, {
+    key: 'addCancelHandler',
+    value: function addCancelHandler(element, cancelHandler) {
+      var that = this;
+      function wrappedHandler() {
+        /*
+          Now, this is fired by touchcancel only, but it might be fired even if curPointerClass is mouse.
+        */
+        // const pointerClass = 'touch';
+        // if (pointerClass === that.curPointerClass) {
+        that.cancel();
+        // }
+      }
+      addEventListenerWithOptions(element, 'touchcancel', wrappedHandler, { capture: false, passive: false });
+      that.curCancelHandler = cancelHandler;
     }
 
     /**
@@ -763,12 +812,17 @@ var PointerEvent = function () {
      */
 
   }, {
-    key: 'end',
-    value: function end() {
-      if (this.curEndHandler) {
-        this.curEndHandler();
-        this.curPointerClass = null;
+    key: 'cancel',
+    value: function cancel() {
+      if (this.curCancelHandler) {
+        this.curCancelHandler();
       }
+      this.curPointerClass = null;
+    }
+  }], [{
+    key: 'addEventListenerWithOptions',
+    get: function get() {
+      return addEventListenerWithOptions;
     }
   }]);
 
@@ -1298,7 +1352,7 @@ function dragEnd(props) {
   }
 
   activeProps = null;
-  pointerEvent.end(); // Reset pointer (activeProps must be null because this calls endHandler)
+  pointerEvent.cancel(); // Reset pointer (activeProps must be null because this calls endHandler)
   if (props.onDragEnd) {
     props.onDragEnd({ left: props.elementBBox.left, top: props.elementBBox.top });
   }
@@ -1783,11 +1837,16 @@ pointerEvent.addMoveHandler(document, function (pointerXY) {
   }
 });
 
-pointerEvent.addEndHandler(document, function () {
-  if (activeProps) {
-    dragEnd(activeProps);
-  }
-});
+{
+  var endHandler = function endHandler() {
+    if (activeProps) {
+      dragEnd(activeProps);
+    }
+  };
+
+  pointerEvent.addEndHandler(document, endHandler);
+  pointerEvent.addCancelHandler(document, endHandler);
+}
 
 {
   var initDoc = function initDoc() {
