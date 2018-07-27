@@ -30,16 +30,16 @@
     "cross-env": "^5.2.0",
     "cssprefix": "^2.0.16",
     "jasmine-core": "^3.1.0",
-    "log4js": "^2.11.0",
+    "log4js": "^3.0.2",
     "m-class-list": "^1.1.9",
     "node-static-alias": "^1.1.2",
-    "pointer-event": "^0.5.2",
+    "pointer-event": "^0.6.0",
     "pre-proc": "^1.0.2",
     "skeleton-loader": "^2.0.0",
     "stats-filelist": "^1.0.1",
     "test-page-loader": "^1.0.7",
-    "webpack": "^4.16.0",
-    "webpack-cli": "^3.0.8"
+    "webpack": "^4.16.2",
+    "webpack-cli": "^3.1.0"
   },
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack --verbose",
