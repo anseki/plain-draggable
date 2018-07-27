@@ -159,10 +159,10 @@ describe('autoScroll', function() {
       speed: AUTOSCROLL_SPEED,
       sensitivity: AUTOSCROLL_SENSITIVITY
     });
-    expect(props.autoScroll.x.min).toEqual(8);
-    expect(props.autoScroll.x.max).toEqual(16);
-    expect(props.autoScroll.y.min).toEqual(32);
-    expect(props.autoScroll.y.max).toEqual(64);
+    expect(props.autoScroll.x.min).toBe(8);
+    expect(props.autoScroll.x.max).toBe(16);
+    expect(props.autoScroll.y.min).toBe(32);
+    expect(props.autoScroll.y.max).toBe(64);
 
     // Fix max*
     draggable.autoScroll = {maxX: 8, maxY: SCROLL_HEIGHT}; // maxY over
@@ -172,10 +172,10 @@ describe('autoScroll', function() {
       speed: AUTOSCROLL_SPEED,
       sensitivity: AUTOSCROLL_SENSITIVITY
     });
-    expect(props.autoScroll.x.min).toEqual(0);
-    expect(props.autoScroll.x.max).toEqual(8);
-    expect(props.autoScroll.y.min).toEqual(0);
-    expect(props.autoScroll.y.max).toEqual(SCROLL_HEIGHT - clientHeight); // Fixed
+    expect(props.autoScroll.x.min).toBe(0);
+    expect(props.autoScroll.x.max).toBe(8);
+    expect(props.autoScroll.y.min).toBe(0);
+    expect(props.autoScroll.y.max).toBe(SCROLL_HEIGHT - clientHeight); // Fixed
 
     // Default max* -> max scroll
     draggable.autoScroll = {minX: 8, minY: SCROLL_WIDTH}; // minY over
@@ -185,8 +185,8 @@ describe('autoScroll', function() {
       speed: AUTOSCROLL_SPEED,
       sensitivity: AUTOSCROLL_SENSITIVITY
     });
-    expect(props.autoScroll.x.min).toEqual(8);
-    expect(props.autoScroll.x.max).toEqual(SCROLL_WIDTH - clientWidth);
+    expect(props.autoScroll.x.min).toBe(8);
+    expect(props.autoScroll.x.max).toBe(SCROLL_WIDTH - clientWidth);
     expect(props.autoScroll.y).not.toBeDefined(); // removed
 
     // over max* -> max scroll
@@ -197,8 +197,8 @@ describe('autoScroll', function() {
       speed: AUTOSCROLL_SPEED,
       sensitivity: AUTOSCROLL_SENSITIVITY
     });
-    expect(props.autoScroll.x.min).toEqual(8);
-    expect(props.autoScroll.x.max).toEqual(SCROLL_WIDTH - clientWidth);
+    expect(props.autoScroll.x.min).toBe(8);
+    expect(props.autoScroll.x.max).toBe(SCROLL_WIDTH - clientWidth);
     expect(props.autoScroll.y).not.toBeDefined(); // removed
 
     done();
