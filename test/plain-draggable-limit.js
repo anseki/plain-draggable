@@ -941,7 +941,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 m_class_list__WEBPACK_IMPORTED_MODULE_3__["default"].ignoreNative = true;
 
 var ZINDEX = 9000,
-    IS_WEBKIT = !window.chrome && 'WebkitAppearance' in document.documentElement.style,
+    IS_EDGE = '-ms-scroll-limit' in document.documentElement.style && '-ms-ime-align' in document.documentElement.style && !window.navigator.msPointerEnabled,
+    IS_TRIDENT = !IS_EDGE && !!document.uniqueID,
+    // Future Edge might support `document.uniqueID`.
+IS_BLINK = !IS_EDGE && !IS_GECKO && // Edge has `window.chrome`, and future Gecko might have that.
+!!window.chrome && !!window.CSS,
+    IS_WEBKIT = !IS_EDGE && !IS_TRIDENT && !IS_GECKO && !IS_BLINK && // Some engines support `webkit-*` properties.
+!window.chrome && 'WebkitAppearance' in document.documentElement.style,
     isObject = function () {
   var toString = {}.toString,
       fnToString = {}.hasOwnProperty.toString,

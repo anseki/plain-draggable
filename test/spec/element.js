@@ -4,9 +4,11 @@ describe('element', function() {
   var LIMIT = self.top.LIMIT;
   var window, document, pageDone,
     cssPropTransform,
-    IS_TRIDENT = !!top.document.uniqueID, // use `top` to get native window
+
+    // use `top` to get native window
     IS_EDGE = '-ms-scroll-limit' in top.document.documentElement.style &&
-      '-ms-ime-align' in top.document.documentElement.style && !top.navigator.msPointerEnabled;
+      '-ms-ime-align' in top.document.documentElement.style && !top.navigator.msPointerEnabled,
+    IS_TRIDENT = !IS_EDGE && !!top.document.uniqueID; // Future Edge might support `document.uniqueID`.
 
   beforeAll(function(beforeDone) {
     loadPage('spec/element.html', function(pageWindow, pageDocument, pageBody, done) {
