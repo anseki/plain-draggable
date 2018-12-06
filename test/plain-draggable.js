@@ -964,8 +964,7 @@ IS_EDGE = '-ms-scroll-limit' in document.documentElement.style && '-ms-ime-align
     IS_TRIDENT = !IS_EDGE && !!document.uniqueID,
     // Future Edge might support `document.uniqueID`.
 IS_GECKO = 'MozAppearance' in document.documentElement.style,
-    // [SVG/]
-IS_BLINK = !IS_EDGE && !IS_GECKO && // Edge has `window.chrome`, and future Gecko might have that.
+    IS_BLINK = !IS_EDGE && !IS_GECKO && // Edge has `window.chrome`, and future Gecko might have that.
 !!window.chrome && !!window.CSS,
     IS_WEBKIT = !IS_EDGE && !IS_TRIDENT && !IS_GECKO && !IS_BLINK && // Some engines support `webkit-*` properties.
 !window.chrome && 'WebkitAppearance' in document.documentElement.style,

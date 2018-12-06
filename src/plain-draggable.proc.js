@@ -37,7 +37,7 @@ const
   IS_EDGE = '-ms-scroll-limit' in document.documentElement.style &&
     '-ms-ime-align' in document.documentElement.style && !window.navigator.msPointerEnabled,
   IS_TRIDENT = !IS_EDGE && !!document.uniqueID, // Future Edge might support `document.uniqueID`.
-  IS_GECKO = 'MozAppearance' in document.documentElement.style, // [SVG/]
+  IS_GECKO = 'MozAppearance' in document.documentElement.style,
   IS_BLINK = !IS_EDGE && !IS_GECKO && // Edge has `window.chrome`, and future Gecko might have that.
     !!window.chrome && !!window.CSS,
   IS_WEBKIT = !IS_EDGE && !IS_TRIDENT &&
