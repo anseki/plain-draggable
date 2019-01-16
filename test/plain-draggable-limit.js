@@ -650,6 +650,11 @@ var PointerEvent = function () {
     value: function regStartHandler(startHandler) {
       var that = this;
       that.startHandlers[++that.lastHandlerId] = function (event) {
+        if(event.srcElement.tagName=="INPUT")//fix input UI cannot input bug
+        {
+          return;
+        }
+
         var pointerClass = event.type === 'mousedown' ? 'mouse' : 'touch',
             now = Date.now();
         var pointerXY = void 0,
@@ -714,6 +719,7 @@ var PointerEvent = function () {
       if (!this.startHandlers[handlerId]) {
         throw new Error('Invalid handlerId: ' + handlerId);
       }
+      
       addEventListenerWithOptions(element, 'mousedown', this.startHandlers[handlerId], { capture: false, passive: false });
       addEventListenerWithOptions(element, 'touchstart', this.startHandlers[handlerId], { capture: false, passive: false });
       addEventListenerWithOptions(element, 'dragstart', dragstart, { capture: false, passive: false });
