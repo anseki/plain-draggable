@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="css/syntax.css">
   <link rel="stylesheet" href="css/default.css">
   <link rel="stylesheet" href="css/ex.css">
-  <script src="js/libs-81ffc5c-190412205328.js"></script>
+  <script src="js/libs-81ffc5c-190414172104.js"></script>
 
   <title>PlainDraggable</title>
 </head>
@@ -615,10 +615,11 @@ window.addEventListener('load', function() {
 
 <p><em>Type:</em> HTML/SVG element or <a href="#rect"><code>Rect</code></a><br><em>Default:</em> Parent element</p>
 
-<p>A rectangle that restricts the draggable element moving. The draggable element can not move to the outside of this rectangle even if a mouse pointer is moved to there.<br>It can be a HTML or SVG element, or <code>Rect</code> object like <code>{left: &#39;10%&#39;, top: 20, right: &#39;90%&#39;, height: 300}</code> (See <a href="#rect"><code>Rect</code></a>). The base of the <code>Rect</code> object is the current document.<br>Note that the rectangle is &quot;padding-box&quot; of the element if an element is specified. That is, it is the inside of borders of the element.</p>
+<p>A rectangle that restricts the moving of the draggable element. The draggable element can not move to the outside of this rectangle even if a mouse pointer is moved to there.<br>It can be a HTML or SVG element, or a <code>Rect</code> object like <code>{left: &#39;10%&#39;, top: 20, right: &#39;90%&#39;, height: 300}</code> (See <a href="#rect"><code>Rect</code></a>). The base of the <code>Rect</code> object is the current document.<br>Note that the rectangle is &quot;padding-box&quot; of the element if an element is specified. That is, it is the inside of borders of the element.</p>
 
-<p>The width or height can be less than the size of the draggable element, such as zero, to disable a moving on that axis.<br>For example, this draggable element can be moved in a horizontal direction only.</p>
+<p>The width or height can be less than the size of the draggable element, such as zero, to disable the moving on that axis.<br>For example, this draggable element can be moved in a horizontal direction only.</p>
 <div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span><span class="p">.</span><span class="nx">containment</span> <span class="o">=</span> <span class="p">{</span><span class="nx">left</span><span class="o">:</span> <span class="mi">20</span><span class="p">,</span> <span class="nx">top</span><span class="o">:</span> <span class="mi">20</span><span class="p">,</span> <span class="nx">width</span><span class="o">:</span> <span class="mi">800</span><span class="p">,</span> <span class="nx">height</span><span class="o">:</span> <span class="mi">0</span><span class="p">};</span>
+<span class="c1">// See next code too.</span>
 </code></pre></div>
 <!-- include "ex-090.html" -->
 <!-- ================ ex -->
@@ -637,6 +638,10 @@ window.addEventListener('load', function() {
 <!-- ================ /ex -->
 <!-- /include "ex-090.html" -->
 
+<p>When the moving on an axis is disabled, the draggable element is not moved in that axis direction at all. Therefore the position of the <code>containment</code> on that axis has no meaning.<br>For example, when <code>0</code> is specified for <code>height</code> to disable the moving on that Y-axis, even if <code>0</code>, <code>999</code> or another value is specified for <code>top</code>, the draggable element is not moved to <code>0</code> or <code>999</code> in Y-axis.<br>Therefore the above example code can be replaced with:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">draggable</span><span class="p">.</span><span class="nx">containment</span> <span class="o">=</span> <span class="p">{</span><span class="nx">left</span><span class="o">:</span> <span class="mi">20</span><span class="p">,</span> <span class="nx">top</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">width</span><span class="o">:</span> <span class="mi">800</span><span class="p">,</span> <span class="nx">height</span><span class="o">:</span> <span class="mi">0</span><span class="p">};</span>
+<span class="c1">// The element is not moved to `top: 0` even if it is positioned at `top: 480` now.</span>
+</code></pre></div>
 <p>The default is the draggable element&#39;s parent element.</p>
 
 <p>You can specify a <code>&lt;body&gt;</code> element that means all of a page, or <code>{left: 0, top: 0, width: &#39;100%&#39;, height: &#39;100%&#39;}</code> means all of a document (the document height might differ from the <code>&lt;body&gt;</code> height).</p>
@@ -861,7 +866,7 @@ window.addEventListener('load', function() {
 
 <p><em>Type:</em> boolean<br><em>Default:</em> <code>false</code></p>
 
-<p>If <code>true</code> is specified, the draggable element stops a moving immediately, and it does not receive mouse operations.</p>
+<p>If <code>true</code> is specified, the draggable element stops the moving immediately, and it does not receive mouse operations.</p>
 
 <h3 id="element"><code>element</code></h3>
 
