@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="css/syntax.css">
   <link rel="stylesheet" href="css/default.css">
   <link rel="stylesheet" href="css/ex.css">
-  <script src="js/libs-81ffc5c-190414172104.js"></script>
+  <script src="js/libs-81ffc5c-190824122743.js"></script>
 
   <title>PlainDraggable</title>
 </head>
@@ -584,11 +584,11 @@ window.addEventListener('load', function() {
 </code></pre></div>
 <p>The <code>element</code> argument is a HTML or SVG element that will be a draggable element. Any element that has a bounding-box is accepted. Other elements such as <code>&lt;g&gt;</code> can not be specified.</p>
 
-<p>The <code>options</code> argument is an Object that can have properties as <a href="#options">options</a> (and <a href="#lefttop-option"><code>leftTop</code></a> option). You can also change the options by <a href="#setoptions"><code>setOptions</code></a> method or <a href="#properties">properties</a> of the PlainDraggable instance.</p>
+<p>The <code>options</code> argument is an Object that can have properties as <a href="#options">options</a> (and <a href="#lefttop-option"><code>leftTop</code></a> option for constructor). You can also change the options by <a href="#setoptions"><code>setOptions</code></a> method or <a href="#properties">properties</a> of the PlainDraggable instance.</p>
 
 <h3 id="lefttop-option"><code>leftTop</code> option</h3>
 
-<p>By default, PlainDraggable tries to move the draggable element by using the <code>translate</code> CSS transform function.<br>If <code>true</code> is specified for <code>leftTop</code> option of the constructor, it uses the <code>left</code> and <code>top</code> CSS properties instead. You may use this to make it synchronize with the layout of something.</p>
+<p>By default, PlainDraggable tries to move the draggable element by using the <code>translate</code> CSS transform function.<br>If <code>true</code> is specified for <code>leftTop</code> option of the constructor, it uses the <code>left</code> and <code>top</code> CSS properties instead, for HTML element. You may use this to make it synchronize with the layout of something.</p>
 
 <p>Note that the <code>left</code> and <code>top</code> CSS properties may be performance degradation.<br>Also, this is an option for constructor, that is, you can not change this after.</p>
 
