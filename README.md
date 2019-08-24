@@ -65,12 +65,12 @@ draggable = new PlainDraggable(element[, options])
 
 The `element` argument is a HTML or SVG element that will be a draggable element. Any element that has a bounding-box is accepted. Other elements such as `<g>` can not be specified.
 
-The `options` argument is an Object that can have properties as [options](#options) (and [`leftTop`](#lefttop-option) option). You can also change the options by [`setOptions`](#setoptions) method or [properties](#properties) of the PlainDraggable instance.
+The `options` argument is an Object that can have properties as [options](#options) (and [`leftTop`](#lefttop-option) option for constructor). You can also change the options by [`setOptions`](#setoptions) method or [properties](#properties) of the PlainDraggable instance.
 
 ### `leftTop` option
 
 By default, PlainDraggable tries to move the draggable element by using the `translate` CSS transform function.  
-If `true` is specified for `leftTop` option of the constructor, it uses the `left` and `top` CSS properties instead. You may use this to make it synchronize with the layout of something.
+If `true` is specified for `leftTop` option of the constructor, it uses the `left` and `top` CSS properties instead, for HTML element. You may use this to make it synchronize with the layout of something.
 
 Note that the `left` and `top` CSS properties may be performance degradation.  
 Also, this is an option for constructor, that is, you can not change this after.
