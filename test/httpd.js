@@ -3,6 +3,13 @@
 'use strict';
 
 const
+  nodeStaticAlias = require('node-static-alias'),
+  log4js = require('log4js'),
+  http = require('http'),
+  pathUtil = require('path'),
+  fs = require('fs'),
+  filelist = require('stats-filelist'),
+
   DOC_ROOT = __dirname,
   PORT = 8080,
 
@@ -12,8 +19,9 @@ const
     'cssprefix'
   ],
 
+  EXT_DIR = pathUtil.resolve(__dirname, '../../test-ext'),
+
   logger = (() => {
-    const log4js = require('log4js');
     log4js.configure({
       appenders: {
         out: {
@@ -29,13 +37,7 @@ const
     return log4js.getLogger('node-static-alias');
   })(),
 
-  filelist = require('stats-filelist'),
-  path = require('path'),
-  fs = require('fs'),
-
-  EXT_DIR = path.resolve(__dirname, '../../test-ext'),
-
-  staticAlias = new (require('node-static-alias')).Server(DOC_ROOT, {
+  staticAlias = new nodeStaticAlias.Server(DOC_ROOT, {
     cache: false,
     headers: {'Cache-Control': 'no-cache, must-revalidate'},
     alias:
@@ -66,14 +68,14 @@ const
         {
           match: /^\/ext\/?$/,
           serve: () => {
-            const indexPath = path.join(EXT_DIR, '.index.html');
+            const indexPath = pathUtil.join(EXT_DIR, '.index.html');
             fs.writeFileSync(indexPath,
               `<html><head><meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"></head><body><ul>${
                 filelist.getSync(EXT_DIR, {
                   filter: stats => /^[^.].*\.html$/.test(stats.name),
                   listOf: 'fullPath'
                 }).sort().map(fullPath => { // abs URL for '/ext' (no trailing slash)
-                  const htmlPath = `/ext/${path.relative(EXT_DIR, fullPath).replace(/\\/g, '/')}`;
+                  const htmlPath = `/ext/${pathUtil.relative(EXT_DIR, fullPath).replace(/\\/g, '/')}`;
                   return `<li><a href="${htmlPath}">${htmlPath}</a></li>`;
                 }).join('')
               }</ul></body></html>`);
@@ -85,7 +87,7 @@ const
     logger
   });
 
-require('http').createServer((request, response) => {
+http.createServer((request, response) => {
   request.addListener('end', () => {
     staticAlias.serve(request, response, error => {
       if (error) {
