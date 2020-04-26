@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="css/syntax.css">
   <link rel="stylesheet" href="css/default.css">
   <link rel="stylesheet" href="css/ex.css">
-  <script src="js/libs-81ffc5c-190824122743.js"></script>
+  <script src="js/libs-81ffc5c-200426112055.js"></script>
 
   <title>PlainDraggable</title>
 </head>
@@ -233,7 +233,7 @@ window.addEventListener('load', function() {
     wall2BBox = document.getElementById('ex-040-stage').getBoundingClientRect(),
     CUBIC1 = [{x: 200, y: 240}, {x: 300, y: 240}, {x: 280, y: 210}, {x: 340, y: 200}],
     CUBIC2 = [{x: 340, y: 200}, {x: 400, y: 190}, {x: 400, y: 190}, {x: 400, y: 120}],
-    WALL2_RECT = {left: 200, top: 120, right: 400, bottom: 240};
+    WALL2_RECT = {left: 200, top: 120, right: 410, bottom: 250}; // padding for Gecko
 
   wall1BBox = {
     left: wall1BBox.left + window.pageXOffset - targetBBox.width,
