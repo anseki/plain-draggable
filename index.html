@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="css/syntax.css">
   <link rel="stylesheet" href="css/default.css">
   <link rel="stylesheet" href="css/ex.css">
-  <script src="js/libs-fb58a01-200426171921.js"></script>
+  <script src="js/libs-632d1c0-200427151913.js"></script>
 
   <title>PlainDraggable</title>
 </head>
@@ -222,78 +222,100 @@ window.addEventListener('load', function() {
   </div>
 </div>
 
+<script src="js/path-data-polyfill.js"></script>
 <script src="js/bezier.min.js"></script>
 <script>
 window.addEventListener('load', function() {
   'use strict';
 
-  var target = document.getElementById('ex-040-draggable'),
-    wall1BBox = document.getElementById('ex-040-wall1').getBoundingClientRect(),
-    wall2BBox = document.getElementById('ex-040-stage').getBoundingClientRect(),
-    CUBIC1 = [{x: 200, y: 240}, {x: 300, y: 240}, {x: 280, y: 210}, {x: 340, y: 200}],
-    CUBIC2 = [{x: 340, y: 200}, {x: 400, y: 190}, {x: 400, y: 190}, {x: 400, y: 120}],
+  function getRect(element) {
+    var rect = element.getBoundingClientRect();
+    return { // Replace DOMRect and change to document-based coordinates
+      left: rect.left + pageXOffset,
+      top: rect.top + pageYOffset,
+      right: rect.right + pageXOffset,
+      bottom: rect.bottom + pageYOffset,
+      width: rect.width,
+      height: rect.height
+    };
+  }
+
+  var wall1Rect = getRect(document.getElementById('ex-040-wall1')),
+    stageRect = getRect(document.getElementById('ex-040-stage')),
+    curPoint = [0, 0],
+    /** @type {Array.<Array.<Object.<x: number, y: number>>>} */
+    cubicList = document.querySelector('#ex-040-wall2 path').getPathData({normalize: true})
+      .filter(function(segment) { // Only 'C'
+        if (segment.type === 'C') {
+          segment.curPoint = curPoint;
+          curPoint = [segment.values[4], segment.values[5]];
+          return true;
+        } else if (segment.type === 'M' || segment.type === 'L') {
+          curPoint = [segment.values[0], segment.values[1]];
+        }
+        return false;
+      }).map(function(segment) { // Convert to coordinates list as cubic
+        return [
+          {x: segment.curPoint[0], y: segment.curPoint[1]},
+          {x: segment.values[0], y: segment.values[1]},
+          {x: segment.values[2], y: segment.values[3]},
+          {x: segment.values[4], y: segment.values[5]}
+        ];
+      }),
     WALL2_RECT = {left: 200, top: 120, right: 410, bottom: 250}; // padding for Gecko
 
-  wall1BBox = { // Replace DOMRect
-    left: wall1BBox.left + pageXOffset,
-    top: wall1BBox.top + pageYOffset,
-    right: wall1BBox.right + pageXOffset,
-    bottom: wall1BBox.bottom + pageYOffset,
-    width: wall1BBox.width,
-    height: wall1BBox.height
-  };
-  wall2BBox = { // Replace DOMRect
-    left: wall2BBox.left + pageXOffset,
-    top: wall2BBox.top + pageYOffset,
-    right: wall2BBox.right + pageXOffset,
-    bottom: wall2BBox.bottom + pageYOffset,
-    width: wall2BBox.width,
-    height: wall2BBox.height
-  };
-
-  new PlainDraggable(target, {
+  new PlainDraggable(document.getElementById('ex-040-draggable'), {
     onDrag: function(moveTo) {
-      var rect = this.rect;
+      var rect = this.rect,
+        moveToRect = {
+          left: moveTo.left,
+          top: moveTo.top,
+          right: moveTo.left + rect.width,
+          bottom: moveTo.top + rect.height
+        };
 
-      if (moveTo.left + rect.width > wall1BBox.left && moveTo.left < wall1BBox.right &&
-          moveTo.top + rect.height > wall1BBox.top && moveTo.top < wall1BBox.bottom) { // Rect
-        var xDir = moveTo.left > rect.left ? 1 : moveTo.left < rect.left ? -1 : 0,
-          yDir = moveTo.top > rect.top ? 1 : moveTo.top < rect.top ? -1 : 0,
-          xBackLen =
-            xDir > 0 ? moveTo.left - (wall1BBox.left - rect.width) :
-            xDir < 0 ? wall1BBox.right - moveTo.left :
-            rect.width + rect.height + wall1BBox.width + wall1BBox.height, // Max length
-          yBackLen =
-            yDir > 0 ? moveTo.top - (wall1BBox.top - rect.height) :
-            yDir < 0 ? wall1BBox.bottom - moveTo.top :
-            rect.width + rect.height + wall1BBox.width + wall1BBox.height; // Max length
-        if (xBackLen <= yBackLen) {
-          moveTo.left += xBackLen * -xDir;
-        } else {
-          moveTo.top += yBackLen * -yDir;
-        }
+      // Check rectangle
+      if (moveToRect.right > wall1Rect.left && moveTo.left < wall1Rect.right &&
+          moveToRect.bottom > wall1Rect.top && moveTo.top < wall1Rect.bottom) {
+        var closestPosition;
+        [
+          /** @type {Object.<axis: string, value: number, distance: number>} */
+          {axis: 'left', value: wall1Rect.left - rect.width}, // To left
+          {axis: 'left', value: wall1Rect.right}, // To right
+          {axis: 'top', value: wall1Rect.top - rect.height}, // To top
+          {axis: 'top', value: wall1Rect.bottom} // To bottom
+        ].forEach(function(position) {
+          position.distance = Math.abs(moveTo[position.axis] - position.value);
+          if (!closestPosition || position.distance < closestPosition.distance) {
+            closestPosition = position;
+          }
+        });
+        moveTo[closestPosition.axis] = closestPosition.value;
+        // Check `rect.left`/`rect.right` also if you want to avoid jumping to opposite side.
 
-      } else { // Bezier
-        var pointBR = {x: moveTo.left + rect.width - wall2BBox.left,
-          y: moveTo.top + rect.height - wall2BBox.top};
+      } else {
+        // Check bezier
+        var pointBR = { // SVG coodinates
+          x: moveToRect.right - stageRect.left,
+          y: moveToRect.bottom - stageRect.top
+        };
         if (pointBR.x >= WALL2_RECT.left && pointBR.x <= WALL2_RECT.right &&
             pointBR.y >= WALL2_RECT.top && pointBR.y <= WALL2_RECT.bottom) {
-          var cubicPoint1 = getClosestPoint(pointBR, CUBIC1),
-            cubicPoint2 = getClosestPoint(pointBR, CUBIC2),
-            isIn1 = pointBR.x > cubicPoint1.point.x && pointBR.y > cubicPoint1.point.y,
-            isIn2 = pointBR.x > cubicPoint2.point.x && pointBR.y > cubicPoint2.point.y,
-            backPoint = isIn1 && isIn2
-              ? (cubicPoint1.distance <= cubicPoint2.distance
-                ? cubicPoint1.point : cubicPoint2.point) :
-              isIn1 ? cubicPoint1.point :
-              isIn2 ? cubicPoint2.point :
-              null;
-          if (backPoint) {
-            moveTo.left = backPoint.x - rect.width + wall2BBox.left;
-            moveTo.top = backPoint.y - rect.height + wall2BBox.top;
+          var closestPoint;
+          cubicList.forEach(function(cubic) {
+            var cubicPoint = getClosestPoint(pointBR, cubic);
+            if (pointBR.x > cubicPoint.point.x && pointBR.y > cubicPoint.point.y &&
+                (!closestPoint || cubicPoint.distance < closestPoint.distance)) {
+              closestPoint = cubicPoint;
+            }
+          });
+          if (closestPoint) {
+            moveTo.left = closestPoint.point.x - rect.width + stageRect.left;
+            moveTo.top = closestPoint.point.y - rect.height + stageRect.top;
           }
         }
       }
+      // Check confliction if it's possible.
     }
   });
 
