@@ -61,7 +61,10 @@ const
   /** @type {Object.<_id: number, props>} */
   insProps = {},
   pointerOffset = {},
-  pointerEvent = new PointerEvent();
+  pointerEvent = new PointerEvent({ // Default
+    preventDefault: false,
+    stopPropagation: false
+  });
 
 let insId = 0,
   activeProps, hasMoved, body,

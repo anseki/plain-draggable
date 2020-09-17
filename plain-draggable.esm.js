@@ -68,7 +68,10 @@ IS_GECKO = 'MozAppearance' in document.documentElement.style,
 /** @type {Object.<_id: number, props>} */
 insProps = {},
     pointerOffset = {},
-    pointerEvent = new PointerEvent();
+    pointerEvent = new PointerEvent({ // Default
+  preventDefault: false,
+  stopPropagation: false
+});
 
 var insId = 0,
     activeProps = void 0,
