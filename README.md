@@ -24,7 +24,7 @@ The simple and high performance library to allow HTML/SVG element to be dragged.
 
 ## Usage
 
-Load PlainDraggable into your web page.
+Load PlainDraggable into your web page. (Or, [install it](#development) for importing.)
 
 ```html
 <script src="plain-draggable.min.js"></script>
@@ -773,3 +773,14 @@ Allowed values are:
 
 - `'containment'`: Indicate the element or [`Rect`](#rect) object that is specified for the [`containment`](#options-containment) option.
 - `'document'`: Indicate the current document.
+
+## Development
+
+If you want to use the library in development mode such as importing it to your app with e.g. Webpack, you have to install the package and `devDependencies` packages according to the custom.
+
+For example:
+```
+npm i plain-draggable
+cd node_modules/plain-draggable
+npm i
+```
