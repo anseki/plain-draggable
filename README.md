@@ -776,7 +776,7 @@ Allowed values are:
 
 ## Development
 
-If you want to use the library in development mode such as importing it to your app with e.g. Webpack, you have to install the package and `devDependencies` packages according to the custom.
+If you want to use a NPM package in development mode such as importing it to your app with e.g. Webpack, you have to install the package and `devDependencies` packages in accordance with customary practice.
 
 For example:
 ```
