@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="css/syntax.css">
   <link rel="stylesheet" href="css/default.css">
   <link rel="stylesheet" href="css/ex.css">
-  <script src="js/libs-632d1c0-200427151913.js"></script>
+  <script src="js/libs-a5b706f-210506000735.js"></script>
 
   <title>PlainDraggable</title>
 </head>
@@ -525,7 +525,7 @@ window.addEventListener('load', function() {
 
 <h2 id="usage">Usage</h2>
 
-<p>Load PlainDraggable into your web page.</p>
+<p>Load PlainDraggable into your web page. (Or, <a href="#development">install it</a> for importing.)</p>
 <div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;plain-draggable.min.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
 </code></pre></div>
 <p>This is simplest case:</p>
@@ -611,6 +611,17 @@ window.addEventListener('load', function() {
 <p>The <code>element</code> argument is a HTML or SVG element that will be a draggable element. Any element that has a bounding-box is accepted. Other elements such as <code>&lt;g&gt;</code> can not be specified.</p>
 
 <p>The <code>options</code> argument is an Object that can have properties as <a href="#options">options</a> (and <a href="#lefttop-option"><code>leftTop</code></a> option for constructor). You can also change the options by <a href="#setoptions"><code>setOptions</code></a> method or <a href="#properties">properties</a> of the PlainDraggable instance.</p>
+
+<p>Regardless of the PlainDraggable, when you will do something about DOM, you typically do that after loading and parsing DOM of the current document.<br>For example:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// Wait for loading and parsing DOM</span>
+<span class="nb">document</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;DOMContentLoaded&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// Do something about DOM</span>
+  <span class="kd">var</span> <span class="nx">draggable</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PlainDraggable</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;target&#39;</span><span class="p">));</span>
+<span class="p">});</span>
+</code></pre></div>
+<p>If you don&#39;t wait that, the target DOM element might not exist yet. Also, you should do so asynchronous like the above for performance of your app because synchronous code blocks parsing of the DOM.</p>
+
+<p>Before loading and parsing DOM, the <code>translate</code> CSS transform function might not be initialized yet. If so, PlainDraggable tries to initialize a draggable element with the <code>left</code> and <code>top</code> CSS properties regardless of <a href="#lefttop-option"><code>leftTop</code></a> option.<br>This may be performance degradation.</p>
 
 <h3 id="lefttop-option"><code>leftTop</code> option</h3>
 
@@ -1513,6 +1524,17 @@ window.addEventListener('load', function() {
 <li><code>&#39;containment&#39;</code>: Indicate the element or <a href="#rect"><code>Rect</code></a> object that is specified for the <a href="#options-containment"><code>containment</code></a> option.</li>
 <li><code>&#39;document&#39;</code>: Indicate the current document.</li>
 </ul>
+
+<h2 id="development">Development</h2>
+
+<p>If you want to use a NPM package in development mode such as importing it to your app with e.g. Webpack, you have to install the package and <code>devDependencies</code> packages in accordance with customary practice.</p>
+
+<p>For example:
+<code>
+npm i plain-draggable
+cd node_modules/plain-draggable
+npm i
+</code></p>
 
   </main>
   <footer>
