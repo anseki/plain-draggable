@@ -67,6 +67,22 @@ The `element` argument is a HTML or SVG element that will be a draggable element
 
 The `options` argument is an Object that can have properties as [options](#options) (and [`leftTop`](#lefttop-option) option for constructor). You can also change the options by [`setOptions`](#setoptions) method or [properties](#properties) of the PlainDraggable instance.
 
+Regardless of the PlainDraggable, when you will do something about DOM, you typically do that after loading and parsing DOM of the current document.  
+For example:
+
+```js
+// Wait for loading and parsing DOM
+document.addEventListener('DOMContentLoaded', function() {
+  // Do something about DOM
+  var draggable = new PlainDraggable(document.getElementById('target'));
+});
+```
+
+If you don't wait that, the target DOM element might not exist yet. Also, you should do so asynchronous like the above for performance of your app because synchronous code blocks parsing of the DOM.
+
+Before loading and parsing DOM, the `translate` CSS transform function might not be initialized yet. If so, PlainDraggable tries to initialize a draggable element with the `left` and `top` CSS properties regardless of [`leftTop`](#lefttop-option) option.  
+This may be performance degradation.
+
 ### `leftTop` option
 
 By default, PlainDraggable tries to move the draggable element by using the `translate` CSS transform function.  
