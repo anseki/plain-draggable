@@ -67,25 +67,25 @@ The `element` argument is a HTML or SVG element that will be a draggable element
 
 The `options` argument is an Object that can have properties as [options](#options) (and [`leftTop`](#lefttop-option) option for constructor). You can also change the options by [`setOptions`](#setoptions) method or [properties](#properties) of the PlainDraggable instance.
 
-Regardless of the PlainDraggable, when you will do something about DOM, you typically do that after loading and parsing DOM of the current document.  
+When you will do something about DOM regardless of the PlainDraggable, you typically do that after DOM is ready (HTML document has been loaded and parsed by web browser).  
 For example:
 
 ```js
-// Wait for loading and parsing DOM
+// Wait for DOM to get ready
 document.addEventListener('DOMContentLoaded', function() {
   // Do something about DOM
   var draggable = new PlainDraggable(document.getElementById('target'));
 });
 ```
 
-If you don't wait that, the target DOM element might not exist yet. Also, you should do so asynchronous like the above for performance of your app because synchronous code blocks parsing of the DOM.
+If you don't wait for DOM to be ready, you might not be able to get a target element yet. Also, you should do so asynchronous like the above for the performance because synchronous code blocks parsing HTML.
 
-Before loading and parsing DOM, the `translate` CSS transform function might not be initialized yet. If so, PlainDraggable tries to initialize a draggable element with the `left` and `top` CSS properties regardless of [`leftTop`](#lefttop-option) option.  
+Before DOM is ready, the `translate` CSS function might not be initialized yet. If so, PlainDraggable tries to initialize a draggable element with the `left` and `top` CSS properties regardless of [`leftTop`](#lefttop-option) option.  
 This may be performance degradation.
 
 ### `leftTop` option
 
-By default, PlainDraggable tries to move the draggable element by using the `translate` CSS transform function.  
+By default, PlainDraggable tries to move the draggable element by using the `translate` CSS function.  
 If `true` is specified for `leftTop` option of the constructor, it uses the `left` and `top` CSS properties instead, for HTML element. You may use this to make it synchronize with the layout of something.
 
 Note that the `left` and `top` CSS properties may be performance degradation.  
