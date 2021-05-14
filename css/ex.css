@@ -1,11 +1,9 @@
-/* line 5, ex.scss */
-.ex-060-anim, #ex-110-draggable.swing > div, .ex-230-item {
-  -webkit-tap-highlight-color: transparent;
+.ex-230-item, #ex-110-draggable.swing > div, .ex-060-anim {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   transform: translateZ(0);
-  box-shadow: 0 0 1px transparent;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0);
 }
 
-/* line 9, ex.scss */
 .draggable {
   display: inline-block;
   padding: 1px 3px;
@@ -14,36 +12,30 @@
   background-color: indianred;
 }
 
-/* line 17, ex.scss */
 .stage-s,
 .stage-m,
 .stage-l {
   background-color: #d4d4d4;
   margin-bottom: 1em;
 }
-/* line 23, ex.scss */
-.col > .stage-s, .col >
-.stage-m, .col >
-.stage-l {
+.col > .stage-s,
+.col > .stage-m,
+.col > .stage-l {
   margin-bottom: 0;
 }
 
-/* line 25, ex.scss */
 .stage-s {
   height: 120px;
 }
 
-/* line 26, ex.scss */
 .stage-m {
   height: 240px;
 }
 
-/* line 27, ex.scss */
 .stage-l {
   height: 280px;
 }
 
-/* line 29, ex.scss */
 .snap-point {
   position: absolute;
   width: 0;
@@ -53,7 +45,6 @@
   border: 2px solid #24c4f1;
 }
 
-/* line 38, ex.scss */
 .snap-line-h {
   position: absolute;
   left: 0;
@@ -64,7 +55,6 @@
   border-width: 1px 0;
 }
 
-/* line 48, ex.scss */
 .snap-line-v {
   position: absolute;
   top: 0;
@@ -75,7 +65,6 @@
   border-width: 0 1px;
 }
 
-/* line 60, ex.scss */
 #ex-020-stage {
   display: inline-block;
   overflow: hidden;
@@ -83,40 +72,32 @@
   height: 240px;
   background-color: #5c7194;
 }
-/* line 67, ex.scss */
 #ex-020-stage rect {
   fill: #d4d4d4;
 }
-/* line 68, ex.scss */
 #ex-020-stage circle {
   fill: indianred;
 }
-/* line 70, ex.scss */
 #ex-020-stage line {
   stroke: #24c4f1;
   stroke-width: 2px;
 }
-/* line 75, ex.scss */
 #ex-020-stage path {
   fill: none;
   stroke: #177cf3;
   stroke-width: 8px;
 }
 
-/* line 87, ex.scss */
 #ex-020-slider {
   display: inline-block;
   margin-right: 20px;
   width: 4px;
   height: 240px;
-  -moz-border-radius: 2px;
-  -webkit-border-radius: 2px;
   border-radius: 2px;
   background-color: #ccc;
   position: relative;
 }
 
-/* line 97, ex.scss */
 #ex-020-pointer {
   position: absolute;
   left: -6px;
@@ -124,18 +105,14 @@
   width: 16px;
   height: 24px;
   background-color: indianred;
-  -moz-border-radius: 8px;
-  -webkit-border-radius: 8px;
   border-radius: 8px;
 }
 
-/* line 109, ex.scss */
 #ex-030-stage {
   width: 400px;
   position: relative;
 }
 
-/* line 114, ex.scss */
 #ex-030-port {
   position: absolute;
   left: 40px;
@@ -143,13 +120,11 @@
   background-color: #24c4f1;
 }
 
-/* line 121, ex.scss */
 #ex-030-line {
   top: 160px;
   width: 180px;
 }
 
-/* line 126, ex.scss */
 #ex-030-grid {
   position: absolute;
   left: 180px;
@@ -159,13 +134,11 @@
   background-image: url("../img/grid-net-40.png");
 }
 
-/* line 137, ex.scss */
 #ex-040-stage {
   width: 400px;
   position: relative;
 }
 
-/* line 142, ex.scss */
 #ex-040-wall1 {
   position: absolute;
   left: 100px;
@@ -175,24 +148,20 @@
   background-color: #f7f5ee;
 }
 
-/* line 151, ex.scss */
 #ex-040-wall2 {
   position: absolute;
   left: 0;
   top: 0;
 }
-/* line 155, ex.scss */
 #ex-040-wall2 path {
   fill: #f7f5ee;
 }
 
-/* line 160, ex.scss */
 #ex-050-stage {
   width: 400px;
   position: relative;
 }
 
-/* line 165, ex.scss */
 #ex-050-stage-in {
   position: absolute;
   left: 0;
@@ -203,19 +172,16 @@
   border-right: 80px solid #f7f5ee;
 }
 
-/* line 175, ex.scss */
 #ex-050-draggable {
   position: absolute;
   right: 0;
 }
 
-/* line 182, ex.scss */
 #ex-060-stage {
   width: 400px;
   position: relative;
 }
 
-/* line 187, ex.scss */
 #ex-060-port {
   position: absolute;
   left: 40px;
@@ -223,14 +189,12 @@
   background-color: #24c4f1;
 }
 
-/* line 194, ex.scss */
 #ex-060-draggable {
   position: absolute;
   left: 40px;
   top: 64px;
 }
 
-/* line 200, ex.scss */
 #ex-060-grid {
   position: absolute;
   left: 180px;
@@ -240,131 +204,84 @@
   background-image: url("../img/grid-net-40.png");
 }
 
-/* line 209, ex.scss */
 .ex-060-anim {
-  -moz-transition-property: -moz-transform;
-  -o-transition-property: -o-transform;
-  -webkit-transition-property: -webkit-transform;
   transition-property: transform;
-  -moz-transition-duration: 0.2s;
-  -o-transition-duration: 0.2s;
-  -webkit-transition-duration: 0.2s;
   transition-duration: 0.2s;
-  -moz-transition-timing-function: ease-in;
-  -o-transition-timing-function: ease-in;
-  -webkit-transition-timing-function: ease-in;
   transition-timing-function: ease-in;
 }
 
-/* line 218, ex.scss */
 #ex-090-stage {
   height: 0;
   margin-bottom: 4em;
 }
 
-/* line 225, ex.scss */
 #ex-100-draggable {
   display: inline-block;
   padding: 5px 5px 30px;
   background-color: #37506d;
 }
 
-/* line 233, ex.scss */
 #ex-110-draggable {
   width: 78px;
   height: 78px;
 }
-/* line 237, ex.scss */
 #ex-110-draggable > div {
   width: 78px;
   height: 78px;
 }
-/* line 242, ex.scss */
 #ex-110-draggable.cat > div {
   background-image: url("../img/cat-0.png");
   background-repeat: no-repeat;
   background-position: center top;
 }
-/* line 248, ex.scss */
 #ex-110-draggable.lift > div {
   background-image: url("../img/cat-1.png");
 }
-/* line 252, ex.scss */
 #ex-110-draggable.swing > div {
-  -moz-animation-name: ex-110-draggable-swing;
   -webkit-animation-name: ex-110-draggable-swing;
-  animation-name: ex-110-draggable-swing;
-  -moz-animation-duration: 0.4s;
+          animation-name: ex-110-draggable-swing;
   -webkit-animation-duration: 0.4s;
-  animation-duration: 0.4s;
-  -moz-animation-timing-function: ease-in-out;
+          animation-duration: 0.4s;
   -webkit-animation-timing-function: ease-in-out;
-  animation-timing-function: ease-in-out;
-  -moz-animation-iteration-count: infinite;
+          animation-timing-function: ease-in-out;
   -webkit-animation-iteration-count: infinite;
-  animation-iteration-count: infinite;
-  -moz-animation-direction: alternate;
+          animation-iteration-count: infinite;
   -webkit-animation-direction: alternate;
-  animation-direction: alternate;
-  -moz-transform-origin: center 5%;
-  -ms-transform-origin: center 5%;
-  -webkit-transform-origin: center 5%;
+          animation-direction: alternate;
   transform-origin: center 5%;
 }
-/* line 262, ex.scss */
 #ex-110-draggable > div > div {
   height: 32px;
 }
 
-@-moz-keyframes ex-110-draggable-swing {
-  from {
-    -moz-transform: rotate(15deg);
-    transform: rotate(15deg);
-  }
-  to {
-    -moz-transform: rotate(-15deg);
-    transform: rotate(-15deg);
-  }
-}
 @-webkit-keyframes ex-110-draggable-swing {
   from {
-    -webkit-transform: rotate(15deg);
     transform: rotate(15deg);
   }
   to {
-    -webkit-transform: rotate(-15deg);
     transform: rotate(-15deg);
   }
 }
+
 @keyframes ex-110-draggable-swing {
   from {
-    -moz-transform: rotate(15deg);
-    -ms-transform: rotate(15deg);
-    -webkit-transform: rotate(15deg);
     transform: rotate(15deg);
   }
   to {
-    -moz-transform: rotate(-15deg);
-    -ms-transform: rotate(-15deg);
-    -webkit-transform: rotate(-15deg);
     transform: rotate(-15deg);
   }
 }
-/* line 272, ex.scss */
 #ex-120-stage {
   position: relative;
 }
 
-/* line 276, ex.scss */
 #ex-120-point {
   left: 160px;
   top: 64px;
 }
-/* line 280, ex.scss */
 #ex-120-point div {
   position: absolute;
 }
-/* line 282, ex.scss */
 #ex-120-point > div {
   right: 0;
   bottom: 100%;
@@ -372,17 +289,14 @@
   margin-right: 5px;
   margin-bottom: 5px;
 }
-/* line 289, ex.scss */
 #ex-120-point > div > div {
   right: 0;
   bottom: 100%;
 }
 
-/* line 296, ex.scss */
 #ex-120-line {
   left: 360px;
 }
-/* line 299, ex.scss */
 #ex-120-line div {
   position: absolute;
   right: 5px;
@@ -390,7 +304,6 @@
   white-space: nowrap;
 }
 
-/* line 307, ex.scss */
 #ex-120-rect {
   position: absolute;
   left: 520px;
@@ -398,7 +311,6 @@
   width: 164px;
   height: 54px;
 }
-/* line 314, ex.scss */
 #ex-120-rect div {
   position: absolute;
   top: -1px;
@@ -408,12 +320,10 @@
   border: 2px solid #24c4f1;
 }
 
-/* line 326, ex.scss */
 #ex-180-stage {
   position: relative;
 }
 
-/* line 330, ex.scss */
 #ex-180-grid {
   position: absolute;
   left: 0;
@@ -423,22 +333,18 @@
   background-image: url("../img/grid-line-h-32.png");
 }
 
-/* line 341, ex.scss */
 #ex-190-stage {
   position: relative;
 }
 
-/* line 345, ex.scss */
 #ex-190-point1,
 #ex-190-point2 {
   top: 64px;
 }
-/* line 349, ex.scss */
 #ex-190-point1 div,
 #ex-190-point2 div {
   position: absolute;
 }
-/* line 351, ex.scss */
 #ex-190-point1 > div,
 #ex-190-point2 > div {
   right: 0;
@@ -447,29 +353,24 @@
   margin-right: 5px;
   margin-bottom: 5px;
 }
-/* line 358, ex.scss */
 #ex-190-point1 > div > div,
 #ex-190-point2 > div > div {
   right: 20px;
   bottom: 100%;
 }
 
-/* line 365, ex.scss */
 #ex-190-point1 {
   left: 260px;
 }
 
-/* line 366, ex.scss */
 #ex-190-point2 {
   left: 520px;
 }
 
-/* line 370, ex.scss */
 #ex-200-stage {
   position: relative;
 }
 
-/* line 377, ex.scss */
 #ex-200-line1 div,
 #ex-200-line2 div {
   position: absolute;
@@ -478,31 +379,25 @@
   white-space: nowrap;
 }
 
-/* line 385, ex.scss */
 #ex-200-line1 {
   left: 260px;
 }
 
-/* line 386, ex.scss */
 #ex-200-line2 {
   left: 520px;
 }
 
-/* line 390, ex.scss */
 #ex-210-stage {
   position: relative;
 }
 
-/* line 394, ex.scss */
 #ex-210-point1 {
   left: 260px;
   top: 64px;
 }
-/* line 398, ex.scss */
 #ex-210-point1 div {
   position: absolute;
 }
-/* line 400, ex.scss */
 #ex-210-point1 > div {
   right: 0;
   bottom: 100%;
@@ -510,17 +405,14 @@
   margin-right: 5px;
   margin-bottom: 5px;
 }
-/* line 407, ex.scss */
 #ex-210-point1 > div > div {
   right: 20px;
   bottom: 100%;
 }
 
-/* line 414, ex.scss */
 #ex-210-line2 {
   left: 520px;
 }
-/* line 417, ex.scss */
 #ex-210-line2 div {
   position: absolute;
   right: 5px;
@@ -528,17 +420,14 @@
   white-space: nowrap;
 }
 
-/* line 425, ex.scss */
 #ex-210-draggable {
   background-color: rgba(205, 92, 92, 0.6);
 }
 
-/* line 431, ex.scss */
 #ex-220-stage {
   position: relative;
 }
 
-/* line 435, ex.scss */
 #ex-220-rect1 {
   position: absolute;
   left: 160px;
@@ -546,7 +435,6 @@
   width: 164px;
   height: 54px;
 }
-/* line 442, ex.scss */
 #ex-220-rect1 div {
   position: absolute;
   top: -1px;
@@ -556,7 +444,6 @@
   border: 2px solid #24c4f1;
 }
 
-/* line 452, ex.scss */
 #ex-220-rect2 {
   position: absolute;
   left: 460px;
@@ -564,7 +451,6 @@
   width: 120px;
   height: 40px;
 }
-/* line 459, ex.scss */
 #ex-220-rect2 div {
   position: absolute;
   top: -1px;
@@ -574,60 +460,39 @@
   border: 2px solid #24c4f1;
 }
 
-/* line 471, ex.scss */
 #ex-230-stage {
   width: 200px;
   background-color: #d4d4d4;
 }
 
-/* line 476, ex.scss */
 .ex-230-item {
   display: block;
   background-color: transparent;
   text-align: center;
-  background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4gPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAuNSIgeTE9IjAuMCIgeDI9IjAuNSIgeTI9IjEuMCI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2VlOTI5MiIvPjxzdG9wIG9mZnNldD0iMTAlIiBzdG9wLWNvbG9yPSIjY2Q1YzVjIi8+PHN0b3Agb2Zmc2V0PSI5MCUiIHN0b3AtY29sb3I9IiNjZDVjNWMiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiM5MjNiM2IiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyYWQpIiAvPjwvc3ZnPiA=');
-  background-size: 100%;
-  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #ee9292), color-stop(10%, #cd5c5c), color-stop(90%, #cd5c5c), color-stop(100%, #923b3b));
-  background-image: -moz-linear-gradient(#ee9292 0%, #cd5c5c 10%, #cd5c5c 90%, #923b3b 100%);
-  background-image: -webkit-linear-gradient(#ee9292 0%, #cd5c5c 10%, #cd5c5c 90%, #923b3b 100%);
-  background-image: linear-gradient(#ee9292 0%, #cd5c5c 10%, #cd5c5c 90%, #923b3b 100%);
+  background-image: linear-gradient(#ee9292 0, #cd5c5c 10%, #cd5c5c 90%, #923b3b 100%);
   position: relative;
-  -moz-transition-property: -moz-transform;
-  -o-transition-property: -o-transform;
-  -webkit-transition-property: -webkit-transform;
   transition-property: transform;
-  -moz-transition-duration: 0.2s;
-  -o-transition-duration: 0.2s;
-  -webkit-transition-duration: 0.2s;
   transition-duration: 0.2s;
-  -moz-transition-timing-function: ease-in;
-  -o-transition-timing-function: ease-in;
-  -webkit-transition-timing-function: ease-in;
   transition-timing-function: ease-in;
 }
-/* line 488, ex.scss */
 .ex-230-item.lift {
   color: #3bc9ff;
 }
 
-/* line 500, ex.scss */
 #ex-240-draggable {
   position: absolute;
 }
 
-/* line 504, ex.scss */
 #ex-240-stage {
   position: relative;
   width: 900px;
   background-color: #d4d4d4;
 }
 
-/* line 510, ex.scss */
 #ex-240-stage p {
   margin-bottom: 0;
 }
 
-/* line 514, ex.scss */
 #ex-240-scroll {
   width: 600px;
   height: 400px;
