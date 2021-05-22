@@ -67,20 +67,20 @@ The `element` argument is a HTML or SVG element that will be a draggable element
 
 The `options` argument is an Object that can have properties as [options](#options) (and [`leftTop`](#lefttop-option) option for constructor). You can also change the options by [`setOptions`](#setoptions) method or [properties](#properties) of the PlainDraggable instance.
 
-When you will do something about DOM regardless of the PlainDraggable, you typically do that after DOM is ready (HTML document has been loaded and parsed by web browser).  
+When you will do something about HTML document regardless of the PlainDraggable, you typically do that after the HTML document is ready (i.e. the HTML document has been loaded and parsed by web browser).  
 For example:
 
 ```js
-// Wait for DOM to get ready
-document.addEventListener('DOMContentLoaded', function() {
-  // Do something about DOM
+// Wait for HTML document to get ready
+window.addEventListener('load', function() { // NOT `DOMContentLoaded`
+  // Do something about HTML document
   var draggable = new PlainDraggable(document.getElementById('target'));
 });
 ```
 
-If you don't wait for DOM to be ready, you might not be able to get a target element yet. Also, you should do so asynchronous like the above for the performance because synchronous code blocks parsing HTML.
+If you don't wait for HTML document to be ready, you might not be able to get a target element yet, or problems with incomplete layout may occur. Also, you should do so asynchronous like the above for the performance because synchronous code blocks parsing HTML.
 
-Before DOM is ready, the `translate` CSS function might not be initialized yet. If so, PlainDraggable tries to initialize a draggable element with the `left` and `top` CSS properties regardless of [`leftTop`](#lefttop-option) option.  
+Before HTML document is ready, the `translate` CSS function might not be initialized yet. If so, PlainDraggable tries to initialize a draggable element with the `left` and `top` CSS properties regardless of [`leftTop`](#lefttop-option) option.  
 This may be performance degradation.
 
 ### `leftTop` option
