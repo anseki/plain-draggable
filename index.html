@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="css/syntax.css">
   <link rel="stylesheet" href="css/default.css">
   <link rel="stylesheet" href="css/ex.css">
-  <script src="js/libs-6f0a665-210514202603.js"></script>
+  <script src="js/libs-b7ae8f6-210523201424.js"></script>
 
   <title>PlainDraggable</title>
 </head>
@@ -612,16 +612,16 @@ window.addEventListener('load', function() {
 
 <p>The <code>options</code> argument is an Object that can have properties as <a href="#options">options</a> (and <a href="#lefttop-option"><code>leftTop</code></a> option for constructor). You can also change the options by <a href="#setoptions"><code>setOptions</code></a> method or <a href="#properties">properties</a> of the PlainDraggable instance.</p>
 
-<p>When you will do something about DOM regardless of the PlainDraggable, you typically do that after DOM is ready (HTML document has been loaded and parsed by web browser).<br>For example:</p>
-<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// Wait for DOM to get ready</span>
-<span class="nb">document</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;DOMContentLoaded&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-  <span class="c1">// Do something about DOM</span>
+<p>When you will do something about HTML document regardless of the PlainDraggable, you typically do that after the HTML document is ready (i.e. the HTML document has been loaded and parsed by web browser).<br>For example:</p>
+<div class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// Wait for HTML document to get ready</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;load&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="c1">// NOT `DOMContentLoaded`</span>
+  <span class="c1">// Do something about HTML document</span>
   <span class="kd">var</span> <span class="nx">draggable</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PlainDraggable</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;target&#39;</span><span class="p">));</span>
 <span class="p">});</span>
 </code></pre></div>
-<p>If you don&#39;t wait for DOM to be ready, you might not be able to get a target element yet. Also, you should do so asynchronous like the above for the performance because synchronous code blocks parsing HTML.</p>
+<p>If you don&#39;t wait for HTML document to be ready, you might not be able to get a target element yet, or problems with incomplete layout may occur. Also, you should do so asynchronous like the above for the performance because synchronous code blocks parsing HTML.</p>
 
-<p>Before DOM is ready, the <code>translate</code> CSS function might not be initialized yet. If so, PlainDraggable tries to initialize a draggable element with the <code>left</code> and <code>top</code> CSS properties regardless of <a href="#lefttop-option"><code>leftTop</code></a> option.<br>This may be performance degradation.</p>
+<p>Before HTML document is ready, the <code>translate</code> CSS function might not be initialized yet. If so, PlainDraggable tries to initialize a draggable element with the <code>left</code> and <code>top</code> CSS properties regardless of <a href="#lefttop-option"><code>leftTop</code></a> option.<br>This may be performance degradation.</p>
 
 <h3 id="lefttop-option"><code>leftTop</code> option</h3>
 
