@@ -61,7 +61,7 @@ module.exports = {
           // ================================ Babel
           {
             loader: 'babel-loader',
-            options: {presets: [['es2015', {modules: false}]]}
+            options: {presets: [['@babel/preset-env', {targets: 'defaults', modules: false}]]}
           },
           // ================================ Preprocess
           PREPROC_REMOVE_TAGS.length ? {
