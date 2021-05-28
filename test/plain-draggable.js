@@ -104,14 +104,12 @@ __webpack_require__.r(__webpack_exports__);
  * AnimEvent
  * https://github.com/anseki/anim-event
  *
- * Copyright (c) 2018 anseki
+ * Copyright (c) 2021 anseki
  * Licensed under the MIT license.
  */
-
 var MSPF = 1000 / 60,
     // ms/frame (FPS: 60)
 KEEP_LOOP = 500,
-
 
 /**
  * @typedef {Object} task
@@ -130,11 +128,10 @@ var requestAnim = window.requestAnimationFrame || window.mozRequestAnimationFram
 };
 
 var lastFrameTime = Date.now(),
-    requestID = void 0;
+    requestID;
 
 function step() {
-  var called = void 0,
-      next = void 0;
+  var called, next;
 
   if (requestID) {
     cancelAnim.call(window, requestID);
@@ -142,9 +139,11 @@ function step() {
   }
 
   tasks.forEach(function (task) {
-    var event = void 0;
+    var event;
+
     if (event = task.event) {
       task.event = null; // Clear it before `task.listener()` because that might fire another event.
+
       task.listener(event);
       called = true;
     }
@@ -157,6 +156,7 @@ function step() {
     // Go on for a while
     next = true;
   }
+
   if (next) {
     requestID = requestAnim.call(window, step);
   }
@@ -169,6 +169,7 @@ function indexOfTasks(listener) {
       index = i;
       return true;
     }
+
     return false;
   });
   return index;
@@ -180,22 +181,29 @@ var AnimEvent = {
    * @returns {(function|null)} A wrapped event listener.
    */
   add: function add(listener) {
-    var task = void 0;
+    var task;
+
     if (indexOfTasks(listener) === -1) {
-      tasks.push(task = { listener: listener });
+      tasks.push(task = {
+        listener: listener
+      });
       return function (event) {
         task.event = event;
+
         if (!requestID) {
           step();
         }
       };
     }
+
     return null;
   },
   remove: function remove(listener) {
-    var iRemove = void 0;
+    var iRemove;
+
     if ((iRemove = indexOfTasks(listener)) > -1) {
       tasks.splice(iRemove, 1);
+
       if (!tasks.length && requestID) {
         cancelAnim.call(window, requestID);
         requestID = null;
@@ -203,7 +211,6 @@ var AnimEvent = {
     }
   }
 };
-
 /* harmony default export */ __webpack_exports__["default"] = (AnimEvent);
 
 /***/ }),
@@ -225,10 +232,9 @@ __webpack_require__.r(__webpack_exports__);
  * CSSPrefix
  * https://github.com/anseki/cssprefix
  *
- * Copyright (c) 2018 anseki
+ * Copyright (c) 2021 anseki
  * Licensed under the MIT license.
  */
-
 function ucf(text) {
   return text.substr(0, 1).toUpperCase() + text.substr(1);
 }
@@ -240,21 +246,19 @@ var PREFIXES = ['webkit', 'moz', 'ms', 'o'],
   return prefixes;
 }, []),
     VALUE_PREFIXES = PREFIXES.map(function (prefix) {
-  return '-' + prefix + '-';
+  return "-".concat(prefix, "-");
 }),
-
 
 /**
  * Get sample CSSStyleDeclaration.
  * @returns {CSSStyleDeclaration}
  */
 getDeclaration = function () {
-  var declaration = void 0;
+  var declaration;
   return function () {
     return declaration = declaration || document.createElement('div').style;
   };
 }(),
-
 
 /**
  * Normalize name.
@@ -276,7 +280,6 @@ normalizeName = function () {
   }; // For old CSSOM
 }(),
 
-
 /**
  * Normalize value.
  * @param {} propValue - A value that is normalized.
@@ -289,7 +292,6 @@ normalizeValue = function () {
   };
 }(),
 
-
 /**
  * Polyfill for `CSS.supports`.
  * @param {string} propName - A name.
@@ -299,29 +301,28 @@ normalizeValue = function () {
  * @returns {boolean} `true` if given pair is accepted.
  */
 cssSupports = function () {
-  return (
-    // return window.CSS && window.CSS.supports || ((propName, propValue) => {
+  return (// return window.CSS && window.CSS.supports || ((propName, propValue) => {
     // `CSS.supports` doesn't find prefixed property.
     function (propName, propValue) {
-      var declaration = getDeclaration();
-      // In some browsers, `declaration[prop] = value` updates any property.
+      var declaration = getDeclaration(); // In some browsers, `declaration[prop] = value` updates any property.
+
       propName = propName.replace(/[A-Z]/g, function (str) {
-        return '-' + str.toLowerCase();
+        return "-".concat(str.toLowerCase());
       }); // kebab-case
+
       declaration.setProperty(propName, propValue);
       return declaration[propName] != null && // Because getPropertyValue returns '' if it is unsupported
       declaration.getPropertyValue(propName) === propValue;
     }
   );
 }(),
-
-
-// Cache
+    // Cache
 propNames = {},
     propValues = {};
 
 function getName(propName) {
   propName = normalizeName(propName);
+
   if (propName && propNames[propName] == null) {
     var declaration = getDeclaration();
 
@@ -331,27 +332,32 @@ function getName(propName) {
     } else {
       // Try with prefixes
       var ucfName = ucf(propName);
+
       if (!NAME_PREFIXES.some(function (prefix) {
         var prefixed = prefix + ucfName;
+
         if (declaration[prefixed] != null) {
           propNames[propName] = prefixed;
           return true;
         }
+
         return false;
       })) {
         propNames[propName] = false;
       }
     }
   }
+
   return propNames[propName] || void 0;
 }
 
 function getValue(propName, propValue) {
-  var res = void 0;
+  var res;
 
   if (!(propName = getName(propName))) {
     return res;
   } // Invalid property
+
 
   propValues[propName] = propValues[propName] || {};
   (Array.isArray(propValue) ? propValue : [propValue]).some(function (propValue) {
@@ -363,6 +369,7 @@ function getValue(propName, propValue) {
         res = propValues[propName][propValue];
         return true;
       }
+
       return false; // Continue to next value
     }
 
@@ -375,10 +382,12 @@ function getValue(propName, propValue) {
     if (VALUE_PREFIXES.some(function (prefix) {
       // Try with prefixes
       var prefixed = prefix + propValue;
+
       if (cssSupports(propName, prefixed)) {
         res = propValues[propName][propValue] = prefixed;
         return true;
       }
+
       return false;
     })) {
       return true;
@@ -387,7 +396,6 @@ function getValue(propName, propValue) {
     propValues[propName][propValue] = false;
     return false; // Continue to next value
   });
-
   return typeof res === 'string' ? res : void 0; // It might be empty string.
 }
 
@@ -395,7 +403,6 @@ var CSSPrefix = {
   getName: getName,
   getValue: getValue
 };
-
 /* harmony default export */ __webpack_exports__["default"] = (CSSPrefix);
 
 /***/ }),
@@ -417,13 +424,14 @@ __webpack_require__.r(__webpack_exports__);
  * mClassList
  * https://github.com/anseki/m-class-list
  *
- * Copyright (c) 2018 anseki
+ * Copyright (c) 2021 anseki
  * Licensed under the MIT license.
  */
-
 function normalize(token) {
   return (token + '').trim();
 } // Not `||`
+
+
 function applyList(list, element) {
   element.setAttribute('class', list.join(' '));
 }
@@ -433,6 +441,7 @@ function _add(list, element, tokens) {
     if (!(token = normalize(token)) || list.indexOf(token) !== -1) {
       return false;
     }
+
     list.push(token);
     return true;
   }).length) {
@@ -442,10 +451,12 @@ function _add(list, element, tokens) {
 
 function _remove(list, element, tokens) {
   if (tokens.filter(function (token) {
-    var i = void 0;
+    var i;
+
     if (!(token = normalize(token)) || (i = list.indexOf(token)) === -1) {
       return false;
     }
+
     list.splice(i, 1);
     return true;
   }).length) {
@@ -455,31 +466,39 @@ function _remove(list, element, tokens) {
 
 function _toggle(list, element, token, force) {
   var i = list.indexOf(token = normalize(token));
+
   if (i !== -1) {
     if (force) {
       return true;
     }
+
     list.splice(i, 1);
     applyList(list, element);
     return false;
   }
+
   if (force === false) {
     return false;
   }
+
   list.push(token);
   applyList(list, element);
   return true;
 }
 
 function _replace(list, element, token, newToken) {
-  var i = void 0;
+  var i;
+
   if (!(token = normalize(token)) || !(newToken = normalize(newToken)) || token === newToken || (i = list.indexOf(token)) === -1) {
     return;
   }
+
   list.splice(i, 1);
+
   if (list.indexOf(newToken) === -1) {
     list.push(newToken);
   }
+
   applyList(list, element);
 }
 
@@ -498,18 +517,20 @@ function mClassList(element) {
       },
       add: function add() {
         _add(list, element, Array.prototype.slice.call(arguments));
+
         return mClassList.methodChain ? ins : void 0;
       },
       remove: function remove() {
         _remove(list, element, Array.prototype.slice.call(arguments));
+
         return mClassList.methodChain ? ins : void 0;
       },
-
       toggle: function toggle(token, force) {
         return _toggle(list, element, token, force);
       },
       replace: function replace(token, newToken) {
         _replace(list, element, token, newToken);
+
         return mClassList.methodChain ? ins : void 0;
       }
     };
@@ -518,7 +539,6 @@ function mClassList(element) {
 }
 
 mClassList.methodChain = true;
-
 /* harmony default export */ __webpack_exports__["default"] = (mClassList);
 
 /***/ }),
@@ -537,33 +557,34 @@ __webpack_require__.r(__webpack_exports__);
         DON'T MANUALLY EDIT THIS FILE
 ================================================ */
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 /*
  * PointerEvent
  * https://github.com/anseki/pointer-event
  *
- * Copyright (c) 2018 anseki
+ * Copyright (c) 2021 anseki
  * Licensed under the MIT license.
  */
 
-
-
 var MOUSE_EMU_INTERVAL = 400; // Avoid mouse events emulation
-
-
 // Support options for addEventListener
+
 var passiveSupported = false;
+
 try {
   window.addEventListener('test', null, Object.defineProperty({}, 'passive', {
     get: function get() {
       passiveSupported = true;
     }
   }));
-} catch (error) {} /* ignore */
-
+} catch (error) {
+  /* ignore */
+}
 /**
  * addEventListener with specific option.
  * @param {Element} target - An event-target element.
@@ -572,18 +593,21 @@ try {
  * @param {Object} options - An options object.
  * @returns {void}
  */
+
+
 function addEventListenerWithOptions(target, type, listener, options) {
   // When `passive` is not supported, consider that the `useCapture` is supported instead of
   // `options` (i.e. options other than the `passive` also are not supported).
   target.addEventListener(type, listener, passiveSupported ? options : options.capture);
 }
-
 /**
  * Get Touch instance in list.
  * @param {Touch[]} touches - An Array or TouchList instance.
  * @param {number} id - Touch#identifier
  * @returns {(Touch|null)} - A found Touch instance.
  */
+
+
 function getTouchById(touches, id) {
   if (touches != null && id != null) {
     for (var i = 0; i < touches.length; i++) {
@@ -592,23 +616,25 @@ function getTouchById(touches, id) {
       }
     }
   }
+
   return null;
 }
-
 /**
  * @param {Object} xy - Something that might have clientX and clientY.
  * @returns {boolean} - `true` if it has valid clientX and clientY.
  */
+
+
 function hasXY(xy) {
   return xy && typeof xy.clientX === 'number' && typeof xy.clientY === 'number';
-}
+} // Gecko, Trident pick drag-event of some elements such as img, a, etc.
 
-// Gecko, Trident pick drag-event of some elements such as img, a, etc.
+
 function dragstart(event) {
   event.preventDefault();
 }
 
-var PointerEvent = function () {
+var PointerEvent = /*#__PURE__*/function () {
   /**
    * Create a `PointerEvent` instance.
    * @param {Object} [options] - Options
@@ -622,14 +648,18 @@ var PointerEvent = function () {
     this.lastHandlerId = 0;
     this.curPointerClass = null;
     this.curTouchId = null;
-    this.lastPointerXY = { clientX: 0, clientY: 0 };
-    this.lastTouchTime = 0;
+    this.lastPointerXY = {
+      clientX: 0,
+      clientY: 0
+    };
+    this.lastTouchTime = 0; // Options
 
-    // Options
-    this.options = { // Default
+    this.options = {
+      // Default
       preventDefault: true,
       stopPropagation: true
     };
+
     if (options) {
       ['preventDefault', 'stopPropagation'].forEach(function (option) {
         if (typeof options[option] === 'boolean') {
@@ -638,7 +668,6 @@ var PointerEvent = function () {
       });
     }
   }
-
   /**
    * @param {function} startHandler - This is called with pointerXY when it starts. This returns boolean.
    * @returns {number} handlerId which is used for adding/removing to element.
@@ -646,17 +675,18 @@ var PointerEvent = function () {
 
 
   _createClass(PointerEvent, [{
-    key: 'regStartHandler',
+    key: "regStartHandler",
     value: function regStartHandler(startHandler) {
       var that = this;
+
       that.startHandlers[++that.lastHandlerId] = function (event) {
         var pointerClass = event.type === 'mousedown' ? 'mouse' : 'touch',
             now = Date.now();
-        var pointerXY = void 0,
-            touchId = void 0;
+        var pointerXY, touchId;
 
         if (pointerClass === 'touch') {
           that.lastTouchTime = now; // Avoid mouse events emulation
+
           pointerXY = event.changedTouches[0];
           touchId = event.changedTouches[0].identifier;
         } else {
@@ -664,13 +694,15 @@ var PointerEvent = function () {
           if (now - that.lastTouchTime < MOUSE_EMU_INTERVAL) {
             return;
           }
+
           pointerXY = event;
         }
+
         if (!hasXY(pointerXY)) {
           throw new Error('No clientX/clientY');
-        }
+        } // It is new one even if those are 'mouse' or ID is same, then cancel current one.
 
-        // It is new one even if those are 'mouse' or ID is same, then cancel current one.
+
         if (that.curPointerClass) {
           that.cancel();
         }
@@ -680,28 +712,29 @@ var PointerEvent = function () {
           that.curTouchId = pointerClass === 'touch' ? touchId : null;
           that.lastPointerXY.clientX = pointerXY.clientX;
           that.lastPointerXY.clientY = pointerXY.clientY;
+
           if (that.options.preventDefault) {
             event.preventDefault();
           }
+
           if (that.options.stopPropagation) {
             event.stopPropagation();
           }
         }
       };
+
       return that.lastHandlerId;
     }
-
     /**
      * @param {number} handlerId - An ID which was returned by regStartHandler.
      * @returns {void}
      */
 
   }, {
-    key: 'unregStartHandler',
+    key: "unregStartHandler",
     value: function unregStartHandler(handlerId) {
       delete this.startHandlers[handlerId];
     }
-
     /**
      * @param {Element} element - A target element.
      * @param {number} handlerId - An ID which was returned by regStartHandler.
@@ -709,17 +742,26 @@ var PointerEvent = function () {
      */
 
   }, {
-    key: 'addStartHandler',
+    key: "addStartHandler",
     value: function addStartHandler(element, handlerId) {
       if (!this.startHandlers[handlerId]) {
-        throw new Error('Invalid handlerId: ' + handlerId);
+        throw new Error("Invalid handlerId: ".concat(handlerId));
       }
-      addEventListenerWithOptions(element, 'mousedown', this.startHandlers[handlerId], { capture: false, passive: false });
-      addEventListenerWithOptions(element, 'touchstart', this.startHandlers[handlerId], { capture: false, passive: false });
-      addEventListenerWithOptions(element, 'dragstart', dragstart, { capture: false, passive: false });
+
+      addEventListenerWithOptions(element, 'mousedown', this.startHandlers[handlerId], {
+        capture: false,
+        passive: false
+      });
+      addEventListenerWithOptions(element, 'touchstart', this.startHandlers[handlerId], {
+        capture: false,
+        passive: false
+      });
+      addEventListenerWithOptions(element, 'dragstart', dragstart, {
+        capture: false,
+        passive: false
+      });
       return handlerId;
     }
-
     /**
      * @param {Element} element - A target element.
      * @param {number} handlerId - An ID which was returned by regStartHandler.
@@ -727,17 +769,17 @@ var PointerEvent = function () {
      */
 
   }, {
-    key: 'removeStartHandler',
+    key: "removeStartHandler",
     value: function removeStartHandler(element, handlerId) {
       if (!this.startHandlers[handlerId]) {
-        throw new Error('Invalid handlerId: ' + handlerId);
+        throw new Error("Invalid handlerId: ".concat(handlerId));
       }
+
       element.removeEventListener('mousedown', this.startHandlers[handlerId], false);
       element.removeEventListener('touchstart', this.startHandlers[handlerId], false);
       element.removeEventListener('dragstart', dragstart, false);
       return handlerId;
     }
-
     /**
      * @param {Element} element - A target element.
      * @param {function} moveHandler - This is called with pointerXY when it moves.
@@ -745,54 +787,61 @@ var PointerEvent = function () {
      */
 
   }, {
-    key: 'addMoveHandler',
+    key: "addMoveHandler",
     value: function addMoveHandler(element, moveHandler) {
       var that = this;
       var wrappedHandler = anim_event__WEBPACK_IMPORTED_MODULE_0__["default"].add(function (event) {
-        var pointerClass = event.type === 'mousemove' ? 'mouse' : 'touch';
+        var pointerClass = event.type === 'mousemove' ? 'mouse' : 'touch'; // Avoid mouse events emulation
 
-        // Avoid mouse events emulation
         if (pointerClass === 'touch') {
           that.lastTouchTime = Date.now();
         }
 
         if (pointerClass === that.curPointerClass) {
           var pointerXY = pointerClass === 'touch' ? getTouchById(event.changedTouches, that.curTouchId) : event;
+
           if (hasXY(pointerXY)) {
             if (pointerXY.clientX !== that.lastPointerXY.clientX || pointerXY.clientY !== that.lastPointerXY.clientY) {
               that.move(pointerXY);
             }
+
             if (that.options.preventDefault) {
               event.preventDefault();
             }
+
             if (that.options.stopPropagation) {
               event.stopPropagation();
             }
           }
         }
       });
-      addEventListenerWithOptions(element, 'mousemove', wrappedHandler, { capture: false, passive: false });
-      addEventListenerWithOptions(element, 'touchmove', wrappedHandler, { capture: false, passive: false });
+      addEventListenerWithOptions(element, 'mousemove', wrappedHandler, {
+        capture: false,
+        passive: false
+      });
+      addEventListenerWithOptions(element, 'touchmove', wrappedHandler, {
+        capture: false,
+        passive: false
+      });
       that.curMoveHandler = moveHandler;
     }
-
     /**
      * @param {{clientX, clientY}} [pointerXY] - This might be MouseEvent, Touch of TouchEvent or Object.
      * @returns {void}
      */
 
   }, {
-    key: 'move',
+    key: "move",
     value: function move(pointerXY) {
       if (hasXY(pointerXY)) {
         this.lastPointerXY.clientX = pointerXY.clientX;
         this.lastPointerXY.clientY = pointerXY.clientY;
       }
+
       if (this.curMoveHandler) {
         this.curMoveHandler(this.lastPointerXY);
       }
     }
-
     /**
      * @param {Element} element - A target element.
      * @param {function} endHandler - This is called with pointerXY when it ends.
@@ -800,56 +849,65 @@ var PointerEvent = function () {
      */
 
   }, {
-    key: 'addEndHandler',
+    key: "addEndHandler",
     value: function addEndHandler(element, endHandler) {
       var that = this;
-      function wrappedHandler(event) {
-        var pointerClass = event.type === 'mouseup' ? 'mouse' : 'touch';
 
-        // Avoid mouse events emulation
+      function wrappedHandler(event) {
+        var pointerClass = event.type === 'mouseup' ? 'mouse' : 'touch'; // Avoid mouse events emulation
+
         if (pointerClass === 'touch') {
           that.lastTouchTime = Date.now();
         }
 
         if (pointerClass === that.curPointerClass) {
-          var pointerXY = pointerClass === 'touch' ? getTouchById(event.changedTouches, that.curTouchId) || (
-          // It might have been removed from `touches` even if it is not in `changedTouches`.
+          var pointerXY = pointerClass === 'touch' ? getTouchById(event.changedTouches, that.curTouchId) || ( // It might have been removed from `touches` even if it is not in `changedTouches`.
           getTouchById(event.touches, that.curTouchId) ? null : {}) : // `{}` means matching
           event;
+
           if (pointerXY) {
             that.end(pointerXY);
+
             if (that.options.preventDefault) {
               event.preventDefault();
             }
+
             if (that.options.stopPropagation) {
               event.stopPropagation();
             }
           }
         }
       }
-      addEventListenerWithOptions(element, 'mouseup', wrappedHandler, { capture: false, passive: false });
-      addEventListenerWithOptions(element, 'touchend', wrappedHandler, { capture: false, passive: false });
+
+      addEventListenerWithOptions(element, 'mouseup', wrappedHandler, {
+        capture: false,
+        passive: false
+      });
+      addEventListenerWithOptions(element, 'touchend', wrappedHandler, {
+        capture: false,
+        passive: false
+      });
       that.curEndHandler = endHandler;
     }
-
     /**
      * @param {{clientX, clientY}} [pointerXY] - This might be MouseEvent, Touch of TouchEvent or Object.
      * @returns {void}
      */
 
   }, {
-    key: 'end',
+    key: "end",
     value: function end(pointerXY) {
       if (hasXY(pointerXY)) {
         this.lastPointerXY.clientX = pointerXY.clientX;
         this.lastPointerXY.clientY = pointerXY.clientY;
       }
+
       if (this.curEndHandler) {
         this.curEndHandler(this.lastPointerXY);
       }
+
       this.curPointerClass = this.curTouchId = null;
     }
-
     /**
      * @param {Element} element - A target element.
      * @param {function} cancelHandler - This is called when it cancels.
@@ -857,44 +915,48 @@ var PointerEvent = function () {
      */
 
   }, {
-    key: 'addCancelHandler',
+    key: "addCancelHandler",
     value: function addCancelHandler(element, cancelHandler) {
       var that = this;
+
       function wrappedHandler(event) {
         /*
           Now, this is fired by touchcancel only, but it might be fired even if curPointerClass is mouse.
         */
         // const pointerClass = 'touch';
-
         that.lastTouchTime = Date.now(); // Avoid mouse events emulation
 
         if (that.curPointerClass != null) {
-          var pointerXY = getTouchById(event.changedTouches, that.curTouchId) || (
-          // It might have been removed from `touches` even if it is not in `changedTouches`.
+          var pointerXY = getTouchById(event.changedTouches, that.curTouchId) || ( // It might have been removed from `touches` even if it is not in `changedTouches`.
           getTouchById(event.touches, that.curTouchId) ? null : {}); // `{}` means matching
+
           if (pointerXY) {
             that.cancel();
           }
         }
       }
-      addEventListenerWithOptions(element, 'touchcancel', wrappedHandler, { capture: false, passive: false });
+
+      addEventListenerWithOptions(element, 'touchcancel', wrappedHandler, {
+        capture: false,
+        passive: false
+      });
       that.curCancelHandler = cancelHandler;
     }
-
     /**
      * @returns {void}
      */
 
   }, {
-    key: 'cancel',
+    key: "cancel",
     value: function cancel() {
       if (this.curCancelHandler) {
         this.curCancelHandler();
       }
+
       this.curPointerClass = this.curTouchId = null;
     }
   }], [{
-    key: 'addEventListenerWithOptions',
+    key: "addEventListenerWithOptions",
     get: function get() {
       return addEventListenerWithOptions;
     }
