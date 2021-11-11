@@ -22,19 +22,21 @@
     "plain-draggable?(-limit)?(-debug).@(min.js|esm.js)",
     "bower.json"
   ],
+  "dependencies": {
+    "pointer-event": "^1.0.2",
+    "cssprefix": "^2.0.17",
+    "anim-event": "^1.0.17",
+    "m-class-list": "^1.1.10"
+  },
   "devDependencies": {
     "@babel/core": "^7.14.3",
     "@babel/preset-env": "^7.14.2",
-    "anim-event": "^1.0.17",
     "babel-core": "^7.0.0-bridge.0",
     "babel-loader": "^7.1.5",
     "cross-env": "^7.0.3",
-    "cssprefix": "^2.0.17",
     "jasmine-core": "^3.7.1",
     "log4js": "^6.3.0",
-    "m-class-list": "^1.1.10",
     "node-static-alias": "^1.1.2",
-    "pointer-event": "^1.0.2",
     "pre-proc": "^1.0.2",
     "skeleton-loader": "^2.0.0",
     "stats-filelist": "^1.0.1",
