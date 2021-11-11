@@ -1,5 +1,4 @@
 /* eslint-env node, es6 */
-const EsmWebpackPlugin = require("@purtuga/esm-webpack-plugin");
 
 'use strict';
 
@@ -38,7 +37,7 @@ module.exports = {
     path: BUILD_DIR_PATH,
     filename: `${BUILD_BASE_NAME}${BUILD_MODE ? (COMMONJS ? '.commonjs.min' : '.min') : ''}.js`,
     library: OBJECT_NAME,
-    libraryTarget: 'var',
+    libraryTarget: COMMONJS ? 'commonjs2' : 'var',
     libraryExport: 'default'
   },
   module: {
@@ -86,7 +85,5 @@ module.exports = {
   plugins: BUILD_MODE ? [
     new webpack.BannerPlugin(
       `${PKG.title || PKG.name} v${PKG.version} (c) ${PKG.author.name} ${PKG.homepage}`)
-  ].concat(
-    COMMONJS ? [new EsmWebpackPlugin()] : []
-  ) : []
+  ] : []
 };
