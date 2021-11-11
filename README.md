@@ -30,6 +30,11 @@ Load PlainDraggable into your web page. (Or, [install it](#development) for impo
 <script src="plain-draggable.min.js"></script>
 ```
 
+Or import it with a JS Loader, such as Webpack
+```js
+import PlainDraggable from "plain-draggable/plain-draggable.commonjs.min";
+```
+
 This is simplest case:
 
 ```js
