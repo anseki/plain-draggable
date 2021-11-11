@@ -25,6 +25,7 @@
   "devDependencies": {
     "@babel/core": "^7.14.3",
     "@babel/preset-env": "^7.14.2",
+    "@purtuga/esm-webpack-plugin": "^1.5.0",
     "anim-event": "^1.0.17",
     "babel-core": "^7.0.0-bridge.0",
     "babel-loader": "^7.1.5",
@@ -44,6 +45,7 @@
   },
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack --verbose",
+    "build-commonjs": "cross-env NODE_ENV=production EDITION=commonjs webpack --verbose",
     "dev": "webpack --verbose",
     "build-limit": "cross-env EDITION=limit NODE_ENV=production webpack --verbose",
     "dev-limit": "cross-env EDITION=limit webpack --verbose",

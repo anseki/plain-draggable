@@ -1,4 +1,5 @@
 /* eslint-env node, es6 */
+const EsmWebpackPlugin = require("@purtuga/esm-webpack-plugin");
 
 'use strict';
 
@@ -8,6 +9,7 @@ const
   LIMIT_TAGS = ['SNAP', 'AUTO-SCROLL', 'SVG', 'LEFTTOP'],
   BUILD_MODE = process.env.NODE_ENV === 'production',
   LIMIT = process.env.EDITION === 'limit',
+  COMMONJS = process.env.EDITION === 'commonjs',
   BUILD_BASE_NAME = `${BASE_NAME}${LIMIT ? '-limit' : ''}`,
   PREPROC_REMOVE_TAGS = (BUILD_MODE ? ['DEBUG'] : []).concat(LIMIT ? LIMIT_TAGS : []),
 
@@ -34,7 +36,7 @@ module.exports = {
   entry: ENTRY_PATH,
   output: {
     path: BUILD_DIR_PATH,
-    filename: `${BUILD_BASE_NAME}${BUILD_MODE ? '.min' : ''}.js`,
+    filename: `${BUILD_BASE_NAME}${BUILD_MODE ? (COMMONJS ? '.commonjs.min' : '.min') : ''}.js`,
     library: OBJECT_NAME,
     libraryTarget: 'var',
     libraryExport: 'default'
@@ -84,5 +86,7 @@ module.exports = {
   plugins: BUILD_MODE ? [
     new webpack.BannerPlugin(
       `${PKG.title || PKG.name} v${PKG.version} (c) ${PKG.author.name} ${PKG.homepage}`)
-  ] : []
+  ].concat(
+    COMMONJS ? [new EsmWebpackPlugin()] : []
+  ) : []
 };
