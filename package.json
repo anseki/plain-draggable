@@ -31,7 +31,7 @@
     "cross-env": "^7.0.3",
     "cssprefix": "^2.0.17",
     "jasmine-core": "^3.7.1",
-    "log4js": "^6.3.0",
+    "log4js": "^6.4.0",
     "m-class-list": "^1.1.10",
     "node-static-alias": "^1.1.2",
     "pointer-event": "^1.0.2",
