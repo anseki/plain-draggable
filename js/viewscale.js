@@ -11,7 +11,7 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
-window.addEventListener('mousewheel', (event) => {
+window.addEventListener('wheel', (event) => {
   if (event.ctrlKey) {
     event.preventDefault();
     event.stopPropagation();
