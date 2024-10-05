@@ -14,7 +14,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
  * PlainDraggable
  * https://anseki.github.io/plain-draggable/
  *
- * Copyright (c) 2021 anseki
+ * Copyright (c) 2024 anseki
  * Licensed under the MIT license.
  */
 import PointerEvent from 'pointer-event';

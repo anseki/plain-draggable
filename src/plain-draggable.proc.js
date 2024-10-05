@@ -6,7 +6,7 @@
  * PlainDraggable
  * https://anseki.github.io/plain-draggable/
  *
- * Copyright (c) 2021 anseki
+ * Copyright (c) 2024 anseki
  * Licensed under the MIT license.
  */
 
@@ -1553,7 +1553,7 @@ class PlainDraggable {
       props.svgTransform = element.transform.baseVal.appendItem(ownerSvg.createSVGTransform());
       props.svgPoint = ownerSvg.createSVGPoint();
       // Gecko bug, view.getScreenCTM returns CTM with root view.
-      const svgView = element.nearestViewportElement;
+      const svgView = element.nearestViewportElement || element.viewportElement;
       props.svgCtmElement = !IS_GECKO ? svgView :
         svgView.appendChild(document.createElementNS(ownerSvg.namespaceURI, 'rect'));
       gpuTrigger = false;

@@ -994,7 +994,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
  * PlainDraggable
  * https://anseki.github.io/plain-draggable/
  *
- * Copyright (c) 2021 anseki
+ * Copyright (c) 2024 anseki
  * Licensed under the MIT license.
  */
 
@@ -2961,7 +2961,7 @@ var PlainDraggable = /*#__PURE__*/function () {
       props.svgTransform = element.transform.baseVal.appendItem(ownerSvg.createSVGTransform());
       props.svgPoint = ownerSvg.createSVGPoint(); // Gecko bug, view.getScreenCTM returns CTM with root view.
 
-      var svgView = element.nearestViewportElement;
+      var svgView = element.nearestViewportElement || element.viewportElement;
       props.svgCtmElement = !IS_GECKO ? svgView : svgView.appendChild(document.createElementNS(ownerSvg.namespaceURI, 'rect'));
       gpuTrigger = false;
       props.initElm = initSvg;
