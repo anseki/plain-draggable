@@ -39,8 +39,8 @@
     "skeleton-loader": "^2.0.0",
     "stats-filelist": "^1.0.1",
     "test-page-loader": "^1.0.8",
-    "webpack": "^4.46.0",
-    "webpack-cli": "^3.3.12"
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1"
   },
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack --verbose",
